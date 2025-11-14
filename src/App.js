@@ -14,7 +14,6 @@ function App() {
 
   const handleLogout = () => {
     console.log('Logout clicked - login functionality removed');
-    // Optional: reload page or show message
   };
 
   return (

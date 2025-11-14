@@ -1,12 +1,3 @@
-/**
- * API Configuration
- * Centralized API endpoint configuration
- * 
- * Priority:
- * 1. Environment variable (REACT_APP_API_BASE_URL) if set
- * 2. Hardcoded URL below (default)
- */
-
 // Hardcoded API Base URL (works immediately without .env file)
 const HARDCODED_API_URL = 'https://localhost:8112';
 
