@@ -1,0 +1,209 @@
+.my-courses-container {
+  width: 100%;
+  padding: 30px;
+  background: #ffffff;
+  min-height: 100vh;
+}
+
+.courses-content {
+  display: flex;
+  gap: 40px;
+  max-width: 1400px;
+  margin: 0 auto;
+  align-items: flex-start;
+}
+
+/* Left Side - Letter Section */
+.letter-section {
+  flex: 1;
+  background: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 40px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.letter-header {
+  margin-bottom: 30px;
+}
+
+.letter-from {
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.letter-body {
+  font-size: 16px;
+  line-height: 1.8;
+  color: #555;
+}
+
+.letter-body p {
+  margin-bottom: 20px;
+}
+
+.letter-body strong {
+  color: #4CAF50;
+  font-weight: 600;
+}
+
+.letter-footer {
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.letter-thanks,
+.letter-regards {
+  margin: 5px 0;
+  color: #666;
+}
+
+.letter-signature {
+  font-family: 'Brush Script MT', cursive;
+  font-size: 28px;
+  color: #4CAF50;
+  margin: 15px 0 5px 0;
+  font-weight: 400;
+}
+
+.letter-name {
+  font-weight: 600;
+  color: #333;
+  margin: 5px 0;
+}
+
+.letter-company {
+  color: #4CAF50;
+  font-weight: 500;
+  margin: 5px 0;
+}
+
+/* Right Side - Blocks Section */
+.blocks-section {
+  flex: 0 0 400px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.blocks-image-container {
+  width: 100%;
+  height: 600px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.blocks-placeholder {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  perspective: 1000px;
+}
+
+.block {
+  width: 120px;
+  height: 120px;
+  border-radius: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: transform 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.block::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0) 100%);
+  pointer-events: none;
+}
+
+.block:hover {
+  transform: translateY(-5px) rotateY(10deg);
+}
+
+.block-emoji {
+  font-size: 48px;
+  z-index: 1;
+}
+
+.block-1 {
+  background: linear-gradient(135deg, #FF9800 0%, #FF6B00 100%);
+}
+
+.block-2 {
+  background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+}
+
+.block-3 {
+  background: linear-gradient(135deg, #F44336 0%, #C62828 100%);
+}
+
+.block-4 {
+  background: linear-gradient(135deg, #8BC34A 0%, #689F38 100%);
+}
+
+.block-5 {
+  background: linear-gradient(135deg, #FFC107 0%, #FFA000 100%);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .courses-content {
+    flex-direction: column;
+  }
+
+  .blocks-section {
+    flex: 1;
+    width: 100%;
+  }
+
+  .blocks-placeholder {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .block {
+    width: 100px;
+    height: 100px;
+  }
+
+  .block-emoji {
+    font-size: 36px;
+  }
+}
+
+@media (max-width: 768px) {
+  .my-courses-container {
+    padding: 15px;
+  }
+
+  .letter-section {
+    padding: 25px;
+  }
+
+  .letter-body {
+    font-size: 14px;
+  }
+
+  .block {
+    width: 80px;
+    height: 80px;
+  }
+
+  .block-emoji {
+    font-size: 28px;
+  }
+}
+
