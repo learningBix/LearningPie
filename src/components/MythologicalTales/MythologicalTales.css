@@ -1,0 +1,229 @@
+/* StoryTime component styles to match the provided screenshot */
+.storytime-root {
+  background: #ffffff;
+  padding: 15px 16px;
+  min-height: 100vh;
+  color: #222;
+}
+
+.storytime-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.storytime-header h1 {
+  font-size: 40px;
+  font-weight: 670;
+  margin: 12px 0 20px;
+  color: #111;
+}
+
+.stories-grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 22px;
+}
+
+@media (min-width: 700px) {
+  .stories-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (min-width: 1100px) {
+  .stories-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+.story-card {
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(20,20,20,0.04);
+  cursor: pointer;
+  transition: transform 180ms ease, box-shadow 180ms ease;
+  margin-top: 1rem !important;
+  margin-left: 1rem !important;;
+}
+.story-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 10px 30px rgba(20,20,20,0.08);
+}
+
+.thumbnail {
+  position: relative;
+  height: 200px;
+  background: #f7f7f7;
+}
+.thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.play-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.play-circle {
+  display: inline-flex;
+  width: 66px;
+  height: 66px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.95);
+  color: #1473b9;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 22px;
+  box-shadow: 0 4px 16px rgba(20,20,20,0.12);
+}
+.lock-icon {
+  display: inline-flex;
+  width: 66px;
+  height: 66px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.55);
+  color: #fff;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+}
+
+.progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 44px;
+  background: rgba(0,0,0,0.65);
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  gap: 10px;
+  color: #fff;
+}
+.play-small {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 14px;
+}
+.progress-bar {
+  flex: 1;
+  height: 6px;
+  background: rgba(255,255,255,0.12);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: #3b82f6; /* orange-ish */
+}
+.controls-dots span {
+  display: inline-block;
+  width: 4px;
+  height: 10px;
+  background: rgba(255,255,255,0.25);
+  margin-left: 6px;
+  border-radius: 2px;
+}
+
+.story-info {
+  padding: 18px 20px 22px 20px;
+}
+.story-info h3 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  color: #222;
+  height: 40px;
+  font-family: Raleway, sans-serif;
+  font-weight: normal
+}
+.story-info p {
+  margin: 0;
+  color: black;
+  font-size: 16px;
+  line-height: 1.45;
+}
+
+/* Modal styles */
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: flex-start;  /* ⭐ Modal top se start hoga */
+  justify-content: center;
+  z-index: 60;
+  padding-top: 60px;        
+}
+
+
+.modal {
+  width: 45%;
+  /* max-width: 640Fpx; */
+  background: #fff;
+  border-radius: 12px;
+  padding: 22px;
+  box-shadow: 0 20px 60px rgba(20,20,20,0.15);
+  position: relative;
+}
+.modal-close {
+  position: absolute;
+  right: 12px;
+  top: 8px;
+  background: transparent;
+  border: none;
+  font-size: 26px;
+  color: #444;
+  cursor: pointer;
+}
+.modal-thumb {
+  width: 100%;
+  height: 400px;
+  background: #f3f8fb;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 14px 0;
+}
+.modal-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.modal-play {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 36px;
+  color: #fff;
+}
+.modal-title { font-size: 22px; margin-bottom: 44px; }
+.modal-desc { color: #444; margin: 12px 0 18px; }
+.modal-cta {
+  width: 100%;
+  background: linear-gradient(90deg,#f6b05d,#f08a24);
+  color: #fff;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+
+.modal-video-wrapper {
+  width: 100%;
+  height: 380px;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-top: 10px;
+}
+
+.video-frame {
+  width: 100%;
+  height: 100%;
+}
+

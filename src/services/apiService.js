@@ -4,44 +4,36 @@
  */
 
 import axios from 'axios';
-import { API_BASE_URL, API_CONFIG } from '../config/api';
+import { API_BASE_URL, API_CONFIG, BLOB_BASE_URL } from '../config/api';
 
 // Create axios instance with default configuration
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   timeout: API_CONFIG.timeout,
   headers: API_CONFIG.headers,
-  // For development with self-signed certificates on localhost
-  // This is automatically handled by the browser's fetch API
   withCredentials: false,
 });
 
-// Request interceptor - no authentication required (login removed)
+// Request interceptor
 apiClient.interceptors.request.use(
   (config) => {
-    // No token needed - authentication removed
-    return config;
+    return config; // no token required
   },
   (error) => {
     return Promise.reject(error);
   }
 );
 
-// Response interceptor - handle common errors
+// Response interceptor
 apiClient.interceptors.response.use(
-  (response) => {
-    return response;
-  },
+  (response) => response,
   (error) => {
-    // Handle common errors
     if (error.code === 'ECONNABORTED') {
       console.error('Request timeout');
     } else if (error.response) {
-      // Server responded with error status
       switch (error.response.status) {
         case 401:
           console.error('Unauthorized - please login again');
-          // Optionally redirect to login
           break;
         case 403:
           console.error('Forbidden - insufficient permissions');
@@ -50,13 +42,12 @@ apiClient.interceptors.response.use(
           console.error('Resource not found');
           break;
         case 500:
-          console.error('Server error - please try again later');
+          console.error('Server error');
           break;
         default:
-          console.error('An error occurred:', error.response.statusText);
+          console.error('Error:', error.response.statusText);
       }
     } else if (error.request) {
-      // Request made but no response received
       console.error('Network error - unable to connect to server');
     }
     return Promise.reject(error);
@@ -64,11 +55,7 @@ apiClient.interceptors.response.use(
 );
 
 /**
- * Generic API call wrapper with consistent error handling
- * @param {string} endpoint - API endpoint path
- * @param {object} data - Request data
- * @param {object} options - Additional axios options
- * @returns {Promise} - API response
+ * Generic API call wrapper
  */
 export const apiCall = async (endpoint, data = {}, options = {}) => {
   try {
@@ -85,55 +72,92 @@ export const apiCall = async (endpoint, data = {}, options = {}) => {
       success: false,
       data: null,
       message: getErrorMessage(error),
-      error: error,
+      error,
     };
   }
 };
 
 /**
- * Get user-friendly error message
- * @param {Error} error - Error object
- * @returns {string} - User-friendly error message
+ * Friendly error message handler
  */
 const getErrorMessage = (error) => {
   if (error.code === 'ECONNABORTED') {
     return 'Request timeout. Please try again.';
   } else if (error.response) {
-    return error.response.data?.replyMsg || 'An error occurred. Please try again.';
+    return (
+      error.response.data?.replyMsg ||
+      'An error occurred. Please try again.'
+    );
   } else if (error.request) {
-    return 'Unable to connect to server. Please check your connection and try again.';
+    return 'Unable to connect to server. Please check your connection.';
   } else {
-    return 'An unexpected error occurred. Please try again.';
+    return 'An unexpected error occurred.';
   }
 };
 
-// Specific API methods
+/**
+ * AUTH
+ */
 export const authAPI = {
-  login: (email, password, roleId = '3') => {
-    return apiCall('/login', { email, password, role_id: roleId });
-  },
+  login: (email, password, roleId = '3') =>
+    apiCall('/login', { email, password, role_id: roleId }),
 };
 
+/**
+ * SUBJECTS
+ */
 export const subjectsAPI = {
-  getSubjectsList: () => {
-    return apiCall('/subjects_list', {});
-  },
-  getActivitiesList: () => {
-    return apiCall('/activities_list', {});
-  },
+  getSubjectsList: () => apiCall('/subjects_list', {}),
+  getActivitiesList: () => apiCall('/activities_list', {}),
 };
 
+/**
+ * COURSES
+ */
 export const coursesAPI = {
-  getCoursesList: (userId) => {
-    return apiCall('/self_page_courses_list', { user_id: userId });
-  },
+  getCoursesList: (userId) =>
+    apiCall('/self_page_courses_list', { user_id: userId }),
 };
 
+/**
+ * PROFILE
+ */
 export const profileAPI = {
-  updateProfile: (userId, profileData) => {
-    return apiCall('/update_profile', { user_id: userId, ...profileData });
-  },
+  updateProfile: (userId, profileData) =>
+    apiCall('/update_profile', { user_id: userId, ...profileData }),
 };
+
+/**
+ * CONTENT (Mythology, Rhymes, Stories)
+ */
+export const contentsAPI = {
+  getMythologyStories: () =>
+    apiCall('/pix_contents_list', {
+      keyword: '',
+      age_group_id: '47',
+      start: '0',
+      limit: '200',
+    }),
+
+  getRhymesList: () =>
+    apiCall('/pix_contents_list', {
+      keyword: '',
+      age_group_id: '47',
+      start: '0',
+      limit: '200',
+    }),
+
+  getStoriesList: () =>
+    apiCall('/pix_contents_list', {
+      keyword: '',
+      age_group_id: '47',
+      start: '0',
+      limit: '200',
+    }),
+};
+
+// Exporting blob URL so components can use it
+export { BLOB_BASE_URL };
 
 export default {
   apiCall,
@@ -141,5 +165,6 @@ export default {
   subjectsAPI,
   coursesAPI,
   profileAPI,
+  contentsAPI,
+  BLOB_BASE_URL,
 };
-
