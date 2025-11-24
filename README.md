@@ -28,7 +28,7 @@ LearningPie provides an engaging learning experience with various subjects and a
 
 - Node.js (v14 or higher)
 - npm or yarn
-- Backend API running (default: `http://localhost:8112`)
+- Backend API running
 
 ### Installation
 
@@ -40,8 +40,9 @@ cd LearningPie_frontend
 # Install dependencies
 npm install
 
-# Create .env file with your API configuration
-echo "REACT_APP_API_BASE_URL=http://localhost:8112" > .env
+# Create .env file and set your API URL
+# Create a .env file in the root directory with:
+# REACT_APP_API_BASE_URL=http://localhost:8112
 
 # Start development server
 npm start
@@ -59,7 +60,20 @@ This creates an optimized production build in the `build/` directory.
 
 ## Configuration
 
-The API configuration is managed in `src/config/api.js`. Set your backend URL using the `REACT_APP_API_BASE_URL` environment variable in the `.env` file.
+### Environment Variables
+
+The application uses environment variables for configuration. Create a `.env` file in the root directory with the following variables:
+
+**Required:**
+- `REACT_APP_API_BASE_URL` - Your backend API URL (e.g., `http://localhost:8112`)
+
+**Optional:**
+- `REACT_APP_API_TIMEOUT` - API request timeout in milliseconds (default: `10000`)
+- `REACT_APP_API_WITH_CREDENTIALS` - Enable credentials for API requests (default: `false`)
+
+### API Configuration
+
+The API configuration is managed in `src/config/api.js`. All API URLs and settings are loaded from environment variables - **no hardcoded URLs**. The application will display a warning in the console if required environment variables are missing.
 
 ## Project Structure
 

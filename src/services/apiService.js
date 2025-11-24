@@ -1,30 +1,32 @@
-/**
- * API Service
- * Centralized service for making API calls with consistent error handling
- */
-
 import axios from 'axios';
-import { API_BASE_URL, API_CONFIG, BLOB_BASE_URL } from '../config/api';
+import { API_BASE_URL, API_CONFIG, BLOB_BASE_URL, isAPIConfigured } from '../config/api';
 
-// Create axios instance with default configuration
+if (!isAPIConfigured()) {
+  console.error(
+    '❌ API base URL is not configured!\n' +
+    'Please create a .env file with REACT_APP_API_BASE_URL\n' +
+    'See .env.example for reference.'
+  );
+} else if (process.env.NODE_ENV === 'development') {
+  console.log('✅ API Base URL loaded from .env:', API_BASE_URL);
+}
+
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   timeout: API_CONFIG.timeout,
   headers: API_CONFIG.headers,
-  withCredentials: false,
+  withCredentials: API_CONFIG.withCredentials,
 });
 
-// Request interceptor
 apiClient.interceptors.request.use(
   (config) => {
-    return config; // no token required
+    return config;
   },
   (error) => {
     return Promise.reject(error);
   }
 );
 
-// Response interceptor
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -54,9 +56,6 @@ apiClient.interceptors.response.use(
   }
 );
 
-/**
- * Generic API call wrapper
- */
 export const apiCall = async (endpoint, data = {}, options = {}) => {
   try {
     const response = await apiClient.post(endpoint, data, options);
@@ -77,9 +76,6 @@ export const apiCall = async (endpoint, data = {}, options = {}) => {
   }
 };
 
-/**
- * Friendly error message handler
- */
 const getErrorMessage = (error) => {
   if (error.code === 'ECONNABORTED') {
     return 'Request timeout. Please try again.';
@@ -95,9 +91,6 @@ const getErrorMessage = (error) => {
   }
 };
 
-/**
- * AUTH
- */
 export const authAPI = {
   login: (email, password, roleId = '3') =>
     apiCall('/login', { email, password, role_id: roleId }),
@@ -107,8 +100,15 @@ export const authAPI = {
  * SUBJECTS
  */
 export const subjectsAPI = {
-  getSubjectsList: () => apiCall('/subjects_list', {}),
-  getActivitiesList: () => apiCall('/activities_list', {}),
+  getSubjectsList: () => {
+    return apiCall('/subjects_list', {});
+  },
+  getActivitiesList: () => {
+    return apiCall('/activities_list', {});
+  },
+  checkStudentSubscription: (sid) => {
+    return apiCall('/check_student_subscription', { sid });
+  },
 };
 
 /**
@@ -156,6 +156,43 @@ export const contentsAPI = {
     }),
 };
 
+export const dashboardAPI = {
+  getDemoClassDetails: (sid) => {
+    return apiCall('/demo_class_details', { sid });
+  },
+  getGroupPostList: ({ group_id = '', keyword = '', learning = '1', user_id = '' } = {}) => {
+    return apiCall('/group_post_list', { group_id, keyword, learning, user_id });
+  },
+  fetchAssessmentReport: (studentId) => {
+    return apiCall('/fetch_assesment_report_student', { student_id: studentId });
+  },
+  getDayLiveClassesList: ({ subscription_date, course_id, sid }) => {
+    return apiCall('/day_live_classes_list', { subscription_date, course_id, sid });
+  },
+};
+
+export const recordedClassesAPI = {
+  fetchTermsCourses: ({ age_group_id, terms = ['3'] } = {}) => {
+    return apiCall('/fetch_terms_courses', { age_group_id, terms });
+  },
+  viewChapterLessonsInfo: ({ course_chapter_id, student_id, type = '0' } = {}) => {
+    return apiCall('/student_view_chapter_lessons_info', { 
+      course_chapter_id, 
+      student_id, 
+      type 
+    });
+  },
+  viewCourseInfo: ({ quarter_id, user_id, sid = '' } = {}) => {
+    return apiCall('/student_view_course_info', { quarter_id, user_id, sid });
+  },
+  getSessionDetails: ({ session_id, user_id, sid = '' } = {}) => {
+    return apiCall('/student_view_session_details', { session_id, user_id, sid });
+  },
+  getPixContentsList: ({ age_group_id, keyword = '' } = {}) => {
+    return apiCall('/pix_contents_list', { age_group_id, keyword });
+  },
+};
+
 // Exporting blob URL so components can use it
 export { BLOB_BASE_URL };
 
@@ -166,5 +203,7 @@ export default {
   coursesAPI,
   profileAPI,
   contentsAPI,
+  dashboardAPI,
+  recordedClassesAPI,
   BLOB_BASE_URL,
 };

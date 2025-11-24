@@ -1,5 +1,5 @@
-import React, { useState, useEffect, act } from 'react';
-import { coursesAPI } from '../../services/apiService';
+import React, { useState, useEffect } from 'react';
+import { coursesAPI, dashboardAPI, subjectsAPI } from '../../services/apiService';
 import './Dashboard.css';
 import ParentSection from '../ParentSection/ParentSection';
 import HindiSessions from '../HindiSessions/HindiSessions';
@@ -8,6 +8,8 @@ import RhymeTime from '../RhymeTime/RhymeTime';
 import StoryTime from '../StoryTime/StoryTime';
 import MyCourses from '../MyCourses/MyCourses';
 import EditProfile from '../EditProfile/EditProfile';
+import RecordedClasses from '../RecordedClasses/RecordedClasses';
+import BonusSessions from '../BonusSessions/BonusSessions';
 import logoPie from '../../assets/logo-pie.png';
 import Community from '../Community/Community';
 import Invite from '../invite/invite';
@@ -25,11 +27,24 @@ const Dashboard = ({ user, onLogout }) => {
     liveClasses: 0,
     bonusSessions: 0
   });
+  const [assessmentData, setAssessmentData] = useState({
+    stories: 0,
+    rhymes: 0,
+    bonus: 0,
+    recorded_class: 0,
+    live_class: 0,
+    robotics: 0
+  });
+  const [liveClassesList, setLiveClassesList] = useState([]);
+  const [studentSubscriptions, setStudentSubscriptions] = useState([]);
+  const [groupPosts, setGroupPosts] = useState([]);
+  const [demoClassDetails, setDemoClassDetails] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch user's course progress
-    fetchCourseProgress();
-  }, []);
+    // Fetch all dashboard data
+    fetchDashboardData();
+  }, [user]);
 
   useEffect(() => {
     // Close dropdown when clicking outside
@@ -45,27 +60,124 @@ const Dashboard = ({ user, onLogout }) => {
     };
   }, [showUserDropdown]);
 
-  const fetchCourseProgress = async () => {
+  // Get session ID from storage
+  const getSid = () => {
+    return localStorage.getItem('sid') || sessionStorage.getItem('sid') || '';
+  };
+
+  // Fetch all dashboard data
+  const fetchDashboardData = async () => {
+    setLoading(true);
     try {
-      const response = await coursesAPI.getCoursesList(user.id);
-      if (response.success) {
-        // Update progress based on API response
-        const courses = response.data || [];
-        setCourseProgress({
-          courseTaken: courses.length,
-          totalCourses: 3,
-          liveClasses: 0,
-          bonusSessions: 0
-        });
-      } else {
-        console.log('Failed to fetch courses:', response.message);
-        // Keep default values - dashboard will still work
-        console.log('Using default course progress values');
+      // Get student ID - try different possible fields
+      const studentIdRaw = user?.id || user?.student_id || user?.user_id;
+      const sid = getSid();
+
+      if (!studentIdRaw) {
+        console.warn('Student ID not found in user object');
+        setLoading(false);
+        return;
       }
+
+      // Convert student ID to number (API expects number)
+      const studentId = typeof studentIdRaw === 'string' ? parseInt(studentIdRaw, 10) : studentIdRaw;
+
+      // Fetch assessment report for statistics
+      const assessmentResponse = await dashboardAPI.fetchAssessmentReport(studentId);
+      if (assessmentResponse.success && assessmentResponse.data) {
+        setAssessmentData({
+          stories: assessmentResponse.data.stories || 0,
+          rhymes: assessmentResponse.data.rhymes || 0,
+          bonus: assessmentResponse.data.bonus || 0,
+          recorded_class: assessmentResponse.data.recorded_class || 0,
+          live_class: assessmentResponse.data.live_class || 0,
+          robotics: assessmentResponse.data.robotics || 0
+        });
+
+        // Update course progress with assessment data
+        setCourseProgress(prev => ({
+          ...prev,
+          liveClasses: assessmentResponse.data.live_class || 0,
+          bonusSessions: assessmentResponse.data.bonus || 0
+        }));
+      }
+
+      // Fetch student subscriptions
+      if (sid) {
+        const subscriptionResponse = await subjectsAPI.checkStudentSubscription(sid);
+        if (subscriptionResponse.success && subscriptionResponse.data) {
+          const subscriptions = subscriptionResponse.data || [];
+          setStudentSubscriptions(subscriptions);
+          
+          // Update course progress from subscriptions
+          setCourseProgress(prev => ({
+            ...prev,
+            courseTaken: subscriptions.length,
+            totalCourses: Math.max(subscriptions.length, 3) // At least 3 or actual count
+          }));
+          
+          console.log('Student subscriptions:', subscriptions);
+
+          // Fetch day live classes list using subscription data
+          if (subscriptions.length > 0) {
+            // Get subscription_date from first subscription or user data or use current date
+            const subscriptionDate = subscriptions[0]?.course_start_date || 
+                                     user?.subscription_date || 
+                                     user?.subscriptionDate || 
+                                     new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
+            
+            // Fetch live classes for all subscribed courses in parallel
+            const liveClassesPromises = subscriptions
+              .filter(sub => sub.course_id)
+              .map(subscription => {
+                return dashboardAPI.getDayLiveClassesList({
+                  subscription_date: subscriptionDate,
+                  course_id: subscription.course_id,
+                  sid: sid
+                });
+              });
+            
+            try {
+              const liveClassesResponses = await Promise.all(liveClassesPromises);
+              // Combine all live classes from all courses
+              const allLiveClasses = liveClassesResponses
+                .filter(response => response.success && response.data)
+                .flatMap(response => response.data || []);
+              
+              setLiveClassesList(allLiveClasses);
+              console.log('Live classes fetched for all courses:', allLiveClasses);
+            } catch (error) {
+              console.error('Error fetching live classes:', error);
+            }
+          }
+        }
+      }
+
+      // Fetch demo class details
+      if (sid) {
+        const demoClassResponse = await dashboardAPI.getDemoClassDetails(sid);
+        if (demoClassResponse.success) {
+          setDemoClassDetails(demoClassResponse.data);
+          console.log('Demo class details:', demoClassResponse.data);
+        }
+      }
+
+      // Fetch group posts list (Community posts)
+      const groupPostsResponse = await dashboardAPI.getGroupPostList({
+        group_id: '',
+        keyword: '',
+        learning: '1',
+        user_id: studentIdRaw || ''
+      });
+      if (groupPostsResponse.success && groupPostsResponse.data) {
+        setGroupPosts(groupPostsResponse.data || []);
+        console.log('Group posts fetched:', groupPostsResponse.data);
+      }
+
     } catch (error) {
-      console.error('Error fetching course progress:', error);
-      // Keep default values - dashboard will still work
-      console.log('Using default course progress values');
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -209,111 +321,125 @@ return (
           </nav>
         </aside>
 
-        {/* MAIN CONTENT */}
-       <main
-  className={`main-content ${
-    activeSection === 'Parent Section' ||
-    activeSection === 'My Courses' ||
-    activeSection === 'My Profile' ||
-    activeSection === 'Story Time' ||                    
-    activeSection === 'Rhyme Time' || 
-    activeSection === 'Mythological Tales' ||
-    activeSection === 'Hindi Sessions' ||
-    activeSection === 'Community' ||
-    activeSection === 'Invite & Earn'
-   
-      ? 'full-width'
-      : ''
-  }`}
->
-  {activeSection === 'Dashboard' ? (
-    <div className="dashboard-grid">
-      {dashboardCards.map(card => (
-        <div
-          key={card.id}
-          className="dashboard-card"
-          onClick={() => handleCardClick(card.section)}
-          data-card-color={card.color}
-          style={{ '--card-color': card.color }}
-        >
-          <div className="card-icon">{card.icon}</div>
-          <div className="card-footer" style={{ backgroundColor: card.color }}>
-            <span className="card-title">{card.title}</span>
-          </div>
-        </div>
-      ))}
-    </div>
+        {/* Main Content */}
+        <main className={`main-content ${
+          activeSection === 'Parent Section' ||
+          activeSection === 'My Courses' ||
+          activeSection === 'My Profile' ||
+          activeSection === 'Recorded Classes' ||
+          activeSection === 'Bonus Sessions' ||
+          activeSection === 'Story Time' ||
+          activeSection === 'Rhyme Time' ||
+          activeSection === 'Mythological Tales' ||
+          activeSection === 'Hindi Sessions' ||
+          activeSection === 'Community' ||
+          activeSection === 'Invite & Earn'
+            ? 'full-width'
+            : ''
+        }`}>
+          {activeSection === 'Dashboard' ? (
+            <div className="dashboard-grid">
+              {dashboardCards.map(card => (
+                <div
+                  key={card.id}
+                  className="dashboard-card"
+                  onClick={() => handleCardClick(card.section)}
+                  data-card-color={card.color}
+                  style={{ '--card-color': card.color }}
+                >
+                  <div className="card-icon">{card.icon}</div>
+                  <div className="card-footer" style={{ backgroundColor: card.color }}>
+                    <span className="card-title">{card.title}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : activeSection === 'Parent Section' ? (
+            <ParentSection user={userData} />
+          ) : activeSection === 'My Courses' ? (
+            <MyCourses />
+          ) : activeSection === 'Recorded Classes' ? (
+            <RecordedClasses user={userData} userData={userData} />
+          ) : activeSection === 'Bonus Sessions' ? (
+            <BonusSessions user={userData} userData={userData} />
+          ) : activeSection === 'My Profile' ? (
+            isEditingProfile ? (
+              <EditProfile 
+                user={userData} 
+                onBack={handleBackFromEdit}
+                onSave={handleSaveProfile}
+              />
+            ) : (
+              <div className="my-profile-section">
+                <div className="profile-header-card">
+                  <div className="profile-image-placeholder">
+                    {userData.profile_image ? (
+                      <img src={userData.profile_image} alt="Profile" />
+                    ) : (
+                      <div className="profile-img-icon">🖼️</div>
+                    )}
+                  </div>
+                  <div className="profile-info">
+                    <h2 className="profile-name">{userData.name || 'Student Name'}</h2>
+                    <p className="profile-age">Age: {userData.age || 'Not specified'}</p>
+                  </div>
+                  <div className="profile-actions">
+                    <button className="edit-profile-btn" onClick={handleEditProfileClick}>
+                      Edit Profile
+                    </button>
+                    <button className="change-avatar-btn">Change Avatar →</button>
+                  </div>
+                </div>
+                
+                <div className="profile-cards-container">
+                  <div className="my-stats-card">
+                    <div className="rocket-illustration">🚀</div>
+                    <h3 className="stats-title">My stats</h3>
+                    <button className="view-stats-btn">→</button>
+                  </div>
+                  
+                  <div className="assessments-card">
+                    <h3 className="assessments-title">Assessments</h3>
+                    <button className="see-performance-btn">See Performance →</button>
+                  </div>
+                </div>
+              </div>
+            )
+          ) : activeSection === 'Story Time' ? (
+            <StoryTime />
+          ) : activeSection === 'Rhyme Time' ? (
+            <RhymeTime />
+          ) : activeSection === 'Mythological Tales' ? (
+            <MythologicalTales />
+          ) : activeSection === 'Hindi Sessions' ? (
+            <HindiSessions />
+          ) : activeSection === 'Community' ? (
+            <Community />
+          ) : activeSection === 'Invite & Earn' ? (
+            <Invite />
+          ) : (
+            <div className="section-content">
+              <h2 className="section-title">{activeSection}</h2>
+              <div className="section-body">
+                <p>Welcome to {activeSection} section.</p>
+                <p>Content for this section will be available soon.</p>
+              </div>
+            </div>
+          )}
+        </main>
 
-  ) : activeSection === 'Parent Section' ? (
-    <ParentSection />
-
-  ) : activeSection === 'My Courses' ? (
-    <MyCourses />
-  ) : activeSection === 'Community' ? (
-    <Community />
-
-  ) : activeSection === 'My Profile' ? (
-    isEditingProfile ? (
-      <EditProfile
-        user={userData}
-        onBack={handleBackFromEdit}
-        onSave={handleSaveProfile}
-      />
-    ) : (
-      <div className="my-profile-section">
-        {/* your profile UI... */}
-      </div>
-    )
-
-  ) : activeSection === 'Story Time' ? (
-    <StoryTime />
-
-
-  
-  ) : activeSection === 'Invite & Earn' ? (
-    <Invite  />
-
-
-  ) : activeSection === 'Rhyme Time' ? (       // ✅ ADDING RHYME TIME
-    <RhymeTime />
-
-    
-   
-  ) : activeSection === 'Hindi Sessions' ? ( 
-    <HindiSessions /> // ✅ ADDING HINDI SESSIONS
-
-  ) : activeSection === 'Mythological Tales' ? (  // ✅ ADDING MYTHOLOGICAL TALES
-    <MythologicalTales />
-
-  ) : (
-    <div className="section-content">
-      <h2 className="section-title">{activeSection}</h2>
-      <div className="section-body">
-        <p>Welcome to {activeSection} section.</p>
-        <p>Content for this section will be available soon.</p>
-      </div>
-    </div>
-  )}
-</main>
-
-
-       
-       
-       
-        {/* RIGHT SIDEBAR */}
+        {/* Right Sidebar */}
         {activeSection !== 'Parent Section' && 
          activeSection !== 'My Courses' && 
          activeSection !== 'My Profile' &&
-         activeSection !== 'Live Class' &&
          activeSection !== 'Recorded Classes' &&
-         activeSection !== 'Bonus Sessions' && 
+         activeSection !== 'Bonus Sessions' &&
          activeSection !== 'Story Time' &&
          activeSection !== 'Rhyme Time' &&
          activeSection !== 'Mythological Tales' &&
          activeSection !== 'Hindi Sessions' &&
          activeSection !== 'Community' &&
-         activeSection !== 'Invite & Earn' &&
-         activeSection !== 'Story Time' && (
+         activeSection !== 'Invite & Earn' && (
           <aside className="right-sidebar">
             
             <div className="progress-card">
@@ -333,7 +459,7 @@ return (
 
               <div className="progress-item">
                 <span className="progress-label">
-                  {courseProgress.liveClasses} Live classes Taken
+                  {assessmentData.live_class} Live classes Taken
                 </span>
                 <div className="progress-bar">
                   <div className="progress-fill" style={{ width: '0%' }}></div>
@@ -342,7 +468,7 @@ return (
 
               <div className="progress-item">
                 <span className="progress-label">
-                  {courseProgress.bonusSessions} Bonus Sessions Taken
+                  {assessmentData.bonus} Bonus Sessions Taken
                 </span>
                 <div className="progress-bar">
                   <div className="progress-fill" style={{ width: '0%' }}></div>

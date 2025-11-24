@@ -1,47 +1,297 @@
 .my-courses-container {
   width: 100%;
-  padding: 30px;
+  padding: 40px 60px;
   background: #ffffff;
   min-height: 100vh;
+  position: relative;
+}
+
+/* Header Section with Navigation */
+.my-courses-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 50px;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.header-titles {
+  display: flex;
+  gap: 30px;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.header-word {
+  font-size: 26px;
+  font-weight: 600;
+  color: #666;
+  cursor: pointer;
+  padding: 6px 18px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  position: relative;
+  user-select: none;
+}
+
+.header-word:hover {
+  color: #333;
+  background: rgba(76, 175, 80, 0.1);
+  transform: translateY(-2px);
+}
+
+.header-word.active {
+  color: #333;
+  background: rgba(76, 175, 80, 0.3);
+  font-weight: bold;
+}
+
+.header-word.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 10%;
+  right: 10%;
+  height: 3px;
+  background: #4CAF50;
+  border-radius: 2px;
 }
 
 .courses-content {
   display: flex;
-  gap: 40px;
-  max-width: 1400px;
-  margin: 0 auto;
+  gap: 0;
+  max-width: 100%;
+  margin: 0;
   align-items: flex-start;
+  width: 100%;
 }
 
-/* Left Side - Letter Section */
-.letter-section {
-  flex: 1;
-  background: #f9f9f9;
-  border: 1px solid #e0e0e0;
-  border-radius: 12px;
+/* Tab Content */
+.tab-content {
+  width: 100%;
   padding: 40px;
+  background: #f9f9f9;
+  border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  min-height: 400px;
 }
 
-.letter-header {
-  margin-bottom: 30px;
+.tab-content.methodology-tab {
+  box-shadow: none !important;
+  background: #FFFFFF !important;
 }
 
-.letter-from {
-  font-size: 24px;
+.tab-content.methodology-tab * {
+  box-shadow: none !important;
+}
+
+.tab-content.course-tab {
+  background: #FFFFFF !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+.tab-content.journey-tab {
+  background: #FFFFFF !important;
+  box-shadow: none !important;
+  padding: 40px 20px !important;
+  min-height: 400px;
+}
+
+.tab-content.details-tab {
+  background: #FFFFFF !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+/* Details Tab - Month Navigation */
+.details-month-navigation {
+  display: flex;
+  gap: 0;
+  align-items: center;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 0 40px;
+  margin-bottom: 0;
+}
+
+.details-month-tab {
+  font-size: 18px;
+  font-weight: 500;
+  color: #999;
+  cursor: pointer;
+  padding: 16px 24px;
+  position: relative;
+  transition: color 0.3s ease;
+  user-select: none;
+}
+
+.details-month-tab:hover {
+  color: #666;
+}
+
+.details-month-tab.active {
+  color: #333;
+  font-weight: 600;
+}
+
+.details-month-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 24px;
+  right: 24px;
+  height: 2px;
+  background: #333;
+  border-radius: 1px 1px 0 0;
+}
+
+/* Details Tab - Month Content */
+.details-month-content {
+  padding: 40px;
+  min-height: 400px;
+}
+
+.month-content-wrapper {
+  width: 100%;
+}
+
+.month-content-wrapper p {
+  font-size: 16px;
+  line-height: 1.6;
+  color: #555;
+}
+
+.tab-content h2 {
+  font-size: 28px;
   font-weight: 600;
   color: #333;
-  margin: 0;
+  margin-bottom: 20px;
 }
 
-.letter-body {
+.tab-content p {
   font-size: 16px;
   line-height: 1.8;
   color: #555;
 }
 
+/* Methodology Image Container */
+.methodology-image-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+  box-shadow: none !important;
+  background: #FFFFFF !important;
+}
+
+.methodology-tab {
+  padding: 20px;
+}
+
+.methodology-image {
+  width: 100%;
+  max-width: 1400px;
+  height: auto;
+  border-radius: 12px;
+  object-fit: contain;
+  cursor: pointer;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+.methodology-image:hover {
+  transform: scale(1.05);
+  opacity: 0.9;
+}
+
+/* Course Content Wrapper - Two Column Layout */
+.course-content-wrapper {
+  display: flex;
+  gap: 50px;
+  align-items: flex-start;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0;
+}
+
+/* Letter Section inside Tab Content */
+.tab-content .letter-section {
+  flex: 1;
+  background: #ffffff;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+  width: 100%;
+  margin: 0;
+}
+
+/* Left Side - Letter Section (standalone) */
+.letter-section {
+  flex: 1;
+  background: #ffffff;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+  max-width: none;
+}
+
+/* Course Image Section - Right Side */
+.course-image-section {
+  flex: 0 0 350px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+}
+
+.course-image-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+  height: 100%;
+}
+
+.course-image {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  border-radius: 0;
+  object-fit: contain;
+  box-shadow: none;
+}
+
+.letter-header {
+  margin-bottom: 25px;
+}
+
+.letter-from {
+  font-size: 18px;
+  font-weight: normal;
+  color: #333;
+  margin: 0 0 20px 0;
+}
+
+.letter-body {
+  font-size: 16px;
+  line-height: 1.8;
+  color: #333;
+  font-family: 'Georgia', 'Times New Roman', serif;
+}
+
 .letter-body p {
-  margin-bottom: 20px;
+  margin-bottom: 18px;
+  text-align: justify;
 }
 
 .letter-body strong {
@@ -50,35 +300,160 @@
 }
 
 .letter-footer {
-  margin-top: 40px;
-  padding-top: 20px;
-  border-top: 1px solid #e0e0e0;
+  margin-top: 18px;
+  padding-top: 0;
 }
 
-.letter-thanks,
+.letter-thanks {
+  margin: 0 0 8px 0;
+  color: #333;
+  font-size: 16px;
+}
+
 .letter-regards {
-  margin: 5px 0;
-  color: #666;
+  margin: 0 0 18px 0;
+  color: #333;
+  font-size: 16px;
 }
 
 .letter-signature {
-  font-family: 'Brush Script MT', cursive;
-  font-size: 28px;
-  color: #4CAF50;
-  margin: 15px 0 5px 0;
-  font-weight: 400;
+  margin: 0 0 18px 0;
+  display: inline-block;
+}
+
+.signature-image {
+  height: auto;
+  max-width: 200px;
+  width: auto;
+  display: block;
+  margin: 0;
 }
 
 .letter-name {
   font-weight: 600;
   color: #333;
-  margin: 5px 0;
+  margin: 0 0 18px 0;
+  font-size: 16px;
 }
 
 .letter-company {
   color: #4CAF50;
+  font-weight: 600;
+  margin: 0;
+  font-size: 16px;
+}
+
+/* Journey Timeline */
+.journey-timeline {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px 10px;
+  gap: 5px;
+}
+
+.journey-month {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  position: relative;
+  min-width: 0;
+}
+
+.journey-line {
+  width: 2px;
+  height: 60px;
+  background: transparent;
+  border-left: 2px dashed #ccc;
+  margin: 10px 0;
+  flex-shrink: 0;
+}
+
+.journey-status-box {
+  width: 100%;
+  max-width: 110px;
+  min-height: 90px;
+  padding: 12px 8px;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid;
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  flex-shrink: 0;
+}
+
+.journey-status-box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.journey-status-box.unlocked {
+  background-color: #c8e6c9;
+  border-color: #4caf50;
+  color: #2e7d32;
+}
+
+.journey-status-box.locked {
+  background-color: #ffcdd2;
+  border-color: #f44336;
+  color: #c62828;
+}
+
+.journey-padlock {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+  width: 28px;
+  height: 28px;
+}
+
+.journey-padlock svg {
+  width: 100%;
+  height: 100%;
+}
+
+.journey-status-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  font-size: 11px;
+  line-height: 1.3;
   font-weight: 500;
-  margin: 5px 0;
+  gap: 2px;
+}
+
+.journey-click-text {
+  color: #2e7d32;
+}
+
+.journey-renew-text {
+  color: #c62828;
+  margin-bottom: 2px;
+}
+
+.journey-unlock-text {
+  color: #c62828;
+  font-size: 11px;
+}
+
+.journey-month-label {
+  margin-top: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  text-align: center;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* Right Side - Blocks Section */
@@ -163,6 +538,48 @@
     flex-direction: column;
   }
 
+  .course-content-wrapper {
+    flex-direction: column;
+    gap: 40px;
+  }
+
+  .course-image-section {
+    flex: 1;
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
+  .my-courses-container {
+    padding: 30px 40px;
+  }
+
+  .journey-timeline {
+    padding: 20px 10px;
+    gap: 8px;
+    overflow-x: auto;
+    justify-content: flex-start;
+  }
+
+  .journey-month {
+    min-width: 100px;
+    flex: 0 0 100px;
+  }
+
+  .journey-status-box {
+    max-width: 100px;
+    min-height: 85px;
+    padding: 10px 6px;
+  }
+
+  .journey-line {
+    height: 50px;
+  }
+
+  .journey-month-label {
+    font-size: 12px;
+  }
+
   .blocks-section {
     flex: 1;
     width: 100%;
@@ -182,11 +599,164 @@
   .block-emoji {
     font-size: 36px;
   }
+
+  .header-titles {
+    gap: 20px;
+  }
+
+  .header-word {
+    font-size: 22px;
+    padding: 5px 15px;
+  }
+
+  .details-month-navigation {
+    padding: 0 30px;
+  }
+
+  .details-month-tab {
+    font-size: 17px;
+    padding: 14px 20px;
+  }
+
+  .details-month-content {
+    padding: 30px;
+  }
 }
 
 @media (max-width: 768px) {
   .my-courses-container {
-    padding: 15px;
+    padding: 20px;
+  }
+
+  .my-courses-header {
+    margin-bottom: 30px;
+  }
+
+  .header-titles {
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .header-word {
+    font-size: 18px;
+    padding: 4px 12px;
+  }
+
+  .tab-content {
+    padding: 20px;
+    min-height: 300px;
+  }
+
+  .course-content-wrapper {
+    flex-direction: column;
+    gap: 30px;
+  }
+
+  .course-image-section {
+    flex: 1;
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+
+  .my-courses-container {
+    padding: 20px;
+  }
+
+  .letter-section {
+    padding: 0;
+  }
+
+  .tab-content .letter-section {
+    padding: 0;
+    margin: 0;
+  }
+
+  .letter-body {
+    font-size: 14px;
+  }
+
+  .letter-from {
+    font-size: 20px;
+  }
+
+  .tab-content h2 {
+    font-size: 22px;
+  }
+
+  .tab-content p {
+    font-size: 14px;
+  }
+
+  .course-image {
+    border-radius: 0;
+  }
+
+  .signature-image {
+    max-width: 150px;
+  }
+
+  .methodology-image-container {
+    padding: 0;
+    background: #FFFFFF !important;
+  }
+
+  .journey-timeline {
+    padding: 15px 5px;
+    gap: 5px;
+    overflow-x: auto;
+    justify-content: flex-start;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .journey-month {
+    min-width: 85px;
+    flex: 0 0 85px;
+  }
+
+  .journey-status-box {
+    max-width: 85px;
+    min-height: 80px;
+    padding: 8px 5px;
+    border-radius: 4px;
+  }
+
+  .journey-padlock {
+    width: 24px;
+    height: 24px;
+    margin-bottom: 6px;
+  }
+
+  .journey-status-text {
+    font-size: 10px;
+  }
+
+  .journey-renew-text,
+  .journey-unlock-text {
+    font-size: 9px;
+  }
+
+  .journey-line {
+    height: 40px;
+  }
+
+  .journey-month-label {
+    font-size: 11px;
+  }
+
+  .journey-tab {
+    padding: 15px 5px !important;
+  }
+
+  .methodology-tab {
+    padding: 10px;
+    background: #FFFFFF !important;
+  }
+
+  .methodology-image {
+    border-radius: 8px;
+    width: 100%;
   }
 
   .letter-section {
@@ -204,6 +774,28 @@
 
   .block-emoji {
     font-size: 28px;
+  }
+
+  .details-month-navigation {
+    padding: 0 20px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .details-month-tab {
+    font-size: 16px;
+    padding: 12px 16px;
+    white-space: nowrap;
+  }
+
+  .details-month-tab.active::after {
+    left: 16px;
+    right: 16px;
+  }
+
+  .details-month-content {
+    padding: 20px;
+    min-height: 300px;
   }
 }
 
