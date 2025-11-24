@@ -1,25 +1,25 @@
-/**
- * API Service
- * Centralized service for making API calls with consistent error handling
- */
-
 import axios from 'axios';
-import { API_BASE_URL, API_CONFIG } from '../config/api';
+import { API_BASE_URL, API_CONFIG, isAPIConfigured } from '../config/api';
 
-// Create axios instance with default configuration
+if (!isAPIConfigured()) {
+  console.error(
+    '❌ API base URL is not configured!\n' +
+    'Please create a .env file with REACT_APP_API_BASE_URL\n' +
+    'See .env.example for reference.'
+  );
+} else if (process.env.NODE_ENV === 'development') {
+  console.log('✅ API Base URL loaded from .env:', API_BASE_URL);
+}
+
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   timeout: API_CONFIG.timeout,
   headers: API_CONFIG.headers,
-  // For development with self-signed certificates on localhost
-  // This is automatically handled by the browser's fetch API
-  withCredentials: false,
+  withCredentials: API_CONFIG.withCredentials,
 });
 
-// Request interceptor - no authentication required (login removed)
 apiClient.interceptors.request.use(
   (config) => {
-    // No token needed - authentication removed
     return config;
   },
   (error) => {
@@ -27,21 +27,17 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Response interceptor - handle common errors
 apiClient.interceptors.response.use(
   (response) => {
     return response;
   },
   (error) => {
-    // Handle common errors
     if (error.code === 'ECONNABORTED') {
       console.error('Request timeout');
     } else if (error.response) {
-      // Server responded with error status
       switch (error.response.status) {
         case 401:
           console.error('Unauthorized - please login again');
-          // Optionally redirect to login
           break;
         case 403:
           console.error('Forbidden - insufficient permissions');
@@ -56,20 +52,12 @@ apiClient.interceptors.response.use(
           console.error('An error occurred:', error.response.statusText);
       }
     } else if (error.request) {
-      // Request made but no response received
       console.error('Network error - unable to connect to server');
     }
     return Promise.reject(error);
   }
 );
 
-/**
- * Generic API call wrapper with consistent error handling
- * @param {string} endpoint - API endpoint path
- * @param {object} data - Request data
- * @param {object} options - Additional axios options
- * @returns {Promise} - API response
- */
 export const apiCall = async (endpoint, data = {}, options = {}) => {
   try {
     const response = await apiClient.post(endpoint, data, options);
@@ -90,11 +78,6 @@ export const apiCall = async (endpoint, data = {}, options = {}) => {
   }
 };
 
-/**
- * Get user-friendly error message
- * @param {Error} error - Error object
- * @returns {string} - User-friendly error message
- */
 const getErrorMessage = (error) => {
   if (error.code === 'ECONNABORTED') {
     return 'Request timeout. Please try again.';
@@ -107,7 +90,6 @@ const getErrorMessage = (error) => {
   }
 };
 
-// Specific API methods
 export const authAPI = {
   login: (email, password, roleId = '3') => {
     return apiCall('/login', { email, password, role_id: roleId });
@@ -120,6 +102,9 @@ export const subjectsAPI = {
   },
   getActivitiesList: () => {
     return apiCall('/activities_list', {});
+  },
+  checkStudentSubscription: (sid) => {
+    return apiCall('/check_student_subscription', { sid });
   },
 };
 
@@ -135,11 +120,49 @@ export const profileAPI = {
   },
 };
 
+export const dashboardAPI = {
+  getDemoClassDetails: (sid) => {
+    return apiCall('/demo_class_details', { sid });
+  },
+  getGroupPostList: ({ group_id = '', keyword = '', learning = '1', user_id = '' } = {}) => {
+    return apiCall('/group_post_list', { group_id, keyword, learning, user_id });
+  },
+  fetchAssessmentReport: (studentId) => {
+    return apiCall('/fetch_assesment_report_student', { student_id: studentId });
+  },
+  getDayLiveClassesList: ({ subscription_date, course_id, sid }) => {
+    return apiCall('/day_live_classes_list', { subscription_date, course_id, sid });
+  },
+};
+
+export const recordedClassesAPI = {
+  fetchTermsCourses: ({ age_group_id, terms = ['3'] } = {}) => {
+    return apiCall('/fetch_terms_courses', { age_group_id, terms });
+  },
+  viewChapterLessonsInfo: ({ course_chapter_id, student_id, type = '0' } = {}) => {
+    return apiCall('/student_view_chapter_lessons_info', { 
+      course_chapter_id, 
+      student_id, 
+      type 
+    });
+  },
+  viewCourseInfo: ({ quarter_id, user_id, sid = '' } = {}) => {
+    return apiCall('/student_view_course_info', { quarter_id, user_id, sid });
+  },
+  getSessionDetails: ({ session_id, user_id, sid = '' } = {}) => {
+    return apiCall('/student_view_session_details', { session_id, user_id, sid });
+  },
+  getPixContentsList: ({ age_group_id, keyword = '' } = {}) => {
+    return apiCall('/pix_contents_list', { age_group_id, keyword });
+  },
+};
+
 export default {
   apiCall,
   authAPI,
   subjectsAPI,
   coursesAPI,
   profileAPI,
+  dashboardAPI,
+  recordedClassesAPI,
 };
-

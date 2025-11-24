@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { subjectsAPI } from '../../services/apiService';
+import React, { useState } from 'react';
 import './ParentSection.css';
 import artCraftImage from '../../assets/art-craft-activity.jpg';
 import developmentImage from '../../assets/DevelopmentActivites.jpg';
@@ -9,17 +8,8 @@ import musicMovementImage from '../../assets/MusicandMovement.png';
 import explorationImage from '../../assets/Exploration.jpg';
 import storiesImage from '../../assets/Stories.png';
 
-const ParentSection = () => {
-  const [subjects, setSubjects] = useState([]);
-  const [selectedSubject, setSelectedSubject] = useState(null);
-  const [showModal, setShowModal] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('subjects'); // 'subjects', 'whatWeInclude', 'activities'
-  const [activitiesData, setActivitiesData] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState('ART & CRAFT');
-
-  // Default subjects with SVG-like icons and colors
-  const defaultSubjects = [
+// Default subjects with SVG-like icons and colors
+const defaultSubjects = [
     {
       id: 1,
       title: 'LANGUAGE AND READING',
@@ -64,8 +54,8 @@ const ParentSection = () => {
     }
   ];
 
-  // Default activities data (fallback when server is down)
-  const defaultActivities = [
+// Default activities data
+const defaultActivities = [
     {
       category: 'MUSIC & MOVEMENT',
       color: '#FFC107',
@@ -184,6 +174,14 @@ const ParentSection = () => {
     }
   ];
 
+const ParentSection = () => {
+  const [subjects] = useState(defaultSubjects);
+  const [selectedSubject, setSelectedSubject] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [activeTab, setActiveTab] = useState('subjects'); // 'subjects', 'whatWeInclude', 'activities'
+  const [activitiesData] = useState(defaultActivities);
+  const [selectedCategory, setSelectedCategory] = useState('ART & CRAFT');
+
   // Categories for Activities tab with images
   const activityCategories = [
     { name: 'ART & CRAFT', color: '#A8D5BA', image: artCraftImage },
@@ -194,53 +192,6 @@ const ParentSection = () => {
     { name: 'EXPLORATION', color: '#9370DB', image: explorationImage },
     { name: 'STORIES', color: '#FF6347', image: storiesImage }
   ];
-
-  useEffect(() => {
-    fetchSubjects();
-    fetchActivities();
-  }, []);
-
-  const fetchSubjects = async () => {
-    try {
-      // Try to fetch from backend
-      const response = await subjectsAPI.getSubjectsList();
-      
-      if (response.success && response.data) {
-        setSubjects(response.data);
-      } else {
-        console.log('Using default subjects:', response.message);
-        // Use default subjects if API fails
-        setSubjects(defaultSubjects);
-      }
-    } catch (error) {
-      console.log('Using default subjects - server might be down');
-      // Use default subjects if API is not available
-      setSubjects(defaultSubjects);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchActivities = async () => {
-    try {
-      // Try to fetch activities from backend
-      const response = await subjectsAPI.getActivitiesList();
-      
-      if (response.success && response.data) {
-        // Transform API data to match our structure if needed
-        // For now, use default activities
-        setActivitiesData(defaultActivities);
-      } else {
-        console.log('Using default activities:', response.message);
-        // Use default activities if API fails
-        setActivitiesData(defaultActivities);
-      }
-    } catch (error) {
-      console.log('Using default activities - server might be down');
-      // Use default activities if API is not available
-      setActivitiesData(defaultActivities);
-    }
-  };
 
   const handleCategoryClick = (categoryName) => {
     setSelectedCategory(categoryName);
@@ -355,14 +306,6 @@ const ParentSection = () => {
         return <span>📚</span>;
     }
   };
-
-  if (loading) {
-    return (
-      <div className="parent-section-container">
-        <div className="loading">Loading subjects...</div>
-      </div>
-    );
-  }
 
   return (
     <div className="parent-section-container">

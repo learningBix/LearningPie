@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { coursesAPI } from '../../services/apiService';
+import { dashboardAPI, subjectsAPI } from '../../services/apiService';
 import './Dashboard.css';
 import ParentSection from '../ParentSection/ParentSection';
 import MyCourses from '../MyCourses/MyCourses';
 import EditProfile from '../EditProfile/EditProfile';
+import RecordedClasses from '../RecordedClasses/RecordedClasses';
+import BonusSessions from '../BonusSessions/BonusSessions';
 import logoPie from '../../assets/logo-pie.png';
 
 const Dashboard = ({ user, onLogout }) => {
@@ -18,11 +20,24 @@ const Dashboard = ({ user, onLogout }) => {
     liveClasses: 0,
     bonusSessions: 0
   });
+  const [assessmentData, setAssessmentData] = useState({
+    stories: 0,
+    rhymes: 0,
+    bonus: 0,
+    recorded_class: 0,
+    live_class: 0,
+    robotics: 0
+  });
+  const [liveClassesList, setLiveClassesList] = useState([]);
+  const [studentSubscriptions, setStudentSubscriptions] = useState([]);
+  const [groupPosts, setGroupPosts] = useState([]);
+  const [demoClassDetails, setDemoClassDetails] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch user's course progress
-    fetchCourseProgress();
-  }, []);
+    // Fetch all dashboard data
+    fetchDashboardData();
+  }, [user]);
 
   useEffect(() => {
     // Close dropdown when clicking outside
@@ -38,27 +53,124 @@ const Dashboard = ({ user, onLogout }) => {
     };
   }, [showUserDropdown]);
 
-  const fetchCourseProgress = async () => {
+  // Get session ID from storage
+  const getSid = () => {
+    return localStorage.getItem('sid') || sessionStorage.getItem('sid') || '';
+  };
+
+  // Fetch all dashboard data
+  const fetchDashboardData = async () => {
+    setLoading(true);
     try {
-      const response = await coursesAPI.getCoursesList(user.id);
-      if (response.success) {
-        // Update progress based on API response
-        const courses = response.data || [];
-        setCourseProgress({
-          courseTaken: courses.length,
-          totalCourses: 3,
-          liveClasses: 0,
-          bonusSessions: 0
-        });
-      } else {
-        console.log('Failed to fetch courses:', response.message);
-        // Keep default values - dashboard will still work
-        console.log('Using default course progress values');
+      // Get student ID - try different possible fields
+      const studentIdRaw = user?.id || user?.student_id || user?.user_id;
+      const sid = getSid();
+
+      if (!studentIdRaw) {
+        console.warn('Student ID not found in user object');
+        setLoading(false);
+        return;
       }
+
+      // Convert student ID to number (API expects number)
+      const studentId = typeof studentIdRaw === 'string' ? parseInt(studentIdRaw, 10) : studentIdRaw;
+
+      // Fetch assessment report for statistics
+      const assessmentResponse = await dashboardAPI.fetchAssessmentReport(studentId);
+      if (assessmentResponse.success && assessmentResponse.data) {
+        setAssessmentData({
+          stories: assessmentResponse.data.stories || 0,
+          rhymes: assessmentResponse.data.rhymes || 0,
+          bonus: assessmentResponse.data.bonus || 0,
+          recorded_class: assessmentResponse.data.recorded_class || 0,
+          live_class: assessmentResponse.data.live_class || 0,
+          robotics: assessmentResponse.data.robotics || 0
+        });
+
+        // Update course progress with assessment data
+        setCourseProgress(prev => ({
+          ...prev,
+          liveClasses: assessmentResponse.data.live_class || 0,
+          bonusSessions: assessmentResponse.data.bonus || 0
+        }));
+      }
+
+      // Fetch student subscriptions
+      if (sid) {
+        const subscriptionResponse = await subjectsAPI.checkStudentSubscription(sid);
+        if (subscriptionResponse.success && subscriptionResponse.data) {
+          const subscriptions = subscriptionResponse.data || [];
+          setStudentSubscriptions(subscriptions);
+          
+          // Update course progress from subscriptions
+          setCourseProgress(prev => ({
+            ...prev,
+            courseTaken: subscriptions.length,
+            totalCourses: Math.max(subscriptions.length, 3) // At least 3 or actual count
+          }));
+          
+          console.log('Student subscriptions:', subscriptions);
+
+          // Fetch day live classes list using subscription data
+          if (subscriptions.length > 0) {
+            // Get subscription_date from first subscription or user data or use current date
+            const subscriptionDate = subscriptions[0]?.course_start_date || 
+                                     user?.subscription_date || 
+                                     user?.subscriptionDate || 
+                                     new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
+            
+            // Fetch live classes for all subscribed courses in parallel
+            const liveClassesPromises = subscriptions
+              .filter(sub => sub.course_id)
+              .map(subscription => {
+                return dashboardAPI.getDayLiveClassesList({
+                  subscription_date: subscriptionDate,
+                  course_id: subscription.course_id,
+                  sid: sid
+                });
+              });
+            
+            try {
+              const liveClassesResponses = await Promise.all(liveClassesPromises);
+              // Combine all live classes from all courses
+              const allLiveClasses = liveClassesResponses
+                .filter(response => response.success && response.data)
+                .flatMap(response => response.data || []);
+              
+              setLiveClassesList(allLiveClasses);
+              console.log('Live classes fetched for all courses:', allLiveClasses);
+            } catch (error) {
+              console.error('Error fetching live classes:', error);
+            }
+          }
+        }
+      }
+
+      // Fetch demo class details
+      if (sid) {
+        const demoClassResponse = await dashboardAPI.getDemoClassDetails(sid);
+        if (demoClassResponse.success) {
+          setDemoClassDetails(demoClassResponse.data);
+          console.log('Demo class details:', demoClassResponse.data);
+        }
+      }
+
+      // Fetch group posts list (Community posts)
+      const groupPostsResponse = await dashboardAPI.getGroupPostList({
+        group_id: '',
+        keyword: '',
+        learning: '1',
+        user_id: studentIdRaw || ''
+      });
+      if (groupPostsResponse.success && groupPostsResponse.data) {
+        setGroupPosts(groupPostsResponse.data || []);
+        console.log('Group posts fetched:', groupPostsResponse.data);
+      }
+
     } catch (error) {
-      console.error('Error fetching course progress:', error);
-      // Keep default values - dashboard will still work
-      console.log('Using default course progress values');
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -199,7 +311,7 @@ const Dashboard = ({ user, onLogout }) => {
         </aside>
 
         {/* Main Content */}
-        <main className={`main-content ${activeSection === 'Parent Section' || activeSection === 'My Courses' || activeSection === 'My Profile' ? 'full-width' : ''}`}>
+        <main className={`main-content ${activeSection === 'Parent Section' || activeSection === 'My Courses' || activeSection === 'My Profile' || activeSection === 'Recorded Classes' || activeSection === 'Bonus Sessions' ? 'full-width' : ''}`}>
           {activeSection === 'Dashboard' ? (
             <div className="dashboard-grid">
               {dashboardCards.map(card => (
@@ -218,9 +330,13 @@ const Dashboard = ({ user, onLogout }) => {
               ))}
             </div>
           ) : activeSection === 'Parent Section' ? (
-            <ParentSection />
+            <ParentSection user={userData} />
           ) : activeSection === 'My Courses' ? (
             <MyCourses />
+          ) : activeSection === 'Recorded Classes' ? (
+            <RecordedClasses user={userData} userData={userData} />
+          ) : activeSection === 'Bonus Sessions' ? (
+            <BonusSessions user={userData} userData={userData} />
           ) : activeSection === 'My Profile' ? (
             isEditingProfile ? (
               <EditProfile 
@@ -275,8 +391,8 @@ const Dashboard = ({ user, onLogout }) => {
           )}
         </main>
 
-        {/* Right Sidebar - Hidden for Parent Section, My Courses, and My Profile */}
-        {activeSection !== 'Parent Section' && activeSection !== 'My Courses' && activeSection !== 'My Profile' && (
+        {/* Right Sidebar - Hidden for Parent Section, My Courses, Recorded Classes, and My Profile */}
+        {activeSection !== 'Parent Section' && activeSection !== 'My Courses' && activeSection !== 'Recorded Classes' && activeSection !== 'My Profile' && activeSection !== 'Bonus Sessions' && (
           <aside className="right-sidebar">
             {/* Course Progress Card */}
             <div className="progress-card">
@@ -294,7 +410,7 @@ const Dashboard = ({ user, onLogout }) => {
               </div>
               <div className="progress-item">
                 <span className="progress-label">
-                  {courseProgress.liveClasses} Live classes Taken
+                  {assessmentData.live_class} Live classes Taken
                 </span>
                 <div className="progress-bar">
                   <div className="progress-fill" style={{ width: '0%' }}></div>
@@ -302,7 +418,7 @@ const Dashboard = ({ user, onLogout }) => {
               </div>
               <div className="progress-item">
                 <span className="progress-label">
-                  {courseProgress.bonusSessions} Bonus Sessions Taken
+                  {assessmentData.bonus} Bonus Sessions Taken
                 </span>
                 <div className="progress-bar">
                   <div className="progress-fill" style={{ width: '0%' }}></div>
