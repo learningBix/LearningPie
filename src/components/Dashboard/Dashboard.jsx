@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { coursesAPI, dashboardAPI, subjectsAPI } from '../../services/apiService';
+import { getStudentId, getSid, toNumber } from '../../utils/userUtils';
 import './Dashboard.css';
 import ParentSection from '../ParentSection/ParentSection';
 import HindiSessions from '../HindiSessions/HindiSessions';
@@ -7,21 +8,28 @@ import MythologicalTales from '../MythologicalTales/MythologicalTales';
 import RhymeTime from '../RhymeTime/RhymeTime';
 import StoryTime from '../StoryTime/StoryTime';
 import MyCourses from '../MyCourses/MyCourses';
-import EditProfile from '../EditProfile/EditProfile';
 import RecordedClasses from '../RecordedClasses/RecordedClasses';
 import BonusSessions from '../BonusSessions/BonusSessions';
 import logoPie from '../../assets/logo-pie.png';
 import Community from '../Community/Community';
 import Invite from '../invite/invite';
-import MyStats from '../MyStats/MyStats';
+import Profile from '../Profile/Profile';
 
 const Dashboard = ({ user, onLogout }) => {
+  // Initialize activeSection from localStorage or default to 'Dashboard'
+  const [activeSection, setActiveSection] = useState(() => {
+    try {
+      const savedSection = localStorage.getItem('dashboard_active_section') || 
+                          sessionStorage.getItem('dashboard_active_section');
+      return savedSection || 'Dashboard';
+    } catch (err) {
+      console.warn('Error reading saved section:', err);
+      return 'Dashboard';
+    }
+  });
+  
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [activeSection, setActiveSection] = useState('Dashboard');
   const [showUserDropdown, setShowUserDropdown] = useState(false);
-  const [isEditingProfile, setIsEditingProfile] = useState(false);
-  const [showMyStats, setShowMyStats] = useState(false);
-  const [showAssessments, setShowAssessments] = useState(false);
   const [userData, setUserData] = useState(user);
   const [courseProgress, setCourseProgress] = useState({
     courseTaken: 0,
@@ -42,34 +50,19 @@ const Dashboard = ({ user, onLogout }) => {
   const [groupPosts, setGroupPosts] = useState([]);
   const [demoClassDetails, setDemoClassDetails] = useState(null);
 
-  // Get student ID with proper fallback
-  const getStudentId = () => {
-    const sources = [
-      user?.id,
-      user?.student_id,
-      user?.user_id,
-      localStorage.getItem('student_id'),
-      sessionStorage.getItem('student_id')
-    ];
 
-    for (const source of sources) {
-      if (source && source !== 'undefined' && source !== 'null' && source !== '') {
-        const parsed = typeof source === 'string' ? parseInt(source, 10) : source;
-        if (!isNaN(parsed) && parsed > 0) {
-          return parsed;
-        }
-      }
+  // Save activeSection to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem('dashboard_active_section', activeSection);
+      sessionStorage.setItem('dashboard_active_section', activeSection);
+    } catch (err) {
+      console.warn('Error saving active section:', err);
     }
-    return null;
-  };
-
-  // Get session ID from storage
-  const getSid = () => {
-    return localStorage.getItem('sid') || sessionStorage.getItem('sid') || '';
-  };
+  }, [activeSection]);
 
   useEffect(() => {
-    const studentId = getStudentId();
+    const studentId = getStudentId(user);
     if (studentId) {
       localStorage.setItem('student_id', studentId.toString());
       sessionStorage.setItem('student_id', studentId.toString());
@@ -92,7 +85,7 @@ const Dashboard = ({ user, onLogout }) => {
 
   // Fetch all dashboard data
   const fetchDashboardData = async () => {
-    const studentId = getStudentId();
+    const studentId = getStudentId(user);
     const sid = getSid();
 
     if (!studentId) {
@@ -112,19 +105,13 @@ const Dashboard = ({ user, onLogout }) => {
     fetchGroupPostsData(studentId);
   };
 
-  // Separate function for assessment data
+  // Separate function for assessment data (used for Dashboard right sidebar)
+  // Note: MyStats component now fetches its own data, but we still need this for the sidebar
   const fetchAssessmentData = async (studentId) => {
     try {
       const assessmentResponse = await dashboardAPI.fetchAssessmentReport(studentId);
 
       if (assessmentResponse.success && assessmentResponse.data) {
-        // Helper to safely convert to number
-        const toNumber = (val) => {
-          if (val === null || val === undefined || val === '') return 0;
-          const num = typeof val === 'string' ? parseInt(val, 10) : val;
-          return isNaN(num) ? 0 : num;
-        };
-
         const assessmentData = {
           stories: toNumber(assessmentResponse.data.stories),
           rhymes: toNumber(assessmentResponse.data.rhymes),
@@ -134,8 +121,7 @@ const Dashboard = ({ user, onLogout }) => {
           robotics: toNumber(assessmentResponse.data.robotics)
         };
 
-        console.log('Assessment Report Response:', assessmentResponse.data);
-        console.log('Processed Assessment Data:', assessmentData);
+        console.log('Dashboard - Assessment data loaded for sidebar:', assessmentData);
 
         setAssessmentData(assessmentData);
 
@@ -145,12 +131,12 @@ const Dashboard = ({ user, onLogout }) => {
           bonusSessions: assessmentData.bonus
         }));
 
-        console.log('✅ Assessment data loaded');
+        console.log('✅ Dashboard assessment data loaded');
       } else {
-        console.warn('Assessment report fetch failed or returned no data:', assessmentResponse);
+        console.warn('Dashboard - Assessment report fetch failed:', assessmentResponse);
       }
     } catch (error) {
-      console.error('Error fetching assessment:', error);
+      console.error('Dashboard - Error fetching assessment:', error);
     }
   };
 
@@ -267,12 +253,18 @@ const Dashboard = ({ user, onLogout }) => {
 
   const handleMyProfileClick = () => {
     setShowUserDropdown(false);
-    setIsEditingProfile(false);
     setActiveSection('My Profile');
   };
 
   const handleLogoutClick = () => {
     setShowUserDropdown(false);
+    // Clear saved section on logout
+    try {
+      localStorage.removeItem('dashboard_active_section');
+      sessionStorage.removeItem('dashboard_active_section');
+    } catch (err) {
+      console.warn('Error clearing saved section:', err);
+    }
     if (onLogout) {
       onLogout();
     }
@@ -282,34 +274,11 @@ const Dashboard = ({ user, onLogout }) => {
     setActiveSection('Dashboard');
   };
 
-  const handleEditProfileClick = () => {
-    setIsEditingProfile(true);
-    setActiveSection('My Profile');
-  };
-
-  const handleBackFromEdit = () => {
-    setIsEditingProfile(false);
-  };
-
-  const handleSaveProfile = (updatedData) => {
-    setUserData({ ...userData, ...updatedData });
-    setIsEditingProfile(false);
-  };
-
-  const handleViewStatsClick = () => {
-    setShowMyStats(true);
-  };
-
-  const handleBackFromMyStats = () => {
-    setShowMyStats(false);
-  };
-
-  const handleSeePerformanceClick = () => {
-    setShowAssessments(true);
-  };
-
-  const handleBackFromAssessments = () => {
-    setShowAssessments(false);
+  // Callback to sync userData from Profile component
+  // Profile component manages userData internally and notifies Dashboard when it changes
+  // This ensures other Dashboard components (ParentSection, RecordedClasses, etc.) get updated data
+  const handleUserDataUpdate = (updatedUserData) => {
+    setUserData(updatedUserData);
   };
 
   // Function to track video watch and update stats
@@ -317,13 +286,11 @@ const Dashboard = ({ user, onLogout }) => {
     console.log('🎥 handleVideoWatch called with videoType:', videoType);
     
     try {
-      const studentIdRaw = user?.id || userData?.id || user?.student_id || user?.user_id;
-      if (!studentIdRaw) {
+      const studentId = getStudentId(userData || user);
+      if (!studentId) {
         console.warn('⚠️ Cannot track video watch: Student ID not found', { user, userData });
         return;
       }
-
-      const studentId = typeof studentIdRaw === 'string' ? parseInt(studentIdRaw, 10) : studentIdRaw;
       console.log('👤 Tracking video watch for student:', studentId, 'type:', videoType);
 
       // Map video types to assessment data keys
@@ -354,12 +321,6 @@ const Dashboard = ({ user, onLogout }) => {
       try {
         const assessmentResponse = await dashboardAPI.fetchAssessmentReport(studentId);
         if (assessmentResponse.success && assessmentResponse.data) {
-          const toNumber = (val) => {
-            if (val === null || val === undefined || val === '') return 0;
-            const num = typeof val === 'string' ? parseInt(val, 10) : val;
-            return isNaN(num) ? 0 : num;
-          };
-
           const updatedData = {
             stories: toNumber(assessmentResponse.data.stories),
             rhymes: toNumber(assessmentResponse.data.rhymes),
@@ -394,10 +355,6 @@ const Dashboard = ({ user, onLogout }) => {
         </div>
 
         <div className="header-right">
-          <button className="notification-btn">
-            🔔
-          </button>
-
           <div className="user-menu-wrapper">
             <div className="user-menu" onClick={() => setShowUserDropdown(!showUserDropdown)}>
               <span className="user-name">Hi, {userData.name || user.name || 'Student'} ▼</span>
@@ -483,66 +440,14 @@ const Dashboard = ({ user, onLogout }) => {
           ) : activeSection === 'Bonus Sessions' ? (
             <BonusSessions user={userData} userData={userData} onVideoWatch={handleVideoWatch} />
           ) : activeSection === 'My Profile' ? (
-            showAssessments ? (
-              <div>Assessments Component</div>
-            ) : showMyStats ? (
-              <MyStats 
-                statsData={assessmentData}
-                onBack={handleBackFromMyStats}
-              />
-            ) : isEditingProfile ? (
-              <EditProfile 
-                user={userData}
-                onBack={handleBackFromEdit}
-                onSave={handleSaveProfile}
-              />
-            ) : (
-              <div className="my-profile-section">
-                <div className="profile-page-header">
-                  <div className="profile-page-header-left">
-                    <button className="profile-back-btn" onClick={handleBackToDashboard}>
-                      ← Back
-                    </button>
-                    <h1 className="profile-page-title">My Profile</h1>
-                  </div>
-                  <button className="profile-logout-btn" onClick={handleLogoutClick}>
-                    Logout →
-                  </button>
-                </div>
-                <div className="profile-header-card">
-                  <div className="profile-image-placeholder">
-                    {userData.profile_image ? (
-                      <img src={userData.profile_image} alt="Profile" />
-                    ) : (
-                      <div className="profile-img-icon">🖼️</div>
-                    )}
-                  </div>
-                  <div className="profile-info">
-                    <h2 className="profile-name">{userData.name || 'Student Name'}</h2>
-                    <p className="profile-age">Age: {userData.age || 'Not specified'}</p>
-                  </div>
-                  <div className="profile-actions">
-                    <button className="edit-profile-btn" onClick={handleEditProfileClick}>
-                      Edit Profile
-                    </button>
-                    <button className="change-avatar-btn">Change Avatar →</button>
-                  </div>
-                </div>
-
-                <div className="profile-cards-container">
-                  <div className="my-stats-card">
-                    <div className="rocket-illustration">🚀</div>
-                    <h3 className="stats-title">My stats</h3>
-                    <button className="view-stats-btn" onClick={handleViewStatsClick}>→</button>
-                  </div>
-
-                  <div className="assessments-card">
-                    <h3 className="assessments-title">Assessments</h3>
-                    <button className="see-performance-btn" onClick={handleSeePerformanceClick}>See Performance →</button>
-                  </div>
-                </div>
-              </div>
-            )
+            <Profile
+              user={user}
+              userData={userData}
+              onBack={handleBackToDashboard}
+              onLogout={handleLogoutClick}
+              onUserDataUpdate={handleUserDataUpdate}
+              onNavigateToProfile={handleMyProfileClick}
+            />
           ) : activeSection === 'Story Time' ? (
             <StoryTime onVideoWatch={handleVideoWatch} />
           ) : activeSection === 'Rhyme Time' ? (

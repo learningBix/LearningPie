@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { profileAPI } from '../../services/apiService';
+import { profileAPI } from '../../../services/apiService';
 import './EditProfile.css';
 
 const EditProfile = ({ user, onBack, onSave }) => {
