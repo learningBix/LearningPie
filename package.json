@@ -32,9 +32,9 @@
       "last 1 safari version"
     ]
   },
-  "proxy": "https://localhost:8112",
   "devDependencies": {
     "autoprefixer": "^10.4.22",
+    "http-proxy-middleware": "^3.0.5",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.18"
   }

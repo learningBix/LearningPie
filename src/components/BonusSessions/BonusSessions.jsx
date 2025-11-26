@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './BonusSessions.css';
 import { recordedClassesAPI } from '../../services/apiService';
 
-const BonusSessions = ({ user, userData }) => {
+const BonusSessions = ({ user, userData, onVideoWatch }) => {
   // Bonus Sessions data - will be populated from API
   const [bonusSessions, setBonusSessions] = useState([]);
   const [loadingSessions, setLoadingSessions] = useState(false);
@@ -30,6 +30,7 @@ const BonusSessions = ({ user, userData }) => {
 
   // State for selected session (video detail view)
   const [selectedSession, setSelectedSession] = useState(null);
+  const [hasTrackedVideo, setHasTrackedVideo] = useState(false);
 
   // Fetch bonus sessions (quarters + DIY Home + Excursions) from API
   const fetchBonusSessions = async () => {
@@ -624,7 +625,29 @@ const BonusSessions = ({ user, userData }) => {
       hasVideoUrl: !!session.videoUrl,
     });
     setSelectedSession(session);
+    setHasTrackedVideo(false);
   };
+
+  // Track video watch when session with video URL is displayed
+  useEffect(() => {
+      console.log(' BonusSessions - useEffect triggered:', {
+      hasSelectedSession: !!selectedSession,
+      hasVideoUrl: !!(selectedSession?.videoUrl),
+      hasTrackedVideo,
+      hasOnVideoWatch: !!onVideoWatch,
+      sessionType: selectedSession?.type
+    });
+    
+    if (selectedSession && selectedSession.videoUrl && !hasTrackedVideo && onVideoWatch) {
+      // Determine video type based on session type or context
+      const videoType = selectedSession.type === 'diy_home' || selectedSession.type === 'robotics' 
+        ? 'robotics' 
+        : 'bonus';
+      console.log(` BonusSessions - Calling onVideoWatch for ${videoType}`);
+      onVideoWatch(videoType);
+      setHasTrackedVideo(true);
+    }
+  }, [selectedSession, hasTrackedVideo, onVideoWatch]);
 
   // Use fetched sessions from API
   const displaySessions = bonusSessions;

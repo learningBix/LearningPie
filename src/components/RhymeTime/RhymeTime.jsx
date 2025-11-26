@@ -3,10 +3,11 @@ import { contentsAPI } from '../../services/apiService';
 import { BLOB_BASE_URL } from '../../config/api'; 
 // import './RhymeTime.css';
 
-const RhymeTime = () => {
+const RhymeTime = ({ onVideoWatch }) => {
   const [rhymes, setRhymes] = useState([]);
   const [selectedRhyme, setSelectedRhyme] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [hasTrackedVideo, setHasTrackedVideo] = useState(false);
 
   useEffect(() => {
     loadRhymes();
@@ -48,7 +49,24 @@ const RhymeTime = () => {
     }
     setSelectedRhyme(rhyme);
     setShowModal(true);
+    setHasTrackedVideo(false);
   };
+
+  // Track video watch when rhyme is displayed
+  useEffect(() => {
+    console.log('🎵 RhymeTime - useEffect triggered:', {
+      hasSelectedRhyme: !!selectedRhyme,
+      showModal,
+      hasTrackedVideo,
+      hasOnVideoWatch: !!onVideoWatch
+    });
+    
+    if (selectedRhyme && showModal && !hasTrackedVideo && onVideoWatch) {
+      console.log('✅ RhymeTime - Calling onVideoWatch for rhymes');
+      onVideoWatch('rhymes');
+      setHasTrackedVideo(true);
+    }
+  }, [selectedRhyme, showModal, hasTrackedVideo, onVideoWatch]);
 
   const closeModal = () => {
     setShowModal(false);

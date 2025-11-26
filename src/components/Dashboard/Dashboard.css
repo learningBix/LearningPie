@@ -578,6 +578,65 @@
   margin: 0 auto;
 }
 
+.profile-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding: 0 10px;
+}
+
+.profile-page-header-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.profile-back-btn {
+  background: transparent;
+  border: none;
+  color: #1a1a1a;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 8px 16px;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.profile-back-btn:hover {
+  color: #667eea;
+  transform: translateX(-2px);
+}
+
+.profile-page-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.profile-logout-btn {
+  background: transparent;
+  border: none;
+  color: #1a1a1a;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 8px 16px;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.profile-logout-btn:hover {
+  color: #667eea;
+  transform: translateX(2px);
+}
+
 .profile-header-card {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-radius: 20px;
@@ -918,6 +977,34 @@
   
   .my-profile-section {
     padding: 20px;
+  }
+  
+  .profile-page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+    margin-bottom: 20px;
+  }
+  
+  .profile-page-header-left {
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .profile-page-title {
+    font-size: 24px;
+  }
+  
+  .profile-back-btn {
+    font-size: 14px;
+    padding: 6px 12px;
+  }
+  
+  .profile-logout-btn {
+    align-self: flex-end;
+    font-size: 14px;
+    padding: 6px 12px;
   }
 }
 

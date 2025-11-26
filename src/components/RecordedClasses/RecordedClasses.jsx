@@ -1,8 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import './RecordedClasses.css';
 import { recordedClassesAPI } from '../../services/apiService';
+import { BLOB_BASE_URL } from '../../config/api';
+import buyTerm3Image from '../../assets/buy_term3.jpeg';
 
-const RecordedClasses = ({ user = {}, userData = {} }) => {
+const RecordedClasses = ({ user = {}, userData = {}, onVideoWatch }) => {
+  // Debug: Log when component receives onVideoWatch prop
+  useEffect(() => {
+    console.log('📦 RecordedClasses - Component mounted/updated, onVideoWatch:', typeof onVideoWatch);
+  }, [onVideoWatch]);
   // Helper to convert HTML strings from API to readable plain text
   const formatRichText = (htmlString) => {
     if (!htmlString) return '';
@@ -70,11 +76,29 @@ const RecordedClasses = ({ user = {}, userData = {} }) => {
   const [selectedSession, setSelectedSession] = useState(null);
   const [sessionDetails, setSessionDetails] = useState(null);
   const [loadingSessionDetails, setLoadingSessionDetails] = useState(false);
+  const [hasTrackedVideo, setHasTrackedVideo] = useState(false);
 
   // Fetch quarters/recorded classes data from API
   useEffect(() => {
     fetchRecordedClasses();
   }, []);
+
+  // Track video watch when session details are loaded with a video URL
+  useEffect(() => {
+    console.log('📹 RecordedClasses - useEffect triggered:', {
+      hasSessionDetails: !!sessionDetails,
+      hasVideoUrl: !!(sessionDetails?.videoUrl),
+      hasTrackedVideo,
+      hasOnVideoWatch: !!onVideoWatch
+    });
+    
+    if (sessionDetails && sessionDetails.videoUrl && !hasTrackedVideo && onVideoWatch) {
+      console.log('✅ RecordedClasses - Calling onVideoWatch for recorded_class');
+      // Track video watch when video is displayed
+      onVideoWatch('recorded_class');
+      setHasTrackedVideo(true);
+    }
+  }, [sessionDetails, hasTrackedVideo, onVideoWatch]);
 
   /**
    * Fetch recorded classes (quarters) from backend
@@ -118,8 +142,7 @@ const RecordedClasses = ({ user = {}, userData = {} }) => {
           if (chapterData.image.startsWith('http')) {
             imageUrl = chapterData.image;
           } else {
-            const baseUrl = process.env.REACT_APP_API_BASE_URL || 'https://api.learningbix.com:8112';
-            imageUrl = `${baseUrl}/public/uploads/course_chapter_image/${chapterData.image}`;
+            imageUrl = `${BLOB_BASE_URL}${chapterData.image}`;
           }
         }
         quarter1 = {
@@ -147,8 +170,7 @@ const RecordedClasses = ({ user = {}, userData = {} }) => {
           if (chapterData.image.startsWith('http')) {
             imageUrl = chapterData.image;
           } else {
-            const baseUrl = process.env.REACT_APP_API_BASE_URL || 'https://api.learningbix.com:8112';
-            imageUrl = `${baseUrl}/public/uploads/course_chapter_image/${chapterData.image}`;
+            imageUrl = `${BLOB_BASE_URL}${chapterData.image}`;
           }
         }
         quarter2 = {
@@ -184,20 +206,24 @@ const RecordedClasses = ({ user = {}, userData = {} }) => {
         console.log('Successfully fetched Quarter 3 data, mapping courses...');
         // Map API response to quarter format
         purchasableQuarters = responseData.map((course) => {
-          // Construct image URL if available
+          const courseTitle = course.course_name || 'Buy Quarter 3';
+          
+          // Use local image for "Junior KG - Term 3" card
           let imageUrl = null;
-          if (course.image) {
+          if (courseTitle.includes('Junior KG - Term 3') || courseTitle.includes('Term 3')) {
+            imageUrl = buyTerm3Image;
+          } else if (course.image) {
+            // For other courses, use API image if available
             if (course.image.startsWith('http')) {
               imageUrl = course.image;
             } else {
-              const baseUrl = process.env.REACT_APP_API_BASE_URL || 'https://api.learningbix.com:8112';
-              imageUrl = `${baseUrl}/uploads/${course.image}`;
+              imageUrl = `${BLOB_BASE_URL}${course.image}`;
             }
           }
 
           return {
             id: course.id, // Course ID
-            title: course.course_name || 'Buy Quarter 3',
+            title: courseTitle,
             image: imageUrl,
             description: course.description || course.course_detail || '',
             isPurchasable: true,
@@ -226,7 +252,7 @@ const RecordedClasses = ({ user = {}, userData = {} }) => {
         purchasableQuarters = [{
           id: 3,
           title: 'Buy Quarter 3',
-          image: null,
+          image: buyTerm3Image,
           description: '',
           isPurchasable: true
         }];
@@ -256,7 +282,7 @@ const RecordedClasses = ({ user = {}, userData = {} }) => {
         {
           id: 3,
           title: 'Buy Quarter 3',
-          image: null,
+          image: buyTerm3Image,
           description: '',
           isPurchasable: true
         }
@@ -292,8 +318,7 @@ const RecordedClasses = ({ user = {}, userData = {} }) => {
             if (chapterData.image.startsWith('http')) {
               chapterImageUrl = chapterData.image;
             } else {
-              const baseUrl = process.env.REACT_APP_API_BASE_URL || 'https://api.learningbix.com:8112';
-              chapterImageUrl = `${baseUrl}/uploads/${chapterData.image}`;
+              chapterImageUrl = `${BLOB_BASE_URL}${chapterData.image}`;
             }
           }
           
@@ -322,17 +347,26 @@ const RecordedClasses = ({ user = {}, userData = {} }) => {
         }
         
         // Map lessons to session format
-        const mappedSessions = lessons.map((lesson) => {
+        const mappedSessions = lessons.map((lesson, index) => {
           const content = lesson.content && lesson.content[0] ? lesson.content[0] : null;
-          // Construct image URL - API returns filename like "attachment-1640848847873.jpg"
+          
+          // Construct image URL - prioritize content[0].image, then fall back to lesson.image
+          // API returns filename like "attachment-1640848847873.jpg"
           let thumbnailUrl = null;
-          if (lesson.image) {
-            // If image is already a full URL, use it; otherwise construct from base URL
-            if (lesson.image.startsWith('http')) {
-              thumbnailUrl = lesson.image;
+          
+          // First check content[0].image, then lesson.image
+          // Make sure we're getting the actual image value, not undefined
+          const imageSource = (content && content.image) ? content.image : (lesson.image || null);
+          
+          if (imageSource) {
+            // If image is already a full URL, use it; otherwise construct from blob URL
+            if (imageSource.startsWith('http')) {
+              thumbnailUrl = imageSource;
             } else {
-              const baseUrl = process.env.REACT_APP_API_BASE_URL || 'https://api.learningbix.com:8112';
-              thumbnailUrl = `${baseUrl}/uploads/${lesson.image}`;
+              // Ensure BLOB_BASE_URL doesn't have trailing slash and image doesn't have leading slash
+              const cleanBaseUrl = BLOB_BASE_URL.endsWith('/') ? BLOB_BASE_URL.slice(0, -1) : BLOB_BASE_URL;
+              const cleanImagePath = imageSource.startsWith('/') ? imageSource.slice(1) : imageSource;
+              thumbnailUrl = `${cleanBaseUrl}/${cleanImagePath}`;
             }
           }
           
@@ -454,6 +488,7 @@ const RecordedClasses = ({ user = {}, userData = {} }) => {
   const handleSessionClick = (session) => {
     setSelectedSession(session);
     setSessionDetails(null);
+    setHasTrackedVideo(false);
     fetchSessionDetails(session.id);
   };
 
@@ -647,10 +682,45 @@ const RecordedClasses = ({ user = {}, userData = {} }) => {
                 <div className="session-video-thumbnail">
                   <div className="video-player-background">
                     <div className="video-books-left"></div>
-                    <div className="video-screen">
+                    <div className="video-screen" data-session-id={session.id}>
                       {/* Video thumbnail image from API */}
-                      {session.thumbnail && (
-                        <img src={session.thumbnail} alt={session.title} className="video-thumbnail-image" />
+                      {session.thumbnail ? (
+                        <img 
+                          src={session.thumbnail}
+                          alt={session.title} 
+                          className="video-thumbnail-image"
+                          key={`thumbnail-${session.id}`}
+                          data-session-id={session.id}
+                          data-image-url={session.thumbnail}
+                          loading="lazy"
+                          style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            zIndex: 1,
+                            display: 'block'
+                          }}
+                          onError={(e) => {
+                            console.error(`❌ Failed to load thumbnail for session ${session.id}:`, session.thumbnail);
+                            e.target.style.display = 'none';
+                          }}
+                        />
+                      ) : (
+                        <div className="video-thumbnail-placeholder" style={{ 
+                          width: '100%', 
+                          height: '100%', 
+                          background: '#9BC4F7',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#666',
+                          fontSize: '12px'
+                        }}>
+                          No thumbnail
+                        </div>
                       )}
                       {/* Always show play button and controls on top */}
                       <div className="play-button-icon">

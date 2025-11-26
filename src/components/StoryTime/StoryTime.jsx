@@ -4,10 +4,16 @@ import { contentsAPI } from '../../services/apiService';
 import { BLOB_BASE_URL } from '../../config/api'; 
 
 
-const StoryTime = () => {
+const StoryTime = ({ onVideoWatch }) => {
   const [stories, setStories] = useState([]);
   const [selectedStory, setSelectedStory] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [hasTrackedVideo, setHasTrackedVideo] = useState(false);
+
+  // Debug: Log when component receives onVideoWatch prop
+  useEffect(() => {
+    console.log('📦 StoryTime - Component mounted/updated, onVideoWatch:', typeof onVideoWatch);
+  }, [onVideoWatch]);
 
   useEffect(() => {
     loadStories();
@@ -51,7 +57,24 @@ const StoryTime = () => {
 
     setSelectedStory(story);
     setShowModal(true);
+    setHasTrackedVideo(false);
   };
+
+  // Track video watch when story is displayed
+  useEffect(() => {
+    console.log('StoryTime - useEffect triggered:', {
+      hasSelectedStory: !!selectedStory,
+      showModal,
+      hasTrackedVideo,
+      hasOnVideoWatch: !!onVideoWatch
+    });
+    
+    if (selectedStory && showModal && !hasTrackedVideo && onVideoWatch) {
+      console.log('StoryTime - Calling onVideoWatch for stories');
+      onVideoWatch('stories');
+      setHasTrackedVideo(true);
+    }
+  }, [selectedStory, showModal, hasTrackedVideo, onVideoWatch]);
 
   const closeModal = () => {
     setSelectedStory(null);

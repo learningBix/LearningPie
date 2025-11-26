@@ -39,20 +39,32 @@ const EditProfile = ({ user, onBack, onSave }) => {
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
 
+  // Map numeric gender to text value
+  const mapNumericToGender = (gender) => {
+    if (!gender) return '';
+    const genderMap = {
+      '1': 'Male',
+      '2': 'Female',
+      '3': 'Other'
+    };
+    // If it's already text, return as is; if numeric, map it
+    return genderMap[gender] || gender;
+  };
+
   useEffect(() => {
     // Load user data into form
     if (user) {
       setFormData({
         name: user.name || '',
         email: user.email || '',
-        dateOfBirth: user.dateOfBirth || '',
-        schoolName: user.schoolName || '',
+        dateOfBirth: user.dateOfBirth || user.dob || '',
+        schoolName: user.schoolName || user.school_name || '',
         age: user.age || '',
         address: user.address || '',
-        parentName: user.parentName || '',
+        parentName: user.parentName || user.parents_name || '',
         phoneNumber: user.phoneNumber || user.phone || '',
-        gender: user.gender || '',
-        gstNumber: user.gstNumber || '',
+        gender: mapNumericToGender(user.gender || ''),
+        gstNumber: user.gstNumber || user.gst || '',
         state: user.state || ''
       });
     }
@@ -66,18 +78,47 @@ const EditProfile = ({ user, onBack, onSave }) => {
     }));
   };
 
+  // Map gender text to numeric value
+  const mapGenderToNumeric = (gender) => {
+    if (!gender) return '';
+    const genderMap = {
+      'Male': '1',
+      'Female': '2',
+      'Other': '3'
+    };
+    return genderMap[gender] || gender;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setSuccessMessage('');
 
     try {
-      const response = await profileAPI.updateProfile(user.id, formData);
+      // Prepare payload with proper field mappings
+      const payload = {
+        name: formData.name,
+        address: formData.address,
+        gender: mapGenderToNumeric(formData.gender),
+        time_zone: '0', // Default time zone
+        dob: formData.dateOfBirth, // Already in YYYY-MM-DD format from date input
+        gst: formData.gstNumber || '',
+        parents_name: formData.parentName || '',
+        school_name: formData.schoolName || '',
+        state: formData.state || ''
+      };
 
-      if (response.success) {
+      const response = await profileAPI.updateProfile(user.id, payload);
+
+      if (response.success || response.raw?.replyCode === 'success') {
         setSuccessMessage('Profile updated successfully!');
+        // Update the user data with the saved values
+        const updatedUserData = {
+          ...formData,
+          name: formData.name // Ensure name is included
+        };
         if (onSave) {
-          onSave(formData);
+          onSave(updatedUserData);
         }
         // Clear success message after 2 seconds
         setTimeout(() => {
@@ -87,7 +128,7 @@ const EditProfile = ({ user, onBack, onSave }) => {
           }
         }, 2000);
       } else {
-        alert(response.message || 'Failed to update profile. Please try again.');
+        alert(response.message || response.raw?.replyMsg || 'Failed to update profile. Please try again.');
       }
     } catch (error) {
       console.error('Error updating profile:', error);

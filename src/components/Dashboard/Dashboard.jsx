@@ -13,13 +13,15 @@ import BonusSessions from '../BonusSessions/BonusSessions';
 import logoPie from '../../assets/logo-pie.png';
 import Community from '../Community/Community';
 import Invite from '../invite/invite';
-
+import MyStats from '../MyStats/MyStats';
 
 const Dashboard = ({ user, onLogout }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeSection, setActiveSection] = useState('Dashboard');
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [showMyStats, setShowMyStats] = useState(false);
+  const [showAssessments, setShowAssessments] = useState(false);
   const [userData, setUserData] = useState(user);
   const [courseProgress, setCourseProgress] = useState({
     courseTaken: 0,
@@ -85,21 +87,35 @@ const Dashboard = ({ user, onLogout }) => {
       // Fetch assessment report for statistics
       const assessmentResponse = await dashboardAPI.fetchAssessmentReport(studentId);
       if (assessmentResponse.success && assessmentResponse.data) {
-        setAssessmentData({
-          stories: assessmentResponse.data.stories || 0,
-          rhymes: assessmentResponse.data.rhymes || 0,
-          bonus: assessmentResponse.data.bonus || 0,
-          recorded_class: assessmentResponse.data.recorded_class || 0,
-          live_class: assessmentResponse.data.live_class || 0,
-          robotics: assessmentResponse.data.robotics || 0
-        });
+        // Helper to safely convert to number
+        const toNumber = (val) => {
+          if (val === null || val === undefined || val === '') return 0;
+          const num = typeof val === 'string' ? parseInt(val, 10) : val;
+          return isNaN(num) ? 0 : num;
+        };
+
+        const assessmentData = {
+          stories: toNumber(assessmentResponse.data.stories),
+          rhymes: toNumber(assessmentResponse.data.rhymes),
+          bonus: toNumber(assessmentResponse.data.bonus),
+          recorded_class: toNumber(assessmentResponse.data.recorded_class),
+          live_class: toNumber(assessmentResponse.data.live_class),
+          robotics: toNumber(assessmentResponse.data.robotics)
+        };
+
+        console.log('Assessment Report Response:', assessmentResponse.data);
+        console.log('Processed Assessment Data:', assessmentData);
+
+        setAssessmentData(assessmentData);
 
         // Update course progress with assessment data
         setCourseProgress(prev => ({
           ...prev,
-          liveClasses: assessmentResponse.data.live_class || 0,
-          bonusSessions: assessmentResponse.data.bonus || 0
+          liveClasses: assessmentData.live_class,
+          bonusSessions: assessmentData.bonus
         }));
+      } else {
+        console.warn('Assessment report fetch failed or returned no data:', assessmentResponse);
       }
 
       // Fetch student subscriptions
@@ -181,12 +197,6 @@ const Dashboard = ({ user, onLogout }) => {
     }
   };
 
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Good Morning!';
-    if (hour < 17) return 'Good Afternoon!';
-    return 'Good Evening!';
-  };
 
   const dashboardCards = [
     { id: 1, title: 'My Courses', icon: '📚', color: '#4CAF50', section: 'My Courses' },
@@ -239,6 +249,10 @@ const Dashboard = ({ user, onLogout }) => {
     }
   };
 
+  const handleBackToDashboard = () => {
+    setActiveSection('Dashboard');
+  };
+
   const handleEditProfileClick = () => {
     setIsEditingProfile(true);
     setActiveSection('My Profile');
@@ -251,6 +265,90 @@ const Dashboard = ({ user, onLogout }) => {
   const handleSaveProfile = (updatedData) => {
     setUserData({ ...userData, ...updatedData });
     setIsEditingProfile(false);
+  };
+
+  const handleViewStatsClick = () => {
+    setShowMyStats(true);
+  };
+
+  const handleBackFromMyStats = () => {
+    setShowMyStats(false);
+  };
+
+  const handleSeePerformanceClick = () => {
+    setShowAssessments(true);
+  };
+
+  const handleBackFromAssessments = () => {
+    setShowAssessments(false);
+  };
+
+  // Function to track video watch and update stats
+  const handleVideoWatch = async (videoType) => {
+    console.log('🎥 handleVideoWatch called with videoType:', videoType);
+    
+    try {
+      const studentIdRaw = user?.id || userData?.id || user?.student_id || user?.user_id;
+      if (!studentIdRaw) {
+        console.warn('⚠️ Cannot track video watch: Student ID not found', { user, userData });
+        return;
+      }
+
+      const studentId = typeof studentIdRaw === 'string' ? parseInt(studentIdRaw, 10) : studentIdRaw;
+      console.log('👤 Tracking video watch for student:', studentId, 'type:', videoType);
+
+      // Map video types to assessment data keys
+      const videoTypeMap = {
+        'recorded_class': 'recorded_class',
+        'live_class': 'live_class',
+        'stories': 'stories',
+        'rhymes': 'rhymes',
+        'bonus': 'bonus',
+        'robotics': 'robotics',
+        'diy_home': 'robotics'
+      };
+
+      const assessmentKey = videoTypeMap[videoType] || videoType;
+      console.log('📊 Assessment key:', assessmentKey);
+
+      // Optimistically update local state immediately (don't wait for API)
+      setAssessmentData(prev => {
+        const newCount = (prev[assessmentKey] || 0) + 1;
+        console.log(`✅ Updated ${assessmentKey} from ${prev[assessmentKey]} to ${newCount}`);
+        return {
+          ...prev,
+          [assessmentKey]: newCount
+        };
+      });
+
+      // Refresh assessment data from server to ensure accuracy
+      try {
+        const assessmentResponse = await dashboardAPI.fetchAssessmentReport(studentId);
+        if (assessmentResponse.success && assessmentResponse.data) {
+          const toNumber = (val) => {
+            if (val === null || val === undefined || val === '') return 0;
+            const num = typeof val === 'string' ? parseInt(val, 10) : val;
+            return isNaN(num) ? 0 : num;
+          };
+
+          const updatedData = {
+            stories: toNumber(assessmentResponse.data.stories),
+            rhymes: toNumber(assessmentResponse.data.rhymes),
+            bonus: toNumber(assessmentResponse.data.bonus),
+            recorded_class: toNumber(assessmentResponse.data.recorded_class),
+            live_class: toNumber(assessmentResponse.data.live_class),
+            robotics: toNumber(assessmentResponse.data.robotics)
+          };
+          
+          console.log('🔄 Refreshed assessment data from server:', updatedData);
+          setAssessmentData(updatedData);
+        }
+      } catch (apiError) {
+        console.warn('⚠️ Error refreshing assessment data:', apiError);
+      }
+    } catch (error) {
+      console.error('❌ Error in handleVideoWatch:', error);
+    }
   };
 
 
@@ -274,12 +372,12 @@ return (
 
           <div className="user-menu-wrapper">
             <div className="user-menu" onClick={() => setShowUserDropdown(!showUserDropdown)}>
-              <span className="user-name">Hi, {user.name || 'Student'} ▼</span>
+              <span className="user-name">Hi, {userData.name || user.name || 'Student'} ▼</span>
               <div className="user-avatar">
-                {user.profile_image ? (
-                  <img src={user.profile_image} alt="User" />
+                {userData.profile_image || user.profile_image ? (
+                  <img src={userData.profile_image || user.profile_image} alt="User" />
                 ) : (
-                  <div className="avatar-placeholder">{(user.name || 'S')[0]}</div>
+                  <div className="avatar-placeholder">{(userData.name || user.name || 'S')[0]}</div>
                 )}
               </div>
             </div>
@@ -294,11 +392,6 @@ return (
               </div>
             )}
           </div>
-
-          <span className="greeting">{getGreeting()}</span>
-          <button className="logout-btn" onClick={handleLogoutClick}>
-            Logout →
-          </button>
         </div>
       </header>
 
@@ -359,11 +452,18 @@ return (
           ) : activeSection === 'My Courses' ? (
             <MyCourses />
           ) : activeSection === 'Recorded Classes' ? (
-            <RecordedClasses user={userData} userData={userData} />
+            <RecordedClasses user={userData} userData={userData} onVideoWatch={handleVideoWatch} />
           ) : activeSection === 'Bonus Sessions' ? (
-            <BonusSessions user={userData} userData={userData} />
+            <BonusSessions user={userData} userData={userData} onVideoWatch={handleVideoWatch} />
           ) : activeSection === 'My Profile' ? (
-            isEditingProfile ? (
+            showAssessments ? (
+              <div>Assessments Component</div>
+            ) : showMyStats ? (
+              <MyStats 
+                statsData={assessmentData}
+                onBack={handleBackFromMyStats}
+              />
+            ) : isEditingProfile ? (
               <EditProfile 
                 user={userData} 
                 onBack={handleBackFromEdit}
@@ -371,6 +471,17 @@ return (
               />
             ) : (
               <div className="my-profile-section">
+                <div className="profile-page-header">
+                  <div className="profile-page-header-left">
+                    <button className="profile-back-btn" onClick={handleBackToDashboard}>
+                      ← Back
+                    </button>
+                    <h1 className="profile-page-title">My Profile</h1>
+                  </div>
+                  <button className="profile-logout-btn" onClick={handleLogoutClick}>
+                    Logout →
+                  </button>
+                </div>
                 <div className="profile-header-card">
                   <div className="profile-image-placeholder">
                     {userData.profile_image ? (
@@ -395,20 +506,20 @@ return (
                   <div className="my-stats-card">
                     <div className="rocket-illustration">🚀</div>
                     <h3 className="stats-title">My stats</h3>
-                    <button className="view-stats-btn">→</button>
+                    <button className="view-stats-btn" onClick={handleViewStatsClick}>→</button>
                   </div>
                   
                   <div className="assessments-card">
                     <h3 className="assessments-title">Assessments</h3>
-                    <button className="see-performance-btn">See Performance →</button>
+                    <button className="see-performance-btn" onClick={handleSeePerformanceClick}>See Performance →</button>
                   </div>
                 </div>
               </div>
             )
           ) : activeSection === 'Story Time' ? (
-            <StoryTime />
+            <StoryTime onVideoWatch={handleVideoWatch} />
           ) : activeSection === 'Rhyme Time' ? (
-            <RhymeTime />
+            <RhymeTime onVideoWatch={handleVideoWatch} />
           ) : activeSection === 'Mythological Tales' ? (
             <MythologicalTales />
           ) : activeSection === 'Hindi Sessions' ? (

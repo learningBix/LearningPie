@@ -123,8 +123,22 @@ export const coursesAPI = {
  * PROFILE
  */
 export const profileAPI = {
-  updateProfile: (userId, profileData) =>
-    apiCall('/update_profile', { user_id: userId, ...profileData }),
+  updateProfile: (userId, profileData) => {
+    // Map form data to API payload format
+    const payload = {
+      id: userId,
+      name: profileData.name || '',
+      address: profileData.address || '',
+      gender: profileData.gender || '',
+      time_zone: profileData.time_zone || '0',
+      dob: profileData.dob || profileData.dateOfBirth || '',
+      gst: profileData.gst || profileData.gstNumber || '',
+      parents_name: profileData.parents_name || profileData.parentName || '',
+      school_name: profileData.school_name || profileData.schoolName || '',
+      state: profileData.state || ''
+    };
+    return apiCall('/update_student_profile', payload);
+  },
 };
 
 /**
