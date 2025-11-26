@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import './RecordedClasses.css';
 import { recordedClassesAPI } from '../../services/apiService';
+import { getBlobUrl } from '../../utils/blob';
+import quarter_3 from '../../assets/Quarter3.jpg';
+
+
 
 const RecordedClasses = ({ user = {}, userData = {} }) => {
   // Helper to convert HTML strings from API to readable plain text
@@ -113,15 +117,7 @@ const RecordedClasses = ({ user = {}, userData = {} }) => {
       
       if (quarter1Response.success && quarter1Response.raw && quarter1Response.raw.data && quarter1Response.raw.data[0]) {
         const chapterData = quarter1Response.raw.data[0];
-        let imageUrl = null;
-        if (chapterData.image) {
-          if (chapterData.image.startsWith('http')) {
-            imageUrl = chapterData.image;
-          } else {
-            const baseUrl = process.env.REACT_APP_API_BASE_URL || 'https://api.learningbix.com:8112';
-            imageUrl = `${baseUrl}/public/uploads/course_chapter_image/${chapterData.image}`;
-          }
-        }
+        const imageUrl = getBlobUrl(chapterData.image);
         quarter1 = {
           id: quarter1Id,
           title: chapterData.chapter_title || 'Quarter 1',
@@ -142,15 +138,7 @@ const RecordedClasses = ({ user = {}, userData = {} }) => {
       
       if (quarter2Response.success && quarter2Response.raw && quarter2Response.raw.data && quarter2Response.raw.data[0]) {
         const chapterData = quarter2Response.raw.data[0];
-        let imageUrl = null;
-        if (chapterData.image) {
-          if (chapterData.image.startsWith('http')) {
-            imageUrl = chapterData.image;
-          } else {
-            const baseUrl = process.env.REACT_APP_API_BASE_URL || 'https://api.learningbix.com:8112';
-            imageUrl = `${baseUrl}/public/uploads/course_chapter_image/${chapterData.image}`;
-          }
-        }
+        const imageUrl = getBlobUrl(chapterData.image);
         quarter2 = {
           id: quarter2Id,
           title: chapterData.chapter_title || 'Quarter 2',
@@ -185,15 +173,7 @@ const RecordedClasses = ({ user = {}, userData = {} }) => {
         // Map API response to quarter format
         purchasableQuarters = responseData.map((course) => {
           // Construct image URL if available
-          let imageUrl = null;
-          if (course.image) {
-            if (course.image.startsWith('http')) {
-              imageUrl = course.image;
-            } else {
-              const baseUrl = process.env.REACT_APP_API_BASE_URL || 'https://api.learningbix.com:8112';
-              imageUrl = `${baseUrl}/uploads/${course.image}`;
-            }
-          }
+          const imageUrl = getBlobUrl(course.image);
 
           return {
             id: course.id, // Course ID
@@ -226,7 +206,7 @@ const RecordedClasses = ({ user = {}, userData = {} }) => {
         purchasableQuarters = [{
           id: 3,
           title: 'Buy Quarter 3',
-          image: null,
+          image: quarter_3,
           description: '',
           isPurchasable: true
         }];
@@ -256,7 +236,7 @@ const RecordedClasses = ({ user = {}, userData = {} }) => {
         {
           id: 3,
           title: 'Buy Quarter 3',
-          image: null,
+          image: quarter_3,
           description: '',
           isPurchasable: true
         }
@@ -287,15 +267,7 @@ const RecordedClasses = ({ user = {}, userData = {} }) => {
         // Update selected quarter with chapter data if available
         if (chapterData && selectedQuarter) {
           // Construct image URL for chapter
-          let chapterImageUrl = null;
-          if (chapterData.image) {
-            if (chapterData.image.startsWith('http')) {
-              chapterImageUrl = chapterData.image;
-            } else {
-              const baseUrl = process.env.REACT_APP_API_BASE_URL || 'https://api.learningbix.com:8112';
-              chapterImageUrl = `${baseUrl}/uploads/${chapterData.image}`;
-            }
-          }
+          const chapterImageUrl = getBlobUrl(chapterData.image) || selectedQuarter.image;
           
           const updatedQuarter = {
             ...selectedQuarter,
@@ -325,16 +297,7 @@ const RecordedClasses = ({ user = {}, userData = {} }) => {
         const mappedSessions = lessons.map((lesson) => {
           const content = lesson.content && lesson.content[0] ? lesson.content[0] : null;
           // Construct image URL - API returns filename like "attachment-1640848847873.jpg"
-          let thumbnailUrl = null;
-          if (lesson.image) {
-            // If image is already a full URL, use it; otherwise construct from base URL
-            if (lesson.image.startsWith('http')) {
-              thumbnailUrl = lesson.image;
-            } else {
-              const baseUrl = process.env.REACT_APP_API_BASE_URL || 'https://api.learningbix.com:8112';
-              thumbnailUrl = `${baseUrl}/uploads/${lesson.image}`;
-            }
-          }
+          const thumbnailUrl = getBlobUrl(lesson.image);
           
           return {
             id: lesson.id,

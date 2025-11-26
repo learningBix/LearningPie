@@ -14,7 +14,6 @@ import logoPie from '../../assets/logo-pie.png';
 import Community from '../Community/Community';
 import Invite from '../invite/invite';
 
-
 const Dashboard = ({ user, onLogout }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeSection, setActiveSection] = useState('Dashboard');
@@ -39,15 +38,43 @@ const Dashboard = ({ user, onLogout }) => {
   const [studentSubscriptions, setStudentSubscriptions] = useState([]);
   const [groupPosts, setGroupPosts] = useState([]);
   const [demoClassDetails, setDemoClassDetails] = useState(null);
-  const [loading, setLoading] = useState(true);
+
+  // Get student ID with proper fallback
+  const getStudentId = () => {
+    const sources = [
+      user?.id,
+      user?.student_id,
+      user?.user_id,
+      localStorage.getItem('student_id'),
+      sessionStorage.getItem('student_id')
+    ];
+
+    for (const source of sources) {
+      if (source && source !== 'undefined' && source !== 'null' && source !== '') {
+        const parsed = typeof source === 'string' ? parseInt(source, 10) : source;
+        if (!isNaN(parsed) && parsed > 0) {
+          return parsed;
+        }
+      }
+    }
+    return null;
+  };
+
+  // Get session ID from storage
+  const getSid = () => {
+    return localStorage.getItem('sid') || sessionStorage.getItem('sid') || '';
+  };
 
   useEffect(() => {
-    // Fetch all dashboard data
-    fetchDashboardData();
+    const studentId = getStudentId();
+    if (studentId) {
+      localStorage.setItem('student_id', studentId.toString());
+      sessionStorage.setItem('student_id', studentId.toString());
+      fetchDashboardData();
+    }
   }, [user]);
 
   useEffect(() => {
-    // Close dropdown when clicking outside
     const handleClickOutside = (event) => {
       if (showUserDropdown && !event.target.closest('.user-menu-wrapper')) {
         setShowUserDropdown(false);
@@ -60,124 +87,130 @@ const Dashboard = ({ user, onLogout }) => {
     };
   }, [showUserDropdown]);
 
-  // Get session ID from storage
-  const getSid = () => {
-    return localStorage.getItem('sid') || sessionStorage.getItem('sid') || '';
-  };
-
   // Fetch all dashboard data
   const fetchDashboardData = async () => {
-    setLoading(true);
+    const studentId = getStudentId();
+    const sid = getSid();
+
+    if (!studentId) {
+      console.error('Cannot fetch data: Student ID not found');
+      return;
+    }
+
+    // Fetch Assessment Report (runs in background)
+    fetchAssessmentData(studentId);
+
+    // Fetch Student Subscriptions (runs in background)
+    if (sid) {
+      fetchSubscriptionData(sid);
+    }
+
+    // Fetch Group Posts (runs in background)
+    fetchGroupPostsData(studentId);
+  };
+
+  // Separate function for assessment data
+  const fetchAssessmentData = async (studentId) => {
     try {
-      // Get student ID - try different possible fields
-      const studentIdRaw = user?.id || user?.student_id || user?.user_id;
-      const sid = getSid();
-
-      if (!studentIdRaw) {
-        console.warn('Student ID not found in user object');
-        setLoading(false);
-        return;
-      }
-
-      // Convert student ID to number (API expects number)
-      const studentId = typeof studentIdRaw === 'string' ? parseInt(studentIdRaw, 10) : studentIdRaw;
-
-      // Fetch assessment report for statistics
       const assessmentResponse = await dashboardAPI.fetchAssessmentReport(studentId);
+
       if (assessmentResponse.success && assessmentResponse.data) {
+        const d = assessmentResponse.data;
+
         setAssessmentData({
-          stories: assessmentResponse.data.stories || 0,
-          rhymes: assessmentResponse.data.rhymes || 0,
-          bonus: assessmentResponse.data.bonus || 0,
-          recorded_class: assessmentResponse.data.recorded_class || 0,
-          live_class: assessmentResponse.data.live_class || 0,
-          robotics: assessmentResponse.data.robotics || 0
+          stories: d.stories || 0,
+          rhymes: d.rhymes || 0,
+          bonus: d.bonus || 0,
+          recorded_class: d.recorded_class || 0,
+          live_class: d.live_class || 0,
+          robotics: d.robotics || 0
         });
 
-        // Update course progress with assessment data
         setCourseProgress(prev => ({
           ...prev,
-          liveClasses: assessmentResponse.data.live_class || 0,
-          bonusSessions: assessmentResponse.data.bonus || 0
+          liveClasses: d.live_class || 0,
+          bonusSessions: d.bonus || 0
         }));
+
+        console.log('✅ Assessment data loaded');
       }
+    } catch (error) {
+      console.error('Error fetching assessment:', error);
+    }
+  };
 
-      // Fetch student subscriptions
-      if (sid) {
-        const subscriptionResponse = await subjectsAPI.checkStudentSubscription(sid);
-        if (subscriptionResponse.success && subscriptionResponse.data) {
-          const subscriptions = subscriptionResponse.data || [];
-          setStudentSubscriptions(subscriptions);
-          
-          // Update course progress from subscriptions
-          setCourseProgress(prev => ({
-            ...prev,
-            courseTaken: subscriptions.length,
-            totalCourses: Math.max(subscriptions.length, 3) // At least 3 or actual count
-          }));
-          
-          console.log('Student subscriptions:', subscriptions);
+  // Separate function for subscription data
+  const fetchSubscriptionData = async (sid) => {
+    try {
+      const subscriptionResponse = await subjectsAPI.checkStudentSubscription(sid);
 
-          // Fetch day live classes list using subscription data
-          if (subscriptions.length > 0) {
-            // Get subscription_date from first subscription or user data or use current date
-            const subscriptionDate = subscriptions[0]?.course_start_date || 
-                                     user?.subscription_date || 
-                                     user?.subscriptionDate || 
-                                     new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
-            
-            // Fetch live classes for all subscribed courses in parallel
-            const liveClassesPromises = subscriptions
-              .filter(sub => sub.course_id)
-              .map(subscription => {
-                return dashboardAPI.getDayLiveClassesList({
-                  subscription_date: subscriptionDate,
-                  course_id: subscription.course_id,
-                  sid: sid
-                });
+      if (subscriptionResponse.success && subscriptionResponse.data) {
+        const subscriptions = subscriptionResponse.data || [];
+        setStudentSubscriptions(subscriptions);
+
+        setCourseProgress(prev => ({
+          ...prev,
+          courseTaken: subscriptions.length,
+          totalCourses: Math.max(subscriptions.length, 3)
+        }));
+
+        // Fetch live classes
+        if (subscriptions.length > 0) {
+          const subscriptionDate = subscriptions[0]?.course_start_date ||
+            user?.subscription_date ||
+            new Date().toISOString().split('T')[0];
+
+          const liveClassesPromises = subscriptions
+            .filter(sub => sub.course_id)
+            .map(subscription => {
+              return dashboardAPI.getDayLiveClassesList({
+                subscription_date: subscriptionDate,
+                course_id: subscription.course_id,
+                sid: sid
               });
-            
-            try {
-              const liveClassesResponses = await Promise.all(liveClassesPromises);
-              // Combine all live classes from all courses
-              const allLiveClasses = liveClassesResponses
-                .filter(response => response.success && response.data)
-                .flatMap(response => response.data || []);
-              
-              setLiveClassesList(allLiveClasses);
-              console.log('Live classes fetched for all courses:', allLiveClasses);
-            } catch (error) {
-              console.error('Error fetching live classes:', error);
-            }
+            });
+
+          try {
+            const liveClassesResponses = await Promise.all(liveClassesPromises);
+            const allLiveClasses = liveClassesResponses
+              .filter(response => response.success && response.data)
+              .flatMap(response => response.data || []);
+
+            setLiveClassesList(allLiveClasses);
+          } catch (error) {
+            console.error('Error fetching live classes:', error);
           }
         }
+
+        console.log('✅ Subscriptions loaded');
       }
 
       // Fetch demo class details
-      if (sid) {
-        const demoClassResponse = await dashboardAPI.getDemoClassDetails(sid);
-        if (demoClassResponse.success) {
-          setDemoClassDetails(demoClassResponse.data);
-          console.log('Demo class details:', demoClassResponse.data);
-        }
+      const demoClassResponse = await dashboardAPI.getDemoClassDetails(sid);
+      if (demoClassResponse.success) {
+        setDemoClassDetails(demoClassResponse.data);
       }
+    } catch (error) {
+      console.error('Error fetching subscriptions:', error);
+    }
+  };
 
-      // Fetch group posts list (Community posts)
+  // Separate function for group posts
+  const fetchGroupPostsData = async (studentId) => {
+    try {
       const groupPostsResponse = await dashboardAPI.getGroupPostList({
         group_id: '',
         keyword: '',
         learning: '1',
-        user_id: studentIdRaw || ''
+        user_id: studentId
       });
+
       if (groupPostsResponse.success && groupPostsResponse.data) {
         setGroupPosts(groupPostsResponse.data || []);
-        console.log('Group posts fetched:', groupPostsResponse.data);
+        console.log('✅ Group posts loaded');
       }
-
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-    } finally {
-      setLoading(false);
+      console.error('Error fetching group posts:', error);
     }
   };
 
@@ -217,19 +250,16 @@ const Dashboard = ({ user, onLogout }) => {
 
   const handleCardClick = (section) => {
     setActiveSection(section);
-    console.log('Navigated to:', section);
   };
 
   const handleSidebarClick = (title) => {
     setActiveSection(title);
-    console.log('Navigated to:', title);
   };
 
   const handleMyProfileClick = () => {
     setShowUserDropdown(false);
     setIsEditingProfile(false);
     setActiveSection('My Profile');
-    console.log('Navigated to: My Profile');
   };
 
   const handleLogoutClick = () => {
@@ -253,8 +283,7 @@ const Dashboard = ({ user, onLogout }) => {
     setIsEditingProfile(false);
   };
 
-
-return (
+  return (
     <div className="dashboard-container">
       {/* Top Header */}
       <header className="dashboard-header">
@@ -266,7 +295,7 @@ return (
             <img src={logoPie} alt="Learning Pie" className="logo-image" />
           </div>
         </div>
-        
+
         <div className="header-right">
           <button className="notification-btn">
             🔔
@@ -304,7 +333,6 @@ return (
 
       {/* Main Content Area */}
       <div className="dashboard-body">
-
         {/* LEFT SIDEBAR */}
         <aside className={`sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
           <nav className="sidebar-nav">
@@ -364,8 +392,8 @@ return (
             <BonusSessions user={userData} userData={userData} />
           ) : activeSection === 'My Profile' ? (
             isEditingProfile ? (
-              <EditProfile 
-                user={userData} 
+              <EditProfile
+                user={userData}
                 onBack={handleBackFromEdit}
                 onSave={handleSaveProfile}
               />
@@ -390,14 +418,14 @@ return (
                     <button className="change-avatar-btn">Change Avatar →</button>
                   </div>
                 </div>
-                
+
                 <div className="profile-cards-container">
                   <div className="my-stats-card">
                     <div className="rocket-illustration">🚀</div>
                     <h3 className="stats-title">My stats</h3>
                     <button className="view-stats-btn">→</button>
                   </div>
-                  
+
                   <div className="assessments-card">
                     <h3 className="assessments-title">Assessments</h3>
                     <button className="see-performance-btn">See Performance →</button>
@@ -414,7 +442,7 @@ return (
           ) : activeSection === 'Hindi Sessions' ? (
             <HindiSessions />
           ) : activeSection === 'Community' ? (
-            <Community />
+            <Community user={user} />
           ) : activeSection === 'Invite & Earn' ? (
             <Invite />
           ) : (
@@ -428,87 +456,93 @@ return (
           )}
         </main>
 
-        {/* Right Sidebar */}
-        {activeSection !== 'Parent Section' && 
-         activeSection !== 'My Courses' && 
-         activeSection !== 'My Profile' &&
-         activeSection !== 'Recorded Classes' &&
-         activeSection !== 'Bonus Sessions' &&
-         activeSection !== 'Story Time' &&
-         activeSection !== 'Rhyme Time' &&
-         activeSection !== 'Mythological Tales' &&
-         activeSection !== 'Hindi Sessions' &&
-         activeSection !== 'Community' &&
-         activeSection !== 'Invite & Earn' && (
-          <aside className="right-sidebar">
-            
-            <div className="progress-card">
-              <h3>Course Progress</h3>
+        {/* Right Sidebar with Live Assessment Data */}
+        {activeSection !== 'Parent Section' &&
+          activeSection !== 'My Courses' &&
+          activeSection !== 'My Profile' &&
+          activeSection !== 'Recorded Classes' &&
+          activeSection !== 'Bonus Sessions' &&
+          activeSection !== 'Story Time' &&
+          activeSection !== 'Rhyme Time' &&
+          activeSection !== 'Mythological Tales' &&
+          activeSection !== 'Hindi Sessions' &&
+          activeSection !== 'Community' &&
+          activeSection !== 'Invite & Earn' && (
+            <aside className="right-sidebar">
+              <div className="progress-card">
+                <h3>Course Progress</h3>
 
-              <div className="progress-item">
-                <span className="progress-label">
-                  {courseProgress.courseTaken}/{courseProgress.totalCourses} Course Taken
-                </span>
-                <div className="progress-bar">
-                  <div 
-                    className="progress-fill" 
-                    style={{ width: `${(courseProgress.courseTaken / courseProgress.totalCourses) * 100}%` }}
-                  ></div>
+                <div className="progress-item">
+                  <span className="progress-label">
+                    {courseProgress.courseTaken}/{courseProgress.totalCourses} Course Taken
+                  </span>
+                  <div className="progress-bar">
+                    <div
+                      className="progress-fill"
+                      style={{
+                        width: `${courseProgress.totalCourses > 0 ? (courseProgress.courseTaken / courseProgress.totalCourses) * 100 : 0}%`
+                      }}
+                    ></div>
+                  </div>
+                </div>
+
+                <div className="progress-item">
+                  <span className="progress-label">
+                    {assessmentData.live_class} Live classes Taken
+                  </span>
+                  <div className="progress-bar">
+                    <div
+                      className="progress-fill"
+                      style={{
+                        width: `${assessmentData.live_class > 0 ? Math.min((assessmentData.live_class / 10) * 100, 100) : 0}%`
+                      }}
+                    ></div>
+                  </div>
+                </div>
+
+                <div className="progress-item">
+                  <span className="progress-label">
+                    {assessmentData.bonus} Bonus Sessions Taken
+                  </span>
+                  <div className="progress-bar">
+                    <div
+                      className="progress-fill"
+                      style={{
+                        width: `${assessmentData.bonus > 0 ? Math.min((assessmentData.bonus / 10) * 100, 100) : 0}%`
+                      }}
+                    ></div>
+                  </div>
                 </div>
               </div>
 
-              <div className="progress-item">
-                <span className="progress-label">
-                  {assessmentData.live_class} Live classes Taken
-                </span>
-                <div className="progress-bar">
-                  <div className="progress-fill" style={{ width: '0%' }}></div>
-                </div>
+              <div className="stem-card">
+                <h3 className="stem-title">DIY STEM Kits</h3>
+                <p className="stem-subtitle">(Coming Soon)</p>
               </div>
 
-              <div className="progress-item">
-                <span className="progress-label">
-                  {assessmentData.bonus} Bonus Sessions Taken
-                </span>
-                <div className="progress-bar">
-                  <div className="progress-fill" style={{ width: '0%' }}></div>
+              <div className="illustration-container">
+                <div className="person-illustration">
+                  <div className="thought-bubbles">
+                    <span className="bubble bubble-1">⚙️</span>
+                    <span className="bubble bubble-2">💡</span>
+                    <span className="bubble bubble-3">⭐</span>
+                    <span className="bubble bubble-4">🎓</span>
+                  </div>
+
+                  <div className="person-working">
+                    <div className="person-head"></div>
+                    <div className="headphones"></div>
+                    <div className="laptop-work"></div>
+                  </div>
                 </div>
+
+                <div className="chat-bubble-float">💬</div>
               </div>
-            </div>
-
-            <div className="stem-card">
-              <h3 className="stem-title">DIY STEM Kits</h3>
-              <p className="stem-subtitle">(Coming Soon)</p>
-            </div>
-
-            <div className="illustration-container">
-              <div className="person-illustration">
-                <div className="thought-bubbles">
-                  <span className="bubble bubble-1">⚙️</span>
-                  <span className="bubble bubble-2">💡</span>
-                  <span className="bubble bubble-3">⭐</span>
-                  <span className="bubble bubble-4">🎓</span>
-                </div>
-
-                <div className="person-working">
-                  <div className="person-head"></div>
-                  <div className="headphones"></div>
-                  <div className="laptop-work"></div>
-                </div>
-              </div>
-
-              <div className="chat-bubble-float">💬</div>
-            </div>
-
-          </aside>
-        )}
-
+            </aside>
+          )}
       </div>
     </div>
-);
-
-
+  );
 };
 
 export default Dashboard;
-
