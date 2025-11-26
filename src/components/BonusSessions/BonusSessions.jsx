@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import './BonusSessions.css';
 import { recordedClassesAPI } from '../../services/apiService';
+import { getBlobUrl } from '../../utils/blob';
+import quarter_3 from '../../assets/Quarter3.jpg';
+import diy_home from '../../assets/diyhomethumb.jpg'; 
+import excursion from '../../assets/Excursionsthumb.jpg';
 
 const BonusSessions = ({ user, userData, onVideoWatch }) => {
   // Bonus Sessions data - will be populated from API
@@ -80,15 +84,7 @@ const BonusSessions = ({ user, userData, onVideoWatch }) => {
       
       if (quarter1Response.success && quarter1Response.raw?.data?.[0]) {
         const chapterData = quarter1Response.raw.data[0];
-        let imageUrl = null;
-        if (chapterData.image) {
-          if (chapterData.image.startsWith('http')) {
-            imageUrl = chapterData.image;
-          } else {
-            const baseUrl = process.env.REACT_APP_API_BASE_URL || 'https://api.learningbix.com:8112';
-            imageUrl = `${baseUrl}/public/uploads/course_chapter_image/${chapterData.image}`;
-          }
-        }
+        const imageUrl = getBlobUrl(chapterData.image);
         quarter1 = {
           id: 1,
           title: chapterData.chapter_title || 'Quarter 1',
@@ -113,15 +109,7 @@ const BonusSessions = ({ user, userData, onVideoWatch }) => {
       
       if (quarter2Response.success && quarter2Response.raw?.data?.[0]) {
         const chapterData = quarter2Response.raw.data[0];
-        let imageUrl = null;
-        if (chapterData.image) {
-          if (chapterData.image.startsWith('http')) {
-            imageUrl = chapterData.image;
-          } else {
-            const baseUrl = process.env.REACT_APP_API_BASE_URL || 'https://api.learningbix.com:8112';
-            imageUrl = `${baseUrl}/public/uploads/course_chapter_image/${chapterData.image}`;
-          }
-        }
+        const imageUrl = getBlobUrl(chapterData.image);
         quarter2 = {
           id: 2,
           title: chapterData.chapter_title || 'Quarter 2',
@@ -138,7 +126,7 @@ const BonusSessions = ({ user, userData, onVideoWatch }) => {
         id: 3,
         title: 'Buy Quarter 3',
         description: null,
-        image: null,
+        image: quarter_3,
         isPurchasable: true,
         type: 'buy_plan',
         terms: ['3'],
@@ -147,15 +135,7 @@ const BonusSessions = ({ user, userData, onVideoWatch }) => {
       const quarter3Data = (quarter3Response.raw && quarter3Response.raw.data) ? quarter3Response.raw.data : (quarter3Response.data || []);
       if (quarter3Response.success && quarter3Data && quarter3Data.length > 0) {
         const course = quarter3Data[0];
-        let imageUrl = null;
-        if (course.image) {
-          if (course.image.startsWith('http')) {
-            imageUrl = course.image;
-          } else {
-            const baseUrl = process.env.REACT_APP_API_BASE_URL || 'https://api.learningbix.com:8112';
-            imageUrl = `${baseUrl}/uploads/${course.image}`;
-          }
-        }
+        const imageUrl = getBlobUrl(course.image);
         // Clean description - remove Curriculum, Activity Box, and More from Learning Pie sections
         let cleanedDescription = course.description || course.course_detail || null;
         if (cleanedDescription) {
@@ -177,7 +157,7 @@ const BonusSessions = ({ user, userData, onVideoWatch }) => {
           id: course.id || 3,
           title: course.course_name || 'Buy Quarter 3',
           description: cleanedDescription,
-          image: imageUrl,
+          image: quarter_3,
           isPurchasable: true,
           type: 'buy_plan',
           terms: ['3'],
@@ -201,7 +181,7 @@ const BonusSessions = ({ user, userData, onVideoWatch }) => {
           id: 4,
           title: 'DIY Home',
           description: null,
-          image: null,
+          image: diy_home,
           isPurchasable: false,
           type: 'diy_home',
         },
@@ -209,7 +189,7 @@ const BonusSessions = ({ user, userData, onVideoWatch }) => {
           id: 5,
           title: 'Excursions',
           description: null,
-          image: null,
+          image: excursion,
           isPurchasable: false,
           type: 'excursions',
         }
@@ -261,7 +241,7 @@ const BonusSessions = ({ user, userData, onVideoWatch }) => {
       id: 5,
       title: 'Excursions',
       description: null,
-      image: null,
+      image: excursion,
       isPurchasable: false,
       type: 'excursions',
     }
@@ -373,15 +353,7 @@ const BonusSessions = ({ user, userData, onVideoWatch }) => {
         const mappedSessions = lessons.map((lesson) => {
           const content = lesson.content && lesson.content[0] ? lesson.content[0] : null;
           // Construct image URL
-          let thumbnailUrl = null;
-          if (lesson.image) {
-            if (lesson.image.startsWith('http')) {
-              thumbnailUrl = lesson.image;
-            } else {
-              const baseUrl = process.env.REACT_APP_API_BASE_URL || 'https://api.learningbix.com:8112';
-              thumbnailUrl = `${baseUrl}/public/uploads/course_chapter_image/${lesson.image}`;
-            }
-          }
+          const thumbnailUrl = getBlobUrl(lesson.image);
           
           return {
             id: lesson.id,
@@ -426,15 +398,7 @@ const BonusSessions = ({ user, userData, onVideoWatch }) => {
         // Map items to session format
         const mappedSessions = diyHomeItems.map((item) => {
           // Construct image URL
-          let thumbnailUrl = null;
-          if (item.image) {
-            if (item.image.startsWith('http')) {
-              thumbnailUrl = item.image;
-            } else {
-              const baseUrl = process.env.REACT_APP_API_BASE_URL || 'https://api.learningbix.com:8112';
-              thumbnailUrl = `${baseUrl}/public/uploads/${item.image}`;
-            }
-          }
+          const thumbnailUrl = getBlobUrl(item.image);
           
           return {
             id: item.id,
@@ -479,15 +443,7 @@ const BonusSessions = ({ user, userData, onVideoWatch }) => {
         // Map items to session format
         const mappedSessions = excursionItems.map((item) => {
           // Construct image URL
-          let thumbnailUrl = null;
-          if (item.image) {
-            if (item.image.startsWith('http')) {
-              thumbnailUrl = item.image;
-            } else {
-              const baseUrl = process.env.REACT_APP_API_BASE_URL || 'https://api.learningbix.com:8112';
-              thumbnailUrl = `${baseUrl}/public/uploads/${item.image}`;
-            }
-          }
+          const thumbnailUrl = getBlobUrl(item.image);
           
           return {
             id: item.id,

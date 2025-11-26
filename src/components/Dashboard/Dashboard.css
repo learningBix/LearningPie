@@ -560,6 +560,24 @@
   right: -10px;
   font-size: 40px;
   animation: bounce 2s ease-in-out infinite;
+
+  /* Loading indicator for progress items */
+.loading-indicator {
+  display: inline-block;
+  font-size: 11px;
+  color: #ff6b6b;
+  margin-left: 10px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
 }
 
 @keyframes bounce {

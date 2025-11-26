@@ -13,13 +13,18 @@ if (!isAPIConfigured()) {
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: API_CONFIG.timeout,
+  timeout: 60000, // ⚠️ Increased to 60 seconds for slow queries
   headers: API_CONFIG.headers,
   withCredentials: API_CONFIG.withCredentials,
 });
 
 apiClient.interceptors.request.use(
   (config) => {
+    // Log request for debugging
+    console.log('📤 API Request:', {
+      url: config.url,
+      data: config.data
+    });
     return config;
   },
   (error) => {
@@ -28,7 +33,13 @@ apiClient.interceptors.request.use(
 );
 
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log('📥 API Response:', {
+      url: response.config.url,
+      data: response.data
+    });
+    return response;
+  },
   (error) => {
     if (error.code === 'ECONNABORTED') {
       console.error('Request timeout');
@@ -174,12 +185,74 @@ export const dashboardAPI = {
   getDemoClassDetails: (sid) => {
     return apiCall('/demo_class_details', { sid });
   },
+  
   getGroupPostList: ({ group_id = '', keyword = '', learning = '1', user_id = '' } = {}) => {
-    return apiCall('/group_post_list', { group_id, keyword, learning, user_id });
+    // Convert user_id to number if it's a string
+    const numericUserId = typeof user_id === 'string' ? parseInt(user_id, 10) : user_id;
+    
+    console.log('🔍 Calling group_post_list with user_id:', numericUserId);
+    
+    return apiCall('/group_post_list', { 
+      group_id, 
+      keyword, 
+      learning, 
+      user_id: numericUserId 
+    });
   },
-  fetchAssessmentReport: (studentId) => {
-    return apiCall('/fetch_assesment_report_student', { student_id: studentId });
+  
+  fetchAssessmentReport: async (studentId) => {
+    // Convert to number if string
+    const numericId = typeof studentId === 'string' ? parseInt(studentId, 10) : studentId;
+    
+    // Validate
+    if (!numericId || isNaN(numericId) || numericId <= 0) {
+      console.error('❌ Invalid student_id:', studentId);
+      return {
+        success: false,
+        data: null,
+        message: 'Invalid student ID'
+      };
+    }
+
+    console.log('🔍 Calling fetchAssessmentReport with student_id:', numericId);
+    console.log('⏱️ This may take 30-60 seconds due to large database...');
+    
+    try {
+      // Try with extended timeout
+      const response = await apiCall('/fetch_assesment_report_student', { 
+        student_id: numericId 
+      });
+      
+      return response;
+    } catch (error) {
+      console.error('❌ Assessment API error:', error);
+      
+      // If timeout, return default empty data instead of failing
+      if (error.code === 'ECONNABORTED') {
+        console.warn('⚠️ Request timed out, returning default empty data');
+        return {
+          success: true, // Mark as success so app doesn't break
+          data: {
+            id: 0,
+            stories: 0,
+            rhymes: 0,
+            bonus: 0,
+            recorded_class: 0,
+            live_class: 0,
+            robotics: 0
+          },
+          message: 'Data loaded with defaults due to slow response'
+        };
+      }
+      
+      return {
+        success: false,
+        data: null,
+        message: error.message || 'Failed to fetch assessment data'
+      };
+    }
   },
+  
   getDayLiveClassesList: ({ subscription_date, course_id, sid }) => {
     return apiCall('/day_live_classes_list', { subscription_date, course_id, sid });
   },

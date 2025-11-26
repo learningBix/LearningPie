@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { FaHeart, FaRegHeart, FaCommentDots, FaEye, FaFlag, FaTrash } from "react-icons/fa";
 import communityAPI from "../../services/communityService";
 
-const Community = () => {
+const Community = ({ user }) => {
   const [showModal, setShowModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportPostId, setReportPostId] = useState(null);
@@ -31,7 +31,8 @@ const Community = () => {
   const [postVideo, setPostVideo] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const USER_ID = "44165";
+  // Normalize USER_ID as a string for consistent comparison
+  const USER_ID = String(user?.id || user?.student_id || user?.user_id || "44165");
   const GROUP_ID = "82";
 
   // ========================= FILTERED POSTS =========================
@@ -73,6 +74,7 @@ const Community = () => {
 
         const initialLikes = {};
         const initialViews = {};
+        const initialComments = {};
 
         posts.forEach((post) => {
           const id = post.id ?? post.post_id ?? post.postId;
@@ -81,10 +83,21 @@ const Community = () => {
             liked: parseInt(post.liked) === 1
           };
           initialViews[id] = parseInt(post.view_count || post.views || 0) || 0;
+          // If the server returns comments as part of post, use them as initial comments
+          if (Array.isArray(post.comments) && post.comments.length) {
+            initialComments[id] = post.comments.map((c) => ({
+              id: c.id || c.comment_id,
+              user: c.name || c.user || 'User',
+              avatar: c.image || getAvatar(c),
+              text: c.comment || c.text || '',
+              date: c.created || c.date || '',
+            }));
+          }
         });
 
         setLikes(initialLikes);
         setViews(initialViews);
+        if (Object.keys(initialComments).length) setComments(initialComments);
       } else {
         setProjects([]);
       }
@@ -99,9 +112,9 @@ const Community = () => {
   // ========================= CREATE POST HANDLER =========================
   const handleCreatePost = async (e) => {
     e.preventDefault();
-    
-    if (!postTitle.trim()) {
-      alert("Please enter a post title");
+
+    if (!postTitle.trim() && !postImage && !postVideo && !postDescription.trim()) {
+      alert("Your post is empty!");
       return;
     }
 
@@ -109,35 +122,69 @@ const Community = () => {
 
     try {
       const postData = {
-        title: postTitle,
-        description: postDescription,
-        image: postImage,
-        video: postVideo,
+        title: postTitle?.trim() || "",
+        description: postDescription?.trim() || "",
+        image: postImage || null,   // File object allowed
+        video: postVideo || null,   // File object allowed
       };
 
       const res = await communityAPI.createPost(GROUP_ID, USER_ID, postData);
+
       const ok = res && (res.success === true || res.replyCode === 'success');
 
       if (ok) {
-        alert("Post created successfully!");
-        setShowModal(false);
+        alert("🎉 Post created successfully!");
+
+        // reset form
         setPostTitle("");
         setPostDescription("");
         setPostImage(null);
         setPostVideo(null);
-        
-        // Refresh posts
+
+        // Hide modal
+        setShowModal(false);
+
+        // Optimistic update: add the new post to UI immediately
+        // Try to get the created post object from API response, otherwise build a fallback
+        const createdPost = (res.data && (res.data.post || (Array.isArray(res.data) ? res.data[0] : res.data))) || null;
+        const newPost = createdPost
+          ? {
+              ...createdPost,
+              user_id: createdPost.user_id ?? USER_ID,
+            }
+          : {
+              id: Date.now(),
+              user_id: USER_ID,
+              name: user?.name || user?.full_name || 'You',
+              post_title: postTitle?.trim() || '',
+              post_description: postDescription?.trim() || '',
+              post_image: postImage && typeof postImage === 'string' ? postImage : postImage ? URL.createObjectURL(postImage) : null,
+              post_video: postVideo && typeof postVideo === 'string' ? postVideo : postVideo ? URL.createObjectURL(postVideo) : null,
+              total_likes: 0,
+              liked: 0,
+              comments: [],
+              view_count: 0,
+              created: new Date().toISOString(),
+            };
+
+        setProjects((prev) => [newPost, ...(prev || [])]);
+        setLikes((prev) => ({ ...prev, [newPost.id]: { count: 0, liked: false } }));
+        setViews((prev) => ({ ...prev, [newPost.id]: 0 }));
+        setComments((prev) => ({ ...prev, [newPost.id]: [] }));
+
+        // Optionally re-fetch to sync with server-fetched canonical data
         fetchPosts();
       } else {
-        alert(res?.replyMsg || "Failed to create post");
+        alert(res?.replyMsg || "❌ Something went wrong while creating post.");
       }
     } catch (err) {
       console.error("createPost error:", err);
-      alert("Error creating post");
+      alert("❌ Error creating post");
     } finally {
       setSubmitting(false);
     }
   };
+
 
   // ========================= DELETE POST HANDLER =========================
   const handleDeletePost = async (postId, e) => {
@@ -283,42 +330,83 @@ const Community = () => {
     });
   };
 
+  // Normalize a comment object from different API shapes
+  const normalizeComment = (c) => {
+    if (!c) return null;
+    return {
+      id: c.id || c.comment_id || Date.now(),
+      user: c.name || c.user || 'User',
+      avatar: c.image || c.avatar || getAvatar(c),
+      text: c.comment || c.text || '',
+      date: formatDate(c.created || c.date),
+    };
+  };
+
+  
+
   // ========================= VIEW HANDLER =========================
   const handlePostClick = async (post) => {
-    setViews((prev) => ({ ...prev, [post.id]: (prev[post.id] || 0) + 1 }));
+  setViews(prev => ({
+    ...prev,
+    [post.id]: (prev[post.id] || 0) + 1
+  }));
 
-    try {
-      const res = await communityAPI.getPostDetails(post.id, USER_ID);
-      const ok = res && (res.success === true || res.replyCode === 'success');
-      if (ok && res.data) {
-        const detail = res.data.post || res.data;
-        const commentList = res.data.comments || res.data.comment_list || res.data.post_comments || [];
+  setSelectedPost(post);
 
-        const mapped = Array.isArray(commentList)
-          ? commentList.map((c) => ({
-              id: c.id,
-              user: c.name || c.user || 'User',
-              avatar: c.image || getAvatar(c),
-              text: c.comment || c.text || '',
-              date: formatDate(c.created || c.date),
-            }))
-          : [];
+  try {
+    // 1️⃣ Fetch post details
+    const res = await communityAPI.getPostDetails(post.id, USER_ID);
 
-        setSelectedPost(detail);
-        setComments((prev) => ({ ...prev, [post.id]: mapped }));
-        setLikes((prev) => ({
-          ...prev,
-          [post.id]: prev[post.id] || { count: parseInt(detail.like_count || 0) || 0, liked: String(detail.is_liked || "0") === "1" },
-        }));
-        setViews((prev) => ({ ...prev, [post.id]: parseInt(detail.view_count || prev[post.id] || 0) || prev[post.id] || 0 }));
-      } else {
-        setSelectedPost(post);
+    if (res?.success && res?.data) {
+      const detail = res.data.post || res.data;
+
+      // Update selected post (title/description/video etc.)
+      setSelectedPost(detail);
+
+      // 2️⃣ Fetch comments from new API
+      const commentsRes = await communityAPI.getPostComments(post.id, USER_ID);
+
+      // Normalize comments response — API can return array or nested objects depending on endpoint
+      const possibleArrays = [
+        commentsRes?.data,
+        commentsRes?.raw?.data,
+        commentsRes?.data?.data,
+        commentsRes?.data?.comments,
+        commentsRes?.raw?.comments,
+      ];
+
+      let commentsArray = [];
+      for (const arr of possibleArrays) {
+        if (Array.isArray(arr)) {
+          commentsArray = arr;
+          break;
+        }
       }
-    } catch (err) {
-      console.error("getPostDetails error:", err);
-      setSelectedPost(post);
+
+      if (!commentsArray.length && Array.isArray(commentsRes?.data)) {
+        commentsArray = commentsRes.data;
+      }
+
+      // If we have comments, map them to the normalized UI shape
+      if (commentsArray.length) {
+        const mappedComments = commentsArray.map((c) => ({
+          id: c.id,
+          user: c.name || c.user || 'User',
+          avatar: c.image ? c.image : getAvatar(c),
+          text: c.comment || c.text || '',
+          date: formatDate(c.created || c.date),
+        }));
+
+        setComments((prev) => ({
+          ...prev,
+          [post.id]: mappedComments,
+        }));
+      }
     }
-  };
+  } catch (err) {
+    console.log("Error loading post details", err);
+  }
+};
 
   // ========================= POST CARD COMPONENT =========================
   const PostCard = ({ post, showDeleteButton = false }) => (
@@ -432,6 +520,8 @@ const Community = () => {
       </div>
     );
   }
+
+  const displayedComments = selectedPost ? (comments[selectedPost.id] || selectedPost.comments || []) : [];
 
   return (
     <div className="w-full max-w-[1200px] mx-auto p-6">
@@ -553,9 +643,11 @@ const Community = () => {
                 </button>
               </div>
 
-              <div className="space-y-4 max-h-[500px] overflow-y-auto">
-                {comments[selectedPost.id]?.map((c) => (
-                  <div key={c.id} className="flex gap-3">
+               <div className="space-y-4 max-h-[500px] overflow-y-auto">
+                 {displayedComments.map((cRaw) => {
+                   const c = normalizeComment(cRaw);
+                   return (
+                     <div key={c.id} className="flex gap-3">
                     <img
                       src={c.avatar}
                       className="w-12 h-12 rounded-full border-2 border-red-500 object-cover"
@@ -578,7 +670,7 @@ const Community = () => {
                       </button>
                     </div>
                   </div>
-                ))}
+                ); })}
               </div>
             </div>
           </div>
@@ -675,25 +767,32 @@ const Community = () => {
                 />
               </div>
 
-              <div>
-                <label className="form text-gray-600 mb-1">Upload Image</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="w-full border border-gray-300 rounded-md px-3 py-2"
-                  onChange={(e) => setPostImage(e.target.files[0])}
-                />
-              </div>
+              {/* Upload Image */}
+          <div className="flex flex-col gap-1">
+            <label className="text-gray-600 text-sm font-medium capitalize">
+              image
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              className="w-full border border-gray-300 rounded-md px-3 py-2 bg-white cursor-pointer"
+              onChange={(e) => setPostImage(e.target.files[0])}
+            />
+          </div>
 
-              <div>
-                <label className="form text-gray-600 mb-1">Upload Video</label>
-                <input
-                  type="file"
-                  accept="video/*"
-                  className="w-full border border-gray-300 rounded-md px-3 py-2"
-                  onChange={(e) => setPostVideo(e.target.files[0])}
-                />
-              </div>
+          {/* Upload Video */}
+          <div className="flex flex-col gap-1">
+            <label className="text-gray-600 text-sm font-medium capitalize">
+              upload Video
+            </label>
+            <input
+              type="file"
+              accept="video/*"
+              className="w-full border border-gray-300 rounded-md px-3 py-2 bg-white cursor-pointer"
+              onChange={(e) => setPostVideo(e.target.files[0])}
+            />
+          </div>
+
 
               <div className="text-center mt-4">
                 <button
