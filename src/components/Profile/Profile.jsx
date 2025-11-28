@@ -52,7 +52,7 @@ const Profile = ({ user, userData: initialUserData, onBack, onLogout, onUserData
 
   // Render second layer screens
   if (showAssessments) {
-    return <Assessments onBack={() => setShowAssessments(false)} />;
+    return <Assessments onBack={() => setShowAssessments(false)} user={userData || user} />;
   }
 
   if (showMyStats) {

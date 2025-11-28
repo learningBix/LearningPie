@@ -3,6 +3,7 @@ import './MyCourses.css';
 import methodologyImage from '../../assets/Mmethodology.jpg';
 import courseImage from '../../assets/coursedemo.png';
 import signatureImage from '../../assets/Msignature.jpg';
+import { BLOB_BASE_URL } from '../../config/api';
 
 const MyCourses = () => {
   const [activeTab, setActiveTab] = useState('course');
@@ -131,17 +132,35 @@ const MyCourses = () => {
             <div className="details-month-content">
               {activeMonth === 'month1' && (
                 <div className="month-content-wrapper">
-                  <p>Month 1 course details will be displayed here.</p>
+                  <div className="pdf-viewer-container">
+                    <iframe
+                      src={`${BLOB_BASE_URL}attachment-1622725772739.pdf`}
+                      className="pdf-viewer"
+                      title="Month 1 Curriculum PDF"
+                    />
+                  </div>
                 </div>
               )}
               {activeMonth === 'month2' && (
                 <div className="month-content-wrapper">
-                  <p>Month 2 course details will be displayed here.</p>
+                  <div className="pdf-viewer-container">
+                    <iframe
+                      src={`${BLOB_BASE_URL}attachment-1622725778530.pdf`}
+                      className="pdf-viewer"
+                      title="Month 2 Curriculum PDF"
+                    />
+                  </div>
                 </div>
               )}
               {activeMonth === 'month3' && (
                 <div className="month-content-wrapper">
-                  <p>Month 3 course details will be displayed here.</p>
+                  <div className="pdf-viewer-container">
+                    <iframe
+                      src={`${BLOB_BASE_URL}attachment-1630055729765.pdf`}
+                      className="pdf-viewer"
+                      title="Month 3 Curriculum PDF"
+                    />
+                  </div>
                 </div>
               )}
             </div>

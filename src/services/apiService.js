@@ -257,6 +257,77 @@ export const dashboardAPI = {
   getDayLiveClassesList: ({ subscription_date, course_id, sid }) => {
     return apiCall('/day_live_classes_list', { subscription_date, course_id, sid });
   },
+  
+  fetchStudentAssessmentReport: async ({ assessment_id, student_id }) => {
+    const numericAssessmentId = typeof assessment_id === 'string' ? parseInt(assessment_id, 10) : assessment_id;
+    const numericStudentId = typeof student_id === 'string' ? parseInt(student_id, 10) : student_id;
+    
+    if (!numericAssessmentId || isNaN(numericAssessmentId) || numericAssessmentId <= 0) {
+      return {
+        success: false,
+        data: null,
+        message: 'Invalid assessment ID'
+      };
+    }
+    
+    if (!numericStudentId || isNaN(numericStudentId) || numericStudentId <= 0) {
+      return {
+        success: false,
+        data: null,
+        message: 'Invalid student ID'
+      };
+    }
+    
+    console.log('📊 Fetching student assessment report:', { assessment_id: numericAssessmentId, student_id: numericStudentId });
+    
+    try {
+      const response = await apiCall('/fetchStudentAssessmentReport', {
+        assessment_id: numericAssessmentId,
+        student_id: numericStudentId
+      });
+      
+      return response;
+    } catch (error) {
+      console.error('❌ Student Assessment Report API error:', error);
+      return {
+        success: false,
+        data: null,
+        message: error.message || 'Failed to fetch assessment report'
+      };
+    }
+  },
+  
+  getStudentAssessmentList: async ({ student_id, assessment_id = '', status = '1', learning = '1' }) => {
+    const numericStudentId = typeof student_id === 'string' ? parseInt(student_id, 10) : student_id;
+    
+    if (!numericStudentId || isNaN(numericStudentId) || numericStudentId <= 0) {
+      return {
+        success: false,
+        data: null,
+        message: 'Invalid student ID'
+      };
+    }
+    
+    console.log('📋 Fetching student assessment list:', { student_id: numericStudentId, assessment_id, status, learning });
+    
+    try {
+      const response = await apiCall('/student_assesment_list', {
+        assessment_id: assessment_id || '',
+        student_id: numericStudentId,
+        status: status,
+        learning: learning
+      });
+      
+      return response;
+    } catch (error) {
+      console.error('❌ Student Assessment List API error:', error);
+      return {
+        success: false,
+        data: null,
+        message: error.message || 'Failed to fetch assessment list'
+      };
+    }
+  },
 };
 
 export const recordedClassesAPI = {

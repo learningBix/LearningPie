@@ -39,6 +39,8 @@ export const API_ENDPOINTS = {
   DEMO_CLASS_DETAILS: '/demo_class_details',
   GROUP_POST_LIST: '/group_post_list',
   FETCH_ASSESSMENT_REPORT_STUDENT: '/fetch_assesment_report_student',
+  FETCH_STUDENT_ASSESSMENT_REPORT: '/fetchStudentAssessmentReport',
+  STUDENT_ASSESSMENT_LIST: '/student_assesment_list',
   DAY_LIVE_CLASSES_LIST: '/day_live_classes_list',
 };
 
