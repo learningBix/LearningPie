@@ -140,6 +140,7 @@ export const profileAPI = {
       id: userId,
       name: profileData.name || '',
       address: profileData.address || '',
+      profile_image: profileData.profile_image || profileData.profileImage || '',
       gender: profileData.gender || '',
       time_zone: profileData.time_zone || '0',
       dob: profileData.dob || profileData.dateOfBirth || '',

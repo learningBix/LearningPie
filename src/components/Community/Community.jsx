@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { FaHeart, FaRegHeart, FaCommentDots, FaEye, FaFlag, FaTrash } from "react-icons/fa";
 import communityAPI from "../../services/communityService";
+import getBlobUrl from "../../utils/blob";
+import Avatar from "../Avatar/Avatar";
 
 const Community = ({ user }) => {
   const [showModal, setShowModal] = useState(false);
@@ -54,13 +56,20 @@ const Community = ({ user }) => {
   const getAvatar = (data) => {
     if (!data) return `https://i.pravatar.cc/150?img=1`;
     return data.user_profile?.trim()
-      ? data.user_profile
+      ? getBlobUrl(data.user_profile)
       : data.profile_image?.trim()
-      ? data.profile_image
+      ? getBlobUrl(data.profile_image)
       : data.image?.trim()
-      ? data.image
+      ? getBlobUrl(data.image)
       : `https://i.pravatar.cc/150?img=${data.id}`;
   };
+
+  const toFullUrl = (path) => {
+    return getBlobUrl(path) || (path && typeof path === 'string' ? path : null);
+  };
+
+  const getImageUrl = (post) => toFullUrl(post?.post_image || post?.image);
+  const getVideoUrl = (post) => toFullUrl(post?.post_video || post?.video);
 
   const fetchPosts = async () => {
     try {
@@ -253,7 +262,7 @@ const Community = ({ user }) => {
     const localComment = {
       id: Date.now(),
       user: "You",
-      avatar: `https://i.pravatar.cc/150?img=12`,
+      avatar: getAvatar(user) || `https://i.pravatar.cc/150?img=12`,
       text: commentInput,
       date: new Date().toDateString(),
     };
@@ -426,15 +435,15 @@ const Community = ({ user }) => {
         </button>
       )}
 
-      {post.post_image || post.image ? (
+      {getImageUrl(post) ? (
         <img
-          src={post.post_image || post.image}
+          src={getImageUrl(post)}
           className="w-full h-[204px] object-cover"
           alt="post"
         />
-      ) : post.post_video || post.video ? (
+      ) : getVideoUrl(post) ? (
         <video
-          src={post.post_video || post.video}
+          src={getVideoUrl(post)}
           className="w-full h-[204px] object-cover"
           controls
         />
@@ -450,11 +459,12 @@ const Community = ({ user }) => {
         <h3 className="text-lg font-semibold">{post.post_title || post.title}</h3>
 
         <div className="flex justify-between items-center mt-3">
-          <div className="flex items-center">
-            <img
-              src={post.user_profile || post.image || `https://i.pravatar.cc/150?img=${post.id}`}
-              className="w-12 h-12 rounded-full border-2 border-red-500 object-cover mr-3"
-              alt="avatar"
+            <div className="flex items-center">
+             <Avatar
+              src={getAvatar(post) || `https://i.pravatar.cc/150?img=${post.id}`}
+              alt={post.name || post.author || 'avatar'}
+              className="mr-3"
+              size={48}
             />
             <div>
               <h6 className="text-xs font-semibold text-gray-700">Posted by</h6>
@@ -527,7 +537,7 @@ const Community = ({ user }) => {
     <div className="w-full max-w-[1200px] mx-auto p-6">
 
       {/* =================== POST DETAIL VIEW =================== */}
-      {selectedPost && (
+      {selectedPost && (          
         <div className="w-full">
           <button 
             className="mb-4 text-blue-300 hover:text-blue-800 font-semibold"
@@ -543,15 +553,15 @@ const Community = ({ user }) => {
           <div className="flex flex-wrap gap-6">
             {/* LEFT CARD SECTION */}
             <div className="w-full max-w-[490px] bg-white border border-gray-300 rounded-lg p-4">
-              {selectedPost.post_image || selectedPost.image ? (
+              {getImageUrl(selectedPost) ? (
                 <img
-                  src={selectedPost.post_image || selectedPost.image}
+                  src={getImageUrl(selectedPost)}
                   className="w-full h-[300px] object-cover rounded-lg"
                   alt="post"
                 />
-              ) : selectedPost.post_video || selectedPost.video ? (
+              ) : getVideoUrl(selectedPost) ? (
                 <video
-                  src={selectedPost.post_video || selectedPost.video}
+                  src={getVideoUrl(selectedPost)}
                   className="w-full h-[300px] object-cover rounded-lg"
                   controls
                 />
@@ -564,10 +574,10 @@ const Community = ({ user }) => {
               )}
 
               <div className="flex items-center gap-3 mt-4 mb-2">
-                <img
-                  src={selectedPost.user_profile || selectedPost.image || `https://i.pravatar.cc/150?img=${selectedPost.id}`}
-                  className="w-12 h-12 rounded-full border-2 border-red-500 object-cover"
-                  alt=""
+                <Avatar
+                  src={getAvatar(selectedPost) || `https://i.pravatar.cc/150?img=${selectedPost.id}`}
+                  alt={selectedPost.name || selectedPost.author || 'avatar'}
+                  size={48}
                 />
 
                 <div className="flex-1">
@@ -616,11 +626,12 @@ const Community = ({ user }) => {
               </h3>
 
               <div className="flex items-center gap-2 mb-6">
-                <img
-                  src={`https://i.pravatar.cc/150?img=12`}
-                  className="w-10 h-10 rounded-full border-2 border-red-500 object-cover"
-                  alt=""
-                />
+                  <Avatar
+                    src={getAvatar(user) || `https://i.pravatar.cc/150?img=12`}
+                    alt={user?.name || user?.full_name || 'You'}
+                    size={40}
+                    className="mr-2"
+                  />
 
                 <input
                   type="text"
@@ -648,11 +659,12 @@ const Community = ({ user }) => {
                    const c = normalizeComment(cRaw);
                    return (
                      <div key={c.id} className="flex gap-3">
-                    <img
-                      src={c.avatar}
-                      className="w-12 h-12 rounded-full border-2 border-red-500 object-cover"
-                      alt=""
-                    />
+                   <Avatar
+                    src={getAvatar(user) || `https://i.pravatar.cc/150?img=12`}
+                    alt={user?.name || user?.full_name || 'You'}
+                    size={40}
+                    className="mr-2"
+                  />
 
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-1">

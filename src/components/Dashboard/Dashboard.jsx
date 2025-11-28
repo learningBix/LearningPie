@@ -279,6 +279,14 @@ const Dashboard = ({ user, onLogout }) => {
   // This ensures other Dashboard components (ParentSection, RecordedClasses, etc.) get updated data
   const handleUserDataUpdate = (updatedUserData) => {
     setUserData(updatedUserData);
+    try {
+      const stored = JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user') || '{}');
+      const merged = { ...stored, ...updatedUserData };
+      localStorage.setItem('user', JSON.stringify(merged));
+      sessionStorage.setItem('user', JSON.stringify(merged));
+    } catch (err) {
+      // ignore
+    }
   };
 
   // Function to track video watch and update stats

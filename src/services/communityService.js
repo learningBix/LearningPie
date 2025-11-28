@@ -11,11 +11,16 @@ export const communityAPI = {
     const res = await apiCall('/upload_file', formData, true);
     
     // Response format expected: { success: true, name: "filename.jpg" }
-    if (res?.success && res?.name) {
-      return res.name;
-    }
+      // Support various possible server response shapes.
+      if (res?.success || res?.raw?.status === true) {
+        // Try common shapes: res.data.name OR res.raw.name OR res.raw?.data?.name
+        const name = res.data?.name || res.raw?.name || res.raw?.data?.name || null;
+        // Support returning full URL as well: data.url
+        const url = res.data?.url || res.raw?.url || null;
+        return name || url || null;
+      }
 
-    return null;
+      return null;
   },
 
   // GET POSTS
@@ -32,6 +37,8 @@ export const communityAPI = {
         ...post,
         post_image: post.post_image ? `${BLOB_BASE_URL}${post.post_image}` : null,
         image: post.image ? `${BLOB_BASE_URL}${post.image}` : null,
+        user_profile: post.user_profile ? `${BLOB_BASE_URL}${post.user_profile}` : (post.profile_image ? `${BLOB_BASE_URL}${post.profile_image}` : null),
+        profile_image: post.profile_image ? `${BLOB_BASE_URL}${post.profile_image}` : (post.user_profile ? `${BLOB_BASE_URL}${post.user_profile}` : null),
         video: post.video ? `${BLOB_BASE_URL}${post.video}` : null,
         post_video: post.post_video ? `${BLOB_BASE_URL}${post.post_video}` : null,
       }));
@@ -48,13 +55,13 @@ export const communityAPI = {
     });
 
     if (res?.success && Array.isArray(res.data)) {
-      res.data = res.data.map(c => ({
-        id: c.id,
-        user: c.name || "User",
-        avatar: c.image ? `${BLOB_BASE_URL}${c.image}` : "",
-        text: c.comment,
-        date: c.created || "",
-      }));
+        res.data = res.data.map(c => ({
+          id: c.id,
+          user: c.name || "User",
+          avatar: c.profile_image ? `${BLOB_BASE_URL}${c.profile_image}` : (c.user_profile ? `${BLOB_BASE_URL}${c.user_profile}` : (c.image ? `${BLOB_BASE_URL}${c.image}` : "")),
+          text: c.comment,
+          date: c.created || "",
+        }));
     }
 
     return res;
@@ -91,7 +98,35 @@ export const communityAPI = {
     if (uploadedImage) formData.append('post_image', uploadedImage);
     if (uploadedVideo) formData.append('post_video', uploadedVideo);
 
-    return await apiCall('/create_group_post', formData, true);
+      // Normalize returned post(s) to include full blob URLs (image, video, profile)
+      const res = await apiCall('/create_group_post', formData, true);
+
+      if (res?.success && res?.data) {
+        const toFullUrl = (path) => (path && typeof path === 'string' && !/^https?:\/\//i.test(path) ? `${BLOB_BASE_URL}${path}` : path);
+
+        const normalizePost = (p) => {
+          if (!p) return p;
+          return {
+            ...p,
+            post_image: toFullUrl(p.post_image || p.image),
+            image: toFullUrl(p.image || p.post_image),
+            video: toFullUrl(p.video || p.post_video),
+            post_video: toFullUrl(p.post_video || p.video),
+            user_profile: toFullUrl(p.user_profile || p.profile_image),
+            profile_image: toFullUrl(p.profile_image || p.user_profile),
+          };
+        };
+
+        if (Array.isArray(res.data)) {
+          res.data = res.data.map(normalizePost);
+        } else if (res.data.post) {
+          res.data.post = normalizePost(res.data.post);
+        } else if (typeof res.data === 'object') {
+          res.data = normalizePost(res.data);
+        }
+      }
+
+      return res;
   },
 
 
@@ -106,6 +141,7 @@ export const communityAPI = {
     if (res?.success && Array.isArray(res.data)) {
       res.data = res.data.map(c => ({
         ...c,
+        avatar: c.profile_image ? `${BLOB_BASE_URL}${c.profile_image}` : (c.user_profile ? `${BLOB_BASE_URL}${c.user_profile}` : (c.image ? `${BLOB_BASE_URL}${c.image}` : null)),
         image: c.image ? `${BLOB_BASE_URL}${c.image}` : null,
       }));
     }
