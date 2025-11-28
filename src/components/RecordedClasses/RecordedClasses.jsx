@@ -110,11 +110,10 @@ const RecordedClasses = ({ user = {}, userData = {}, onVideoWatch }) => {
       const term3Data = term3Response.raw?.data || term3Response.data || [];
       if (term3Response.success && term3Data.length > 0) {
         const course = term3Data[0];
-        const courseTitle = course.course_name || 'Buy Quarter 3';
         quartersList.push({
           id: course.id,
-          title: courseTitle,
-          image: courseTitle.includes('Term 3') ? buyTerm3Image : constructImageUrl(course.image),
+          title: 'Buy Quarter 3',
+          image: buyTerm3Image,
           description: course.description || course.course_detail || '',
           isPurchasable: true,
           courseData: {

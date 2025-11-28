@@ -1,27 +1,10 @@
-/* Bonus Sessions Section */
-.bonus-sessions-section {
-  padding: 30px;
-  background: transparent;
+/* Loading Spinner Animation */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
-.bonus-sessions-loading,
-.no-bonus-sessions {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 300px;
-  padding: 40px;
-}
-
-.bonus-sessions-loading .loading-spinner {
-  font-size: 18px;
-  color: #666;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.bonus-sessions-loading .loading-spinner::before {
+.loading-spinner::before {
   content: '';
   width: 20px;
   height: 20px;
@@ -31,114 +14,7 @@
   animation: spin 1s linear infinite;
 }
 
-.no-bonus-sessions {
-  text-align: center;
-  color: #666;
-  font-size: 16px;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.bonus-sessions-section .section-title {
-  font-size: 28px;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 30px;
-  padding-bottom: 15px;
-  border-bottom: 3px solid #FF8C42;
-}
-
-.bonus-sessions-container {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 30px;
-  margin-top: 30px;
-  align-items: stretch;
-  max-width: 1400px;
-  margin-left: auto;
-  margin-right: auto;
-  padding: 0 20px;
-}
-
-.bonus-session-card {
-  background: white;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  flex-direction: column;
-  border: 1px solid #e0e0e0;
-  min-height: 100%;
-}
-
-.bonus-session-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-}
-
-.bonus-session-card.purchasable {
-  border: 1px solid #e0e0e0;
-}
-
-.bonus-session-image-container {
-  width: 100%;
-  height: 200px;
-  background: #ffffff;
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-start;
-  overflow: hidden;
-  position: relative;
-  flex-shrink: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-.bonus-session-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-.bonus-session-image-placeholder {
-  width: 100%;
-  height: 100%;
-  background: #ffffff;
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-start;
-  position: relative;
-  box-sizing: border-box;
-}
-
-/* Only apply nested card effect to non-purchasable cards (Quarter 1 & 2) */
-.bonus-session-card:not(.purchasable) .bonus-session-image-placeholder {
-  border: none;
-  padding: 0;
-}
-
-/* For non-purchasable cards, add padding for broken image icon */
-.bonus-session-card:not(.purchasable) .bonus-session-image-container {
-  padding: 0;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-/* For purchasable cards, image should fill the container */
-.bonus-session-card.purchasable .bonus-session-image-container {
-  padding: 0;
-}
-
-.placeholder-icon {
-  display: none; /* Hide the large emoji icon */
-}
-
-/* Broken image icon - shown in top-left corner (like a broken image placeholder) */
+/* Broken image icon - shown in top-left corner for non-purchasable quarters */
 .bonus-session-image-placeholder::before {
   content: '';
   position: absolute;
@@ -154,374 +30,72 @@
   z-index: 1;
 }
 
-/* For purchasable cards, don't show broken icon */
+/* Hide broken icon for purchasable cards */
 .bonus-session-card.purchasable .bonus-session-image-placeholder::before {
   display: none;
 }
 
-.bonus-session-content {
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  flex: 1;
-}
-
-.bonus-session-title {
-  font-size: 24px;
-  font-weight: 700;
-  color: #333;
-  margin: 0;
-  line-height: 1.3;
-}
-
-.bonus-session-description {
-  font-size: 14px;
-  color: #666;
-  line-height: 1.5;
-  margin: 0;
-  font-weight: 400;
-}
-
-/* Responsive Design */
-@media (max-width: 1024px) {
-  .bonus-sessions-container {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 768px) {
-  .bonus-sessions-section {
-    padding: 20px;
-  }
-
-  .bonus-sessions-container {
-    grid-template-columns: 1fr;
-    gap: 20px;
-  }
-
-  .bonus-session-image-container {
-    height: 180px;
-  }
-}
-
-/* Bonus Quarter Detail Section */
-.bonus-quarter-detail-section {
-  padding: 30px;
-  background: transparent;
-}
-
-.bonus-quarter-detail-section .back-button {
-  background: #FF8C42;
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  margin-bottom: 20px;
-  display: block;
-  width: fit-content;
-  margin-left: 0;
-  margin-right: auto;
-  transition: all 0.3s ease;
-}
-
-.bonus-quarter-detail-section .back-button:hover {
-  background: #e67a35;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(255, 140, 66, 0.3);
-}
-
-.bonus-quarter-detail-header {
-  margin-bottom: 30px;
-}
-
-.bonus-quarter-detail-title {
-  font-size: 32px;
-  font-weight: 700;
-  color: #333;
-  margin: 0 0 10px 0;
-}
-
-.bonus-quarter-detail-description {
-  font-size: 16px;
-  color: #666;
-  line-height: 1.6;
-  margin: 0;
-}
-
-/* Bonus Sessions Grid Container */
-.bonus-sessions-container-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 25px;
-  margin-top: 20px;
-}
-
-/* Bonus Session Video Card */
-.bonus-session-video-card {
-  background: white;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e0e0e0;
-  transition: all 0.3s ease;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-}
-
-.bonus-session-video-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-}
-
-/* Bonus Session Video Thumbnail */
-.bonus-session-video-thumbnail {
-  width: 100%;
-  height: 200px;
-  position: relative;
-  background: #f5f5f5;
-  overflow: hidden;
-}
-
-.bonus-video-player-background {
-  width: 100%;
-  height: 100%;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Books in background */
-.bonus-video-books-left,
-.bonus-video-books-right {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  z-index: 1;
-}
-
-.bonus-video-books-left {
-  left: 5%;
-}
-
-.bonus-video-books-right {
-  right: 5%;
-}
-
-.bonus-video-books-left::before,
-.bonus-video-books-left::after,
-.bonus-video-books-right::before,
-.bonus-video-books-right::after {
+/* Video Books - Left side (red, brown) - for session cards */
+.video-books-left::before,
+.video-books-left::after {
   content: '';
-  width: 28px;
-  height: 45px;
-  border-radius: 3px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  width: 24px;
+  height: 40px;
+  border-radius: 2px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
-.bonus-video-books-left::before {
+.video-books-left::before {
   background: #d97757;
   transform: rotate(-8deg);
 }
 
-.bonus-video-books-left::after {
+.video-books-left::after {
   background: #a67c52;
   transform: rotate(5deg);
+  margin-top: -2px;
 }
 
-.bonus-video-books-right::before {
+/* Video Books - Right side (orange, green) - for session cards */
+.video-books-right::before,
+.video-books-right::after {
+  content: '';
+  width: 24px;
+  height: 40px;
+  border-radius: 2px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.video-books-right::before {
   background: #f4a460;
   transform: rotate(-5deg);
 }
 
-.bonus-video-books-right::after {
+.video-books-right::after {
   background: #90EE90;
   transform: rotate(8deg);
+  margin-top: -2px;
 }
 
-/* Video Screen */
-.bonus-video-screen {
-  width: 70%;
-  height: 120px;
-  background: #9BC4F7;
-  border-radius: 8px;
-  position: relative;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 10px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  overflow: hidden;
-  /* Hide any text content */
-  text-indent: -9999px;
-  font-size: 0;
-  line-height: 0;
-}
-
-/* Restore normal text behavior for SVG and controls */
-.bonus-video-screen svg,
-.bonus-video-screen .bonus-play-button-icon,
-.bonus-video-screen .bonus-video-controls {
-  text-indent: 0;
-  font-size: initial;
-  line-height: initial;
-}
-
-/* Video thumbnail image from API */
-.bonus-video-thumbnail-image {
+/* Video thumbnail image styling - for session cards */
+.video-thumbnail-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
   position: absolute;
   top: 0;
   left: 0;
+  right: 0;
+  bottom: 0;
   z-index: 1;
-  text-indent: -9999px;
-  font-size: 0;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  background: transparent;
+  pointer-events: none;
 }
 
-.bonus-play-button-icon {
-  margin-bottom: 15px;
-  position: relative;
-  z-index: 2;
-}
-
-.bonus-video-controls {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 0 10px;
-  position: relative;
-  z-index: 2;
-}
-
-/* Progress Bar */
-.bonus-progress-bar-container {
-  flex: 1;
-  height: 4px;
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 2px;
-  position: relative;
-}
-
-.bonus-progress-bar {
-  width: 35%;
-  height: 100%;
-  background: white;
-  border-radius: 2px;
-}
-
-.bonus-progress-scrubber {
-  position: absolute;
-  left: 35%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: 10px;
-  height: 10px;
-  background: white;
-  border-radius: 50%;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-/* Volume Indicator */
-.bonus-volume-indicator {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-}
-
-.bonus-volume-bar {
-  width: 3px;
-  height: 12px;
-  background: white;
-  border-radius: 2px;
-}
-
-.bonus-volume-bar:nth-child(1) {
-  height: 8px;
-}
-
-.bonus-volume-bar:nth-child(2) {
-  height: 12px;
-}
-
-.bonus-volume-bar:nth-child(3) {
-  height: 10px;
-}
-
-/* Session Content */
-.bonus-session-video-content {
-  padding: 15px 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.bonus-session-video-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
-  margin: 0;
-  line-height: 1.4;
-}
-
-.bonus-session-video-description {
-  font-size: 14px;
-  color: #666;
-  margin: 0;
-  line-height: 1.5;
-}
-
-/* Responsive Design for Detail View */
-@media (max-width: 1024px) {
-  .bonus-sessions-container-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 768px) {
-  .bonus-quarter-detail-section {
-    padding: 20px;
-  }
-
-  .bonus-sessions-container-grid {
-    grid-template-columns: 1fr;
-    gap: 20px;
-  }
-
-  .bonus-session-video-thumbnail {
-    height: 180px;
-  }
-}
-
-/* Select Plan Section */
-.bonus-select-plan-section {
-  padding: 30px;
-  min-height: 100vh;
-  background: white;
-  position: relative;
-}
-
-.bonus-select-plan-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 40px;
-  position: relative;
-}
-
+/* Back Button */
 .bonus-back-button {
   background: #FF8C42;
   color: white;
@@ -543,432 +117,26 @@
   box-shadow: 0 4px 12px rgba(255, 140, 66, 0.3);
 }
 
-.bonus-select-plan-title {
-  font-size: 32px;
-  font-weight: 700;
-  color: #333;
-  margin: 0;
-  text-align: center;
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.bonus-plan-card-container {
-  display: flex;
-  justify-content: flex-start;
-  align-items: flex-start;
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
-.bonus-plan-card {
-  width: 33.333%;
-  background: #f8f8f8;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-.bonus-plan-header {
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-}
-
-.bonus-plan-image-placeholder {
-  width: 80px;
-  height: 80px;
-  background: #FF8C42;
-  border-radius: 8px;
-  flex-shrink: 0;
-}
-
-.bonus-plan-image {
-  width: 80px;
-  height: 80px;
-  object-fit: cover;
-  border-radius: 8px;
-  flex-shrink: 0;
-}
-
-.bonus-plan-header-content {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  flex: 1;
-}
-
-.bonus-plan-duration-badge {
-  display: inline-block;
-  background: #FFE5D4;
-  color: #FF8C42;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 14px;
-  font-weight: 600;
-  width: fit-content;
-}
-
-.bonus-plan-course-title {
-  font-size: 24px;
-  font-weight: 700;
-  color: #333;
-  margin: 0;
-}
-
-.bonus-plan-pricing {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-}
-
-.bonus-plan-current-price {
-  font-size: 32px;
-  font-weight: 700;
-  color: #FF8C42;
-}
-
-.bonus-plan-original-price {
-  font-size: 20px;
-  font-weight: 500;
-  color: #999;
-  text-decoration: line-through;
-}
-
-.bonus-plan-section {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.bonus-plan-section-title {
-  font-size: 18px;
-  font-weight: 700;
-  color: #333;
-  margin: 0;
-}
-
-.bonus-plan-section-content {
-  font-size: 16px;
-  color: #666;
-  line-height: 1.6;
-  margin: 0;
-}
-
-.bonus-enroll-now-button {
-  width: 100%;
-  background: #FF8C42;
-  color: white;
-  border: none;
-  padding: 16px 24px;
-  border-radius: 8px;
-  font-size: 18px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  margin-top: 10px;
-}
-
-.bonus-enroll-now-button:hover {
-  background: #e67a35;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(255, 140, 66, 0.3);
-}
-
-.bonus-plan-loading {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 300px;
-  padding: 40px;
-}
-
-.bonus-plan-loading .loading-spinner {
-  font-size: 18px;
-  color: #666;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.bonus-plan-loading .loading-spinner::before {
-  content: '';
-  width: 20px;
-  height: 20px;
-  border: 3px solid #f3f3f3;
-  border-top: 3px solid #FF8C42;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-.bonus-plan-error {
-  text-align: center;
-  color: #e74c3c;
-  font-size: 16px;
-  padding: 40px;
-}
-
-@media (max-width: 1024px) {
-  .bonus-plan-card {
-    width: 50%;
-  }
-}
-
-@media (max-width: 768px) {
-  .bonus-select-plan-section {
-    padding: 20px;
-  }
-
-  .bonus-select-plan-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 15px;
-  }
-
-  .bonus-select-plan-title {
-    text-align: left;
-    font-size: 24px;
-    width: 100%;
-  }
-
-  .bonus-plan-card-container {
-    justify-content: center;
-  }
-
-  .bonus-plan-card {
-    width: 100%;
-    max-width: 100%;
-  }
-}
-
-/* Excursions Section */
-.bonus-excursions-section {
-  padding: 30px;
-  min-height: 100vh;
-  background: white;
-}
-
-.bonus-excursions-header {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  margin-bottom: 40px;
-}
-
-.bonus-excursions-title {
-  font-size: 32px;
-  font-weight: 700;
-  color: #333;
-  margin: 0;
-  flex: 1;
-}
-
-.bonus-excursions-container {
-  display: flex;
-  justify-content: flex-start;
-  align-items: flex-start;
-  max-width: 1400px;
-  gap: 20px;
-}
-
-.bonus-excursions-container .bonus-session-video-card {
-  width: 350px;
-  max-width: 350px;
-}
-
-.bonus-excursion-card-description {
-  font-size: 14px;
-  color: #666;
-  line-height: 1.5;
-  margin: 8px 0 0 0;
-}
-
-.bonus-excursion-error {
-  text-align: center;
-  color: #e74c3c;
-  font-size: 16px;
-  padding: 40px;
-}
-
-.bonus-excursion-loading {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 300px;
-  padding: 40px;
-}
-
-.bonus-excursion-loading .loading-spinner {
-  font-size: 18px;
-  color: #666;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.bonus-excursion-loading .loading-spinner::before {
-  content: '';
-  width: 20px;
-  height: 20px;
-  border: 3px solid #f3f3f3;
-  border-top: 3px solid #FF8C42;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-/* Excursion Session Detail Section */
-.bonus-session-detail-section {
-  padding: 30px 40px;
-  min-height: 100vh;
-  background: #fff;
-}
-
-.bonus-session-detail-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  margin-bottom: 30px;
-}
-
-.bonus-session-detail-title {
-  font-size: 28px;
-  font-weight: 700;
-  color: #333;
-  margin: 0;
-  flex: 1;
-}
-
-.bonus-session-detail-container {
-  display: flex;
-  gap: 40px;
-  align-items: flex-start;
-}
-
-.bonus-session-video-player {
-  flex: 1;
-  min-width: 0;
-}
-
-.bonus-video-player-placeholder {
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  background: #000;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.bonus-video-iframe {
-  width: 100%;
-  height: 100%;
-  border: none;
-}
-
-.bonus-video-placeholder-content {
-  color: white;
-  text-align: center;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  gap: 10px;
-}
-
-.bonus-session-detail-content {
-  flex: 0 0 400px;
-  display: flex;
-  flex-direction: column;
-}
-
-.bonus-session-detail-info {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.bonus-session-info-section {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.bonus-session-info-label {
-  font-size: 18px;
-  font-weight: 700;
-  color: #333;
-  margin: 0;
-}
-
-.bonus-session-info-text {
-  font-size: 16px;
-  color: #666;
-  line-height: 1.6;
-  margin: 0;
-}
-
+/* Responsive Design - Additional mobile styles */
 @media (max-width: 1024px) {
   .bonus-session-detail-container {
-    flex-direction: column;
+    flex-direction: column !important;
+    gap: 20px !important;
   }
-
+  
   .bonus-session-detail-content {
-    flex: 1;
-    width: 100%;
+    flex: 1 !important;
+    width: 100% !important;
   }
 }
 
 @media (max-width: 768px) {
-  .bonus-excursions-section {
-    padding: 20px;
+  .plan-card-container {
+    justify-content: center !important;
   }
-
-  .bonus-excursions-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 15px;
-  }
-
-  .bonus-excursions-title {
-    font-size: 24px;
-    width: 100%;
-  }
-
-  .bonus-excursions-container {
-    justify-content: center;
-  }
-
-  .bonus-session-video-card {
-    width: 100%;
-    max-width: 100%;
-  }
-
-  .bonus-session-detail-section {
-    padding: 20px;
-  }
-
-  .bonus-session-detail-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 15px;
-  }
-
-  .bonus-session-detail-title {
-    font-size: 24px;
-    width: 100%;
-  }
-
-  .bonus-session-detail-container {
-    gap: 20px;
+  
+  .plan-card {
+    width: 100% !important;
+    max-width: 100% !important;
   }
 }
-

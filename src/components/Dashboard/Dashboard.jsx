@@ -10,6 +10,7 @@ import StoryTime from '../StoryTime/StoryTime';
 import MyCourses from '../MyCourses/MyCourses';
 import RecordedClasses from '../RecordedClasses/RecordedClasses';
 import BonusSessions from '../BonusSessions/BonusSessions';
+import LiveClass from '../LiveClass/LiveClass';
 import logoPie from '../../assets/logo-pie.png';
 import Community from '../Community/Community';
 import Invite from '../invite/invite';
@@ -412,8 +413,10 @@ const Dashboard = ({ user, onLogout }) => {
         {/* Main Content */}
         <main className={`main-content ${
           activeSection === 'Parent Section' ||
+          activeSection === 'Parent Section' ||
           activeSection === 'My Courses' ||
           activeSection === 'My Profile' ||
+          activeSection === 'Live Class' ||
           activeSection === 'Recorded Classes' ||
           activeSection === 'Bonus Sessions' ||
           activeSection === 'Story Time' ||
@@ -446,6 +449,8 @@ const Dashboard = ({ user, onLogout }) => {
             <ParentSection user={userData} />
           ) : activeSection === 'My Courses' ? (
             <MyCourses />
+          ) : activeSection === 'Live Class' ? (
+            <LiveClass />
           ) : activeSection === 'Recorded Classes' ? (
             <RecordedClasses user={userData} userData={userData} onVideoWatch={handleVideoWatch} />
           ) : activeSection === 'Bonus Sessions' ? (
@@ -486,6 +491,7 @@ const Dashboard = ({ user, onLogout }) => {
         {activeSection !== 'Parent Section' &&
           activeSection !== 'My Courses' &&
           activeSection !== 'My Profile' &&
+          activeSection !== 'Live Class' &&
           activeSection !== 'Recorded Classes' &&
           activeSection !== 'Bonus Sessions' &&
           activeSection !== 'Story Time' &&

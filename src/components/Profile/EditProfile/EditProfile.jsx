@@ -143,7 +143,7 @@ const EditProfile = ({ user, onBack, onSave }) => {
       {/* Header */}
       <div className="edit-profile-header">
         <button className="back-btn" onClick={onBack}>
-          ← Edit Profile
+          ← Back
         </button>
       </div>
 

@@ -30,7 +30,7 @@ const ChangeAvatar = ({ onBack, onSave, currentAvatar }) => {
           className="flex items-center gap-2 text-lg font-medium text-gray-800 hover:text-gray-600 transition-colors"
         >
           <span className="text-2xl">←</span>
-          <span>Change avatar</span>
+          <span>Back</span>
         </button>
         <button 
           onClick={handleSave}
