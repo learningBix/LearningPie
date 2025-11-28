@@ -8,7 +8,8 @@ export const getBlobUrl = (path) => {
   if (!path) return null;
   const trimmed = String(path).trim();
   if (trimmed === '') return null;
-  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  // Keep absolute URLs, blob URIs and data URIs as-is
+  if (/^(https?:\/\/|blob:|data:)/i.test(trimmed)) return trimmed;
 
   // If path contains folder segments, use the filename only for blob URL
   const filename = trimmed.split('/').pop();
