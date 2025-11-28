@@ -224,8 +224,11 @@ const Dashboard = ({ user, onLogout }) => {
     { id: 5, title: 'Bonus Sessions', icon: '⭐', color: '#42A5F5', section: 'Bonus Sessions' },
     { id: 6, title: 'Story Time', icon: '📖', color: '#EF5350', section: 'Story Time' },
     { id: 7, title: 'Rhyme Time', icon: '🎵', color: '#AB47BC', section: 'Rhyme Time' },
-    { id: 8, title: 'Invite & Earn', icon: '🔗', color: '#66BB6A', section: 'Invite & Earn' },
-    { id: 9, title: 'Community', icon: '👥', color: '#29B6F6', section: 'Community' }
+    { id: 8, title: 'Parent Section', icon: '👨‍👩‍👧', color: '#E91E63', section: 'Parent Section' },
+    { id: 9, title: 'Mythological Tales', icon: '👼', color: '#9C27B0', section: 'Mythological Tales' },
+    { id: 10, title: 'Hindi Sessions', icon: '💻', color: '#00BCD4', section: 'Hindi Sessions' },
+    { id: 11, title: 'Invite & Earn', icon: '🔗', color: '#66BB6A', section: 'Invite & Earn' },
+    { id: 12, title: 'Community', icon: '👥', color: '#29B6F6', section: 'Community' }
   ];
 
   const sidebarItems = [
