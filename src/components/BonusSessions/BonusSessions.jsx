@@ -241,7 +241,7 @@ const loadQuarters = async () => {
   } finally {
     setLoading(false);
   }
-};
+};``
   const parseDescriptionSections = (descriptionHtml) => {
     if (!descriptionHtml) return { curriculum: '', activityBox: '', moreFromLearningPie: '' };
     return {
