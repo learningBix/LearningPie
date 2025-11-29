@@ -341,8 +341,9 @@ export const recordedClassesAPI = {
       type 
     });
   },
-  viewCourseInfo: ({ quarter_id, user_id, sid = '' } = {}) => {
-    return apiCall('/student_view_course_info', { quarter_id, user_id, sid });
+  // NEW METHOD - Add this
+  viewCourseInfo: ({ id, student_id } = {}) => {
+    return apiCall('/student_view_course_info', { id, student_id });
   },
   getSessionDetails: ({ session_id, user_id, sid = '' } = {}) => {
     return apiCall('/student_view_session_details', { session_id, user_id, sid });
