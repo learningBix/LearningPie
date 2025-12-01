@@ -10,11 +10,13 @@ import StoryTime from '../StoryTime/StoryTime';
 import MyCourses from '../MyCourses/MyCourses';
 import RecordedClasses from '../RecordedClasses/RecordedClasses';
 import BonusSessions from '../BonusSessions/BonusSessions';
-import LiveClass from '../LiveClass/LiveClass';
+import LiveClass from '../LiveClasses/LiveClass';
 import logoPie from '../../assets/logo-pie.png';
 import Community from '../Community/Community';
 import Invite from '../invite/invite';
 import Profile from '../Profile/Profile';
+
+
 
 const Dashboard = ({ user, onLogout }) => {
   // Initialize activeSection from localStorage or default to 'Dashboard'
@@ -474,6 +476,8 @@ const Dashboard = ({ user, onLogout }) => {
             <HindiSessions />
           ) : activeSection === 'Community' ? (
             <Community user={user} />
+          ) : activeSection === 'Live Class' ? (
+            <LiveClass />
           ) : activeSection === 'Invite & Earn' ? (
             <Invite />
           ) : (

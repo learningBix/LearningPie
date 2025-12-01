@@ -275,6 +275,94 @@ const loadQuarters = async () => {
       .trim();
   };
 
+  // UPDATE: Add this helper function at the top of BonusSessions component (after state declarations)
+
+const calculateUnlockedBonusVideoIndex = (courseStartDate) => {
+  if (!courseStartDate) return 0;
+  
+  const today = new Date();
+  const start = new Date(courseStartDate);
+  const diffTime = Math.abs(today - start);
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  
+  // Count only Tue/Thu (Bonus Session days)
+  let bonusSessionCount = 0;
+  
+  for (let i = 0; i <= diffDays; i++) {
+    const checkDate = new Date(courseStartDate);
+    checkDate.setDate(checkDate.getDate() + i);
+    const dayOfWeek = checkDate.getDay();
+    
+    // Tuesday (2), Thursday (4)
+    if ([2, 4].includes(dayOfWeek)) {
+      bonusSessionCount++;
+    }
+  }
+  
+  return bonusSessionCount; // This is how many videos should be unlocked
+};
+
+// UPDATE: Modify loadQuarterSessions function to include lock/unlock logic
+
+const loadQuarterSessions = async (chapterId) => {
+  const studentId = user?.id || userData?.id || userData?.student_id;
+  const response = await recordedClassesAPI.viewChapterLessonsInfo({ 
+    course_chapter_id: chapterId.toString(),
+    student_id: studentId,
+    type: '1'
+  });
+  
+  if (response.success && response.raw?.lessons) {
+    // Get course_start_date to calculate unlocked videos
+    let unlockedCount = response.raw.lessons.length; // Default: all unlocked
+    
+    try {
+      const sid = user?.sid || userData?.sid || localStorage.getItem('sid') || sessionStorage.getItem('sid');
+      if (sid) {
+        const subscriptionRes = await subjectsAPI.checkStudentSubscription(sid);
+        if (subscriptionRes.success && subscriptionRes.data?.[0]?.course_start_date) {
+          const courseStartDate = subscriptionRes.data[0].course_start_date;
+          unlockedCount = calculateUnlockedBonusVideoIndex(courseStartDate);
+          console.log('🔓 [Bonus] Unlocked videos count:', unlockedCount);
+        }
+      }
+    } catch (err) {
+      console.warn('⚠️ [Bonus] Could not determine unlock status:', err);
+    }
+    
+    const mappedSessions = response.raw.lessons.map((lesson, index) => {
+      const content = lesson.content?.[0] || null;
+      const isLocked = index >= unlockedCount; // Lock videos beyond unlocked count
+      
+      return {
+        id: lesson.id,
+        title: lesson.lesson_title,
+        thumbnail: getBlobUrl(lesson.image),
+        videoUrl: content?.video_url || '',
+        description: content ? formatRichText(content.class_description) : '',
+        requirement: content ? formatRichText(content.class_requirement) : '',
+        isLocked: isLocked,
+        index: index
+      };
+    });
+    setSessions(mappedSessions);
+  }
+};
+
+// UPDATE: Modify handleSessionClick to check if video is locked
+
+const handleSessionClick = (session) => {
+  if (session.isLocked) {
+    alert('This video is locked. It will be unlocked after the live class.');
+    return;
+  }
+  
+  setSelectedSession(session);
+  setHasTrackedVideo(false);
+};
+
+// Session card lock/unlock overlay is implemented in the sessions.map below
+
   const handleQuarterClick = async (quarter) => {
     // Check if quarter is locked
     if (quarter.isLocked) {
@@ -308,29 +396,7 @@ const loadQuarters = async () => {
     }
   };
 
-  const loadQuarterSessions = async (chapterId) => {
-    const studentId = user?.id || userData?.id || userData?.student_id;
-    const response = await recordedClassesAPI.viewChapterLessonsInfo({ 
-      course_chapter_id: chapterId.toString(),
-      student_id: studentId,
-      type: '1'
-    });
-    
-    if (response.success && response.raw?.lessons) {
-      const mappedSessions = response.raw.lessons.map((lesson) => {
-        const content = lesson.content?.[0] || null;
-        return {
-          id: lesson.id,
-          title: lesson.lesson_title,
-          thumbnail: getBlobUrl(lesson.image),
-          videoUrl: content?.video_url || '',
-          description: content ? formatRichText(content.class_description) : '',
-          requirement: content ? formatRichText(content.class_requirement) : ''
-        };
-      });
-      setSessions(mappedSessions);
-    }
-  };
+  // Duplicate simple loadQuarterSessions removed; keep the unlock-aware version defined above
 
   const loadPixSessions = async (type) => {
     const ageGroupId = userData?.age_group_id || user?.age_group_id || 47;
@@ -361,10 +427,7 @@ const loadQuarters = async () => {
     }
   };
 
-  const handleSessionClick = (session) => {
-    setSelectedSession(session);
-    setHasTrackedVideo(false);
-  };
+  // Duplicate simple handleSessionClick removed; keep the lock-aware version defined above
 
   useEffect(() => {
     if (selectedSession?.videoUrl && !hasTrackedVideo && onVideoWatch) {
@@ -536,7 +599,19 @@ const loadQuarters = async () => {
         ) : (
           <div className="sessions-container grid grid-cols-1 md:grid-cols-3 gap-6 mt-5 max-w-[1400px] mx-auto">
             {sessions.map((session) => (
-              <div key={session.id} className="session-card bg-white rounded-lg overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.1)] border border-[#e0e0e0] transition-all duration-300 cursor-pointer flex flex-col hover:-translate-y-1 hover:shadow-[0_6px_20px_rgba(0,0,0,0.15)]" onClick={() => handleSessionClick(session)}>
+              <div key={session.id} className={`session-card bg-white rounded-lg overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.1)] border border-[#e0e0e0] transition-all duration-300 cursor-pointer flex flex-col hover:-translate-y-1 hover:shadow-[0_6px_20px_rgba(0,0,0,0.15)] relative ${session.isLocked ? 'opacity-60' : ''}`} onClick={() => handleSessionClick(session)}>
+                {/* Lock Icon Overlay */}
+                {session.isLocked && (
+                  <div className="absolute top-4 right-4 z-10 bg-white rounded-full p-3 shadow-lg">
+                    <FaLock className="text-[#FF8C42] text-2xl" />
+                  </div>
+                )}
+                {/* Unlock Icon for unlocked sessions */}
+                {!session.isLocked && (
+                  <div className="absolute top-4 right-4 z-10 bg-green-100 rounded-full p-3 shadow-md">
+                    <FaUnlock className="text-green-600 text-2xl" />
+                  </div>
+                )}
                 <div className="session-video-thumbnail w-full h-[200px] relative bg-[#f5f0e8] overflow-hidden">
                   <div className="video-player-background w-full h-full relative flex items-center justify-center">
                     <div className="video-books-left absolute top-1/2 -translate-y-1/2 left-[8%] flex flex-col gap-1 z-[1]"></div>
@@ -587,6 +662,9 @@ const loadQuarters = async () => {
                 </div>
                 <div className="p-5 flex flex-col bg-white">
                   <h3 className="text-base font-semibold text-black m-0 leading-normal">{session.title}</h3>
+                  {session.isLocked && (
+                    <p className="text-xs text-[#FF8C42] mt-2 font-semibold">🔒 Unlocks after live class</p>
+                  )}
                 </div>
               </div>
             ))}
