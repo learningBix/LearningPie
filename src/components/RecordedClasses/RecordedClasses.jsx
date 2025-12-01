@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { recordedClassesAPI } from '../../services/apiService';
+import { FaLock, FaUnlock } from 'react-icons/fa';
+import { recordedClassesAPI, subjectsAPI } from '../../services/apiService';
 import { BLOB_BASE_URL } from '../../config/api';
 import './RecordedClasses.css';
 import buyTerm3Image from '../../assets/buy_term3.jpeg';
@@ -15,6 +16,7 @@ const RecordedClasses = ({ user = {}, userData = {}, onVideoWatch }) => {
   const [showPlanSelection, setShowPlanSelection] = useState(false);
   const [planData, setPlanData] = useState(null);
   const [hasTrackedVideo, setHasTrackedVideo] = useState(false);
+  const [subscribedChapters, setSubscribedChapters] = useState([]);
 
   useEffect(() => {
     loadQuarters();
@@ -26,6 +28,129 @@ const RecordedClasses = ({ user = {}, userData = {}, onVideoWatch }) => {
       setHasTrackedVideo(true);
     }
   }, [sessionDetails, hasTrackedVideo, onVideoWatch]);
+
+  // UPDATE: Add this helper function at the top of RecordedClasses component (after state declarations)
+
+const calculateUnlockedVideoIndex = (courseStartDate) => {
+  if (!courseStartDate) return 0;
+  
+  const today = new Date();
+  const start = new Date(courseStartDate);
+  const diffTime = Math.abs(today - start);
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  
+  // Count only Mon/Wed/Fri (Recorded Class days)
+  let recordedClassCount = 0;
+  
+  for (let i = 0; i <= diffDays; i++) {
+    const checkDate = new Date(courseStartDate);
+    checkDate.setDate(checkDate.getDate() + i);
+    const dayOfWeek = checkDate.getDay();
+    
+    // Monday (1), Wednesday (3), Friday (5)
+    if ([1, 3, 5].includes(dayOfWeek)) {
+      recordedClassCount++;
+    }
+  }
+  
+  return recordedClassCount; // This is how many videos should be unlocked
+};
+
+// UPDATE: Modify loadQuarterSessions function to include lock/unlock logic
+
+const loadQuarterSessions = async (quarterId) => {
+  setLoadingSessions(true);
+  try {
+    const response = await recordedClassesAPI.viewChapterLessonsInfo({ 
+      course_chapter_id: quarterId.toString(),
+      student_id: user?.id || userData?.id || userData?.student_id,
+      type: '0'
+    });
+    
+    if (response.success && response.raw) {
+      const chapterData = response.raw.data?.[0];
+      const lessons = response.raw.lessons || [];
+      
+      if (chapterData && selectedQuarter) {
+        setSelectedQuarter({
+          ...selectedQuarter,
+          title: chapterData.chapter_title || selectedQuarter.title,
+          description: chapterData.chapter_description || selectedQuarter.description,
+          image: constructImageUrl(chapterData.image) || selectedQuarter.image
+        });
+      }
+      
+      // Get course_start_date to calculate unlocked videos
+      let unlockedCount = lessons.length; // Default: all unlocked
+      
+      try {
+        const sid = user?.sid || userData?.sid || localStorage.getItem('sid') || sessionStorage.getItem('sid');
+        if (sid) {
+          const subscriptionRes = await subjectsAPI.checkStudentSubscription(sid);
+          if (subscriptionRes.success && subscriptionRes.data?.[0]?.course_start_date) {
+            const courseStartDate = subscriptionRes.data[0].course_start_date;
+            unlockedCount = calculateUnlockedVideoIndex(courseStartDate);
+            console.log('🔓 Unlocked videos count:', unlockedCount);
+          }
+        }
+      } catch (err) {
+        console.warn('⚠️ Could not determine unlock status:', err);
+      }
+      
+      const mappedSessions = lessons.map((lesson, index) => {
+        const content = lesson.content?.[0];
+        const imageSource = content?.image || lesson.image;
+        const isLocked = index >= unlockedCount; // Lock videos beyond unlocked count
+        
+        return {
+          id: lesson.id,
+          title: lesson.lesson_title,
+          thumbnail: constructImageUrl(imageSource),
+          videoUrl: content?.video_url || '',
+          duration: lesson.duration || '',
+          description: lesson.lesson_description || content?.class_description || '',
+          requirement: lesson.requirements || content?.class_requirement || '',
+          content,
+          isLocked: isLocked,
+          index: index
+        };
+      });
+      
+      setSessions(mappedSessions);
+    } else {
+      setSessions([]);
+    }
+  } catch (error) {
+    console.error('Error fetching sessions:', error);
+    setSessions([]);
+  } finally {
+    setLoadingSessions(false);
+  }
+};
+
+// UPDATE: Modify handleSessionClick to check if video is locked
+
+const handleSessionClick = (session) => {
+  if (session.isLocked) {
+    alert('This video is locked. It will be unlocked after the live class.');
+    return;
+  }
+  
+  setSelectedSession(session);
+  setSessionDetails(null);
+  setHasTrackedVideo(false);
+  
+  const content = session.content || {};
+  setSessionDetails({
+    id: session.id,
+    title: session.title,
+    videoUrl: session.videoUrl || content.video_url || '',
+    description: formatRichText(session.description || content.class_description || ''),
+    requirement: formatRichText(session.requirement || content.class_requirement || '')
+  });
+};
+
+// Session card lock/unlock overlay will be rendered inside the actual sessions.map below
 
   const constructImageUrl = (imagePath) => {
     if (!imagePath) return null;
@@ -60,11 +185,68 @@ const RecordedClasses = ({ user = {}, userData = {}, onVideoWatch }) => {
     };
   };
 
+  const fetchSubscribedChapters = async () => {
+    try {
+      const studentId = user?.id || userData?.id || userData?.student_id;
+      const courseId = '82'; // Junior KG - Term 1 course ID
+      
+      console.log('🔍 Fetching subscribed chapters for student:', studentId, 'course:', courseId);
+      // No-op: fetchSubscribedChapters only fetches the chapter IDs to find locked-unlocked state
+      
+      const response = await recordedClassesAPI.viewCourseInfo({
+        id: courseId,
+        student_id: studentId
+      });
+
+      console.log('📥 Subscribed chapters response:', response);
+
+      if (response.success && response.raw?.data?.[0]?.chapters) {
+        const chapterIds = response.raw.data[0].chapters.map(ch => ch.id.toString());
+        console.log('✅ Subscribed chapter IDs:', chapterIds);
+        setSubscribedChapters(chapterIds);
+        return chapterIds;
+      }
+      
+      console.log('⚠️ No chapters found in response');
+      return [];
+    } catch (error) {
+      console.error('❌ Error fetching subscribed chapters:', error);
+      return [];
+    }
+  };
+
   const loadQuarters = async () => {
     setLoading(true);
     try {
       const studentId = user?.id || userData?.id || userData?.student_id;
       const ageGroupId = userData?.age_group_id || user?.age_group_id || 47;
+      
+      console.log('📊 Loading quarters for student:', studentId);
+      
+      // Fetch subscribed chapters and selected terms first
+      const subscribed = await fetchSubscribedChapters();
+      // Also call check_student_subscription to know selected terms (term 1/2)
+      let chosenTerms = { term1: false, term2: false };
+      try {
+        const sid = user?.sid || userData?.sid || localStorage.getItem('sid') || sessionStorage.getItem('sid');
+        if (sid) {
+          const subscriptionRes = await subjectsAPI.checkStudentSubscription(sid);
+          if (subscriptionRes.success && Array.isArray(subscriptionRes.data)) {
+            subscriptionRes.data.forEach(s => {
+              const courseName = (s.course_name || s.course || '').toString().toLowerCase();
+              const courseIdSub = s.course_id || s.courseId || s.courseid || s.course || '';
+              if (courseName.includes('term 1') || courseName.includes('term1') || String(courseIdSub) === '82') {
+                chosenTerms.term1 = true;
+              }
+              if (courseName.includes('term 2') || courseName.includes('term2')) {
+                chosenTerms.term2 = true;
+              }
+            });
+          }
+        }
+      } catch (err) {
+        console.warn('⚠️ Unable to determine chosen terms:', err);
+      }
       
       const [term1Response, term2Response, term3Response] = await Promise.all([
         recordedClassesAPI.viewChapterLessonsInfo({ 
@@ -85,28 +267,40 @@ const RecordedClasses = ({ user = {}, userData = {}, onVideoWatch }) => {
 
       const quartersList = [];
 
+      // Quarter 1
       if (term1Response.success && term1Response.raw?.data?.[0]) {
         const chapterData = term1Response.raw.data[0];
+        const isLocked = !(chosenTerms.term1 || subscribed.includes('521'));
+        console.log('Quarter 1 - isLocked:', isLocked, 'subscribed:', subscribed);
+        // If the user selected specific terms: if no term is selected show all as before;
+        // if a term selection exists, we'll only add fields that match selected term(s)
+        // actual filtering happens later in the function using chosenTerms
         quartersList.push({
           id: '521',
           title: chapterData.chapter_title || 'Quarter 1',
           image: constructImageUrl(chapterData.image),
           description: chapterData.chapter_description || '',
-          isPurchasable: false
+          isPurchasable: false,
+          isLocked: isLocked
         });
       }
 
+      // Quarter 2
       if (term2Response.success && term2Response.raw?.data?.[0]) {
         const chapterData = term2Response.raw.data[0];
+        const isLocked = !(chosenTerms.term2 || subscribed.includes('790'));
+        console.log('Quarter 2 - isLocked:', isLocked, 'subscribed:', subscribed);
         quartersList.push({
           id: '790',
           title: chapterData.chapter_title || 'Quarter 2',
           image: constructImageUrl(chapterData.image),
           description: chapterData.chapter_description || '',
-          isPurchasable: false
+          isPurchasable: false,
+          isLocked: isLocked
         });
       }
 
+      // Quarter 3 (Buy option)
       const term3Data = term3Response.raw?.data || term3Response.data || [];
       if (term3Response.success && term3Data.length > 0) {
         const course = term3Data[0];
@@ -116,6 +310,7 @@ const RecordedClasses = ({ user = {}, userData = {}, onVideoWatch }) => {
           image: buyTerm3Image,
           description: course.description || course.course_detail || '',
           isPurchasable: true,
+          isLocked: false,
           courseData: {
             amount: course.amount,
             fake_price: course.fake_price,
@@ -130,66 +325,37 @@ const RecordedClasses = ({ user = {}, userData = {}, onVideoWatch }) => {
         });
       }
 
-      setQuarters(quartersList);
+      // Filter quarters based on chosenTerms if any selection exists
+      const filteredQuarters = (() => {
+        const hasSelection = chosenTerms.term1 || chosenTerms.term2;
+        if (!hasSelection) return quartersList;
+        return quartersList.filter(q => {
+          if (q.id === '521' && chosenTerms.term1) return true;
+          if (q.id === '790' && chosenTerms.term2) return true;
+          if (q.isPurchasable) return true; // keep buy option visible always
+          return false;
+        });
+      })();
+
+      console.log('✅ Quarters loaded:', filteredQuarters, 'chosenTerms:', chosenTerms);
+      setQuarters(filteredQuarters);
     } catch (error) {
-      console.error('Error fetching quarters:', error);
+      console.error('❌ Error fetching quarters:', error);
       setQuarters([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const loadQuarterSessions = async (quarterId) => {
-    setLoadingSessions(true);
-    try {
-      const response = await recordedClassesAPI.viewChapterLessonsInfo({ 
-        course_chapter_id: quarterId.toString(),
-        student_id: user?.id || userData?.id || userData?.student_id,
-        type: '0'
-      });
-      
-      if (response.success && response.raw) {
-        const chapterData = response.raw.data?.[0];
-        const lessons = response.raw.lessons || [];
-        
-        if (chapterData && selectedQuarter) {
-          setSelectedQuarter({
-            ...selectedQuarter,
-            title: chapterData.chapter_title || selectedQuarter.title,
-            description: chapterData.chapter_description || selectedQuarter.description,
-            image: constructImageUrl(chapterData.image) || selectedQuarter.image
-          });
-        }
-        
-        const mappedSessions = lessons.map((lesson) => {
-          const content = lesson.content?.[0];
-          const imageSource = content?.image || lesson.image;
-          
-          return {
-            id: lesson.id,
-            title: lesson.lesson_title,
-            thumbnail: constructImageUrl(imageSource),
-            videoUrl: content?.video_url || '',
-            duration: lesson.duration || '',
-            description: lesson.lesson_description || content?.class_description || '',
-            requirement: lesson.requirements || content?.class_requirement || '',
-            content
-          };
-        });
-        
-        setSessions(mappedSessions);
-      } else {
-        setSessions([]);
-      }
-    } catch (error) {
-      console.error('Error fetching sessions:', error);
-      setSessions([]);
-    } finally {
-      setLoadingSessions(false);
-    }
-  };
+  // Duplicate simple loadQuarterSessions removed; keep the unlock-aware version above
 
   const handleQuarterClick = (quarter) => {
+    // Check if quarter is locked
+    if (quarter.isLocked) {
+      alert('This quarter is locked. Please subscribe to access the content.');
+      return;
+    }
+
     if (quarter.isPurchasable) {
       if (!quarter.courseData) return;
       
@@ -214,20 +380,7 @@ const RecordedClasses = ({ user = {}, userData = {}, onVideoWatch }) => {
     }
   };
 
-  const handleSessionClick = (session) => {
-    setSelectedSession(session);
-    setSessionDetails(null);
-    setHasTrackedVideo(false);
-    
-    const content = session.content || {};
-    setSessionDetails({
-      id: session.id,
-      title: session.title,
-      videoUrl: session.videoUrl || content.video_url || '',
-      description: formatRichText(session.description || content.class_description || ''),
-      requirement: formatRichText(session.requirement || content.class_requirement || '')
-    });
-  };
+  // Duplicate simple handleSessionClick removed; keep the lock-aware version defined above
 
   const handleBackClick = () => {
     if (selectedSession) {
@@ -389,7 +542,19 @@ const RecordedClasses = ({ user = {}, userData = {}, onVideoWatch }) => {
         ) : (
           <div className="sessions-container grid grid-cols-1 md:grid-cols-3 gap-6 mt-5 max-w-[1400px] mx-auto">
             {sessions.map((session) => (
-              <div key={session.id} className="session-card bg-white rounded-lg overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.1)] border border-[#e0e0e0] transition-all duration-300 cursor-pointer flex flex-col hover:-translate-y-1 hover:shadow-[0_6px_20px_rgba(0,0,0,0.15)]" onClick={() => handleSessionClick(session)}>
+              <div key={session.id} className={`session-card bg-white rounded-lg overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.1)] border border-[#e0e0e0] transition-all duration-300 cursor-pointer flex flex-col hover:-translate-y-1 hover:shadow-[0_6px_20px_rgba(0,0,0,0.15)] relative ${session.isLocked ? 'opacity-60' : ''}`} onClick={() => handleSessionClick(session)}>
+                {/* Lock Icon Overlay */}
+                {session.isLocked && (
+                  <div className="absolute top-4 right-4 z-10 bg-white rounded-full p-3 shadow-lg">
+                    <FaLock className="text-[#FF8C42] text-2xl" />
+                  </div>
+                )}
+                {/* Unlock Icon for unlocked sessions */}
+                {!session.isLocked && (
+                  <div className="absolute top-4 right-4 z-10 bg-green-100 rounded-full p-3 shadow-md">
+                    <FaUnlock className="text-green-600 text-2xl" />
+                  </div>
+                )}
                 <div className="session-video-thumbnail w-full h-[200px] relative bg-[#f5f0e8] overflow-hidden">
                   <div className="video-player-background w-full h-full relative flex items-center justify-center">
                     <div className="video-books-left absolute top-1/2 -translate-y-1/2 left-[8%] flex flex-col gap-1 z-[1]"></div>
@@ -440,6 +605,9 @@ const RecordedClasses = ({ user = {}, userData = {}, onVideoWatch }) => {
                 </div>
                 <div className="p-5 flex flex-col bg-white">
                   <h3 className="text-base font-semibold text-black m-0 leading-normal">{session.title}</h3>
+                  {session.isLocked && (
+                    <p className="text-xs text-[#FF8C42] mt-2 font-semibold">🔒 Unlocks after live class</p>
+                  )}
                 </div>
               </div>
             ))}
@@ -466,9 +634,25 @@ const RecordedClasses = ({ user = {}, userData = {}, onVideoWatch }) => {
           {quarters.map((quarter) => (
             <div 
               key={quarter.id} 
-              className={`quarter-card bg-white rounded-lg overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.1)] cursor-pointer transition-all duration-300 flex flex-col border border-[#e0e0e0] min-h-full hover:-translate-y-1 hover:shadow-[0_6px_20px_rgba(0,0,0,0.15)] ${quarter.isPurchasable ? 'purchasable' : ''}`}
+              className={`quarter-card bg-white rounded-lg overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.1)] cursor-pointer transition-all duration-300 flex flex-col border border-[#e0e0e0] min-h-full relative hover:-translate-y-1 hover:shadow-[0_6px_20px_rgba(0,0,0,0.15)] ${
+                quarter.isLocked ? 'opacity-60' : ''
+              } ${quarter.isPurchasable ? 'purchasable' : ''}`}
               onClick={() => handleQuarterClick(quarter)}
             >
+              {/* Lock Icon Overlay */}
+              {quarter.isLocked && (
+                <div className="absolute top-4 right-4 z-10 bg-white rounded-full p-3 shadow-lg">
+                  <FaLock className="text-[#FF8C42] text-2xl" />
+                </div>
+              )}
+              
+              {/* Unlock Icon for unlocked quarters */}
+              {!quarter.isLocked && !quarter.isPurchasable && (
+                <div className="absolute top-4 right-4 z-10 bg-green-100 rounded-full p-3 shadow-md">
+                  <FaUnlock className="text-green-600 text-2xl" />
+                </div>
+              )}
+
               <div className={`quarter-image-container w-full h-[180px] bg-white flex items-start justify-start overflow-hidden relative flex-shrink-0 p-0 box-border ${!quarter.isPurchasable ? 'p-4 border-b border-[#e0e0e0]' : ''}`}>
                 {quarter.image ? (
                   <img src={quarter.image} alt={quarter.title} className="w-full h-full object-cover" />
@@ -480,6 +664,12 @@ const RecordedClasses = ({ user = {}, userData = {}, onVideoWatch }) => {
                 <h3 className="text-2xl font-bold text-[#333] m-0 leading-tight">{quarter.title}</h3>
                 {!quarter.isPurchasable && quarter.description && (
                   <p className="text-sm text-[#666] leading-normal m-0 font-normal">{quarter.description}</p>
+                )}
+                
+                {quarter.isLocked && (
+                  <div className="mt-2 text-sm text-[#FF8C42] font-semibold">
+                    🔒 Subscribe to unlock
+                  </div>
                 )}
               </div>
             </div>
