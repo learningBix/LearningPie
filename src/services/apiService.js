@@ -151,6 +151,13 @@ export const profileAPI = {
     };
     return apiCall('/update_student_profile', payload);
   },
+  changePassword: ({ sid, currentPassword, newPassword }) => {
+    return apiCall('/change_password', {
+      sid,
+      current_password: currentPassword,
+      password: newPassword
+    });
+  },
 };
 
 /**

@@ -38,6 +38,16 @@ const EditProfile = ({ user, onBack, onSave }) => {
 
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    oldPassword: '',
+    newPassword: ''
+  });
+  const [passwordErrors, setPasswordErrors] = useState({
+    oldPassword: '',
+    newPassword: ''
+  });
+  const [passwordLoading, setPasswordLoading] = useState(false);
 
   // Map numeric gender to text value
   const mapNumericToGender = (gender) => {
@@ -95,6 +105,17 @@ const EditProfile = ({ user, onBack, onSave }) => {
     setSuccessMessage('');
 
     try {
+      // Safely resolve the correct student ID (some payloads use different keys)
+      const studentId =
+        user?.id ||
+        user?.student_id ||
+        user?.user_id;
+
+      if (!studentId) {
+        alert('Unable to identify student ID. Please re-login and try again.');
+        return;
+      }
+
       // Prepare payload with proper field mappings
       const payload = {
         name: formData.name,
@@ -108,7 +129,7 @@ const EditProfile = ({ user, onBack, onSave }) => {
         state: formData.state || ''
       };
 
-      const response = await profileAPI.updateProfile(user.id, payload);
+      const response = await profileAPI.updateProfile(studentId, payload);
 
       if (response.success || response.raw?.replyCode === 'success') {
         setSuccessMessage('Profile updated successfully!');
@@ -135,6 +156,72 @@ const EditProfile = ({ user, onBack, onSave }) => {
       alert('An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePasswordInputChange = (e) => {
+    const { name, value } = e.target;
+    setPasswordForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    setPasswordErrors(prev => ({
+      ...prev,
+      [name]: ''
+    }));
+  };
+
+  const validatePasswordForm = () => {
+    const errors = {};
+    if (!passwordForm.oldPassword.trim()) {
+      errors.oldPassword = 'This Field is required';
+    }
+    if (!passwordForm.newPassword.trim()) {
+      errors.newPassword = 'This Field is required';
+    }
+    setPasswordErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handlePasswordSubmit = async (e) => {
+    e.preventDefault();
+    if (!validatePasswordForm()) return;
+
+    const sid =
+      user?.sid ||
+      localStorage.getItem('sid') ||
+      sessionStorage.getItem('sid');
+
+    if (!sid) {
+      alert('Unable to identify session. Please re-login and try again.');
+      return;
+    }
+
+    try {
+      setPasswordLoading(true);
+      const response = await profileAPI.changePassword({
+        sid,
+        currentPassword: passwordForm.oldPassword,
+        newPassword: passwordForm.newPassword
+      });
+
+      if (response.success || response.raw?.replyCode === 'success') {
+        alert('Password changed successfully.');
+        setShowChangePasswordModal(false);
+        setPasswordForm({ oldPassword: '', newPassword: '' });
+        setPasswordErrors({ oldPassword: '', newPassword: '' });
+      } else {
+        const msg =
+          response.message ||
+          response.raw?.replyMsg ||
+          'Unable to change password. Please try again.';
+        alert(msg);
+      }
+    } catch (error) {
+      console.error('Error changing password:', error);
+      alert('An unexpected error occurred. Please try again.');
+    } finally {
+      setPasswordLoading(false);
     }
   };
 
@@ -316,16 +403,76 @@ const EditProfile = ({ user, onBack, onSave }) => {
             <button 
               type="button" 
               className="change-password-link"
-              onClick={() => alert('Change password functionality coming soon!')}
+              onClick={() => setShowChangePasswordModal(true)}
             >
               Click here to Change Password
             </button>
           </div>
         </form>
       </div>
+
+      {/* Change Password Modal */}
+      {showChangePasswordModal && (
+        <div className="change-password-modal-overlay">
+          <div className="change-password-modal">
+            <button
+              className="change-password-modal-close"
+              onClick={() => setShowChangePasswordModal(false)}
+            >
+              ×
+            </button>
+            <h2 className="change-password-title">Change Password</h2>
+            <form onSubmit={handlePasswordSubmit} className="change-password-form">
+              <div className="change-password-fields">
+                <div className="change-password-field">
+                  <label htmlFor="oldPassword">Old Password</label>
+                  <input
+                    type="password"
+                    id="oldPassword"
+                    name="oldPassword"
+                    value={passwordForm.oldPassword}
+                    onChange={handlePasswordInputChange}
+                  />
+                  {passwordErrors.oldPassword && (
+                    <span className="change-password-error">{passwordErrors.oldPassword}</span>
+                  )}
+                </div>
+                <div className="change-password-field">
+                  <label htmlFor="newPassword">New Password</label>
+                  <input
+                    type="password"
+                    id="newPassword"
+                    name="newPassword"
+                    value={passwordForm.newPassword}
+                    onChange={handlePasswordInputChange}
+                  />
+                  {passwordErrors.newPassword && (
+                    <span className="change-password-error">{passwordErrors.newPassword}</span>
+                  )}
+                </div>
+              </div>
+              <div className="change-password-actions">
+                <button
+                  type="button"
+                  className="change-password-close-btn"
+                  onClick={() => setShowChangePasswordModal(false)}
+                >
+                  Close
+                </button>
+                <button
+                  type="submit"
+                  className="change-password-save-btn"
+                  disabled={passwordLoading}
+                >
+                  {passwordLoading ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 export default EditProfile;
-

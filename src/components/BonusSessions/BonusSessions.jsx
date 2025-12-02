@@ -440,48 +440,50 @@ const handleSessionClick = (session) => {
   // Video detail view
   if (selectedSession) {
     return (
-      <div className="p-[30px_40px] min-h-screen bg-white sm:p-5">
-        <div className="flex items-center justify-between gap-5 mb-[30px] sm:flex-col sm:items-start sm:gap-4">
-          <h1 className="text-[28px] font-bold text-[#333] m-0 flex-1 sm:text-2xl sm:w-full">{selectedSession.title}</h1>
-          <button
-            className="bonus-back-button"
-            onClick={handleBack}
-          >
-            Back
-          </button>
+      <div className="p-8 min-h-screen bg-white max-w-full">
+        <button
+          className="bonus-back-button"
+          onClick={handleBack}
+        >
+          Back
+        </button>
+        <div className="max-w-[1400px] mx-auto mb-8">
+          <h1 className="text-[32px] font-bold text-[#333] m-0 leading-tight">
+            {selectedSession.title}
+          </h1>
         </div>
-        <div className="flex gap-10 items-start lg:flex-col">
+        <div className="session-detail-container flex flex-col md:flex-row gap-10 mt-0 items-start max-w-[1400px] mx-auto">
           <div className="flex-1 min-w-0">
-            <div className="w-full aspect-video bg-black rounded-lg overflow-hidden shadow-[0_4px_12px_rgba(0,0,0,0.15)]">
+            <div className="w-full aspect-video bg-black rounded-lg overflow-hidden flex items-center justify-center shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
               {selectedSession.videoUrl ? (
                 <iframe
                   src={selectedSession.videoUrl}
-                  title={selectedSession.title}
                   className="w-full h-full border-none"
-                  allow="autoplay; fullscreen; picture-in-picture"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
-                />
+                  title={selectedSession.title}
+                  frameBorder="0"
+                ></iframe>
               ) : (
-                <div className="text-white text-center p-5 flex flex-col items-center justify-center h-full gap-2.5">
-                  <p>Video not available</p>
+                <div className="text-white text-center p-5">
+                  <p className="my-2.5 text-sm text-[#ccc]">Video player will be displayed here</p>
+                  <p className="my-2.5 text-sm text-[#ccc]">Video URL: {selectedSession.videoUrl || 'Not available'}</p>
                 </div>
               )}
             </div>
           </div>
-          <div className="flex-[0_0_400px] flex flex-col lg:flex-1 lg:w-full">
-            <div className="flex flex-col gap-6">
-              {selectedSession.description && (
-                <div className="flex flex-col gap-3">
-                  <h3 className="text-lg font-bold text-[#333] m-0">Description</h3>
-                  <p className="text-base text-[#666] leading-relaxed m-0">{formatRichText(selectedSession.description)}</p>
-                </div>
-              )}
-              {selectedSession.requirement && (
-                <div className="flex flex-col gap-3">
-                  <h3 className="text-lg font-bold text-[#333] m-0">Requirement</h3>
-                  <p className="text-base text-[#666] leading-relaxed m-0">{formatRichText(selectedSession.requirement)}</p>
-                </div>
-              )}
+          <div className="session-detail-content flex-[0_0_400px] md:flex-[0_0_400px] flex flex-col gap-8 w-full md:w-auto">
+            <div className="flex flex-col gap-3">
+              <h3 className="text-xl font-bold text-[#333] m-0 leading-tight">Description</h3>
+              <p className="text-base text-[#333] leading-relaxed m-0 whitespace-pre-line">
+                {selectedSession.description ? formatRichText(selectedSession.description) : 'No description available.'}
+              </p>
+            </div>
+            <div className="flex flex-col gap-3">
+              <h3 className="text-xl font-bold text-[#333] m-0 leading-tight">Requirement</h3>
+              <p className="text-base text-[#333] leading-relaxed m-0 whitespace-pre-line">
+                {selectedSession.requirement ? formatRichText(selectedSession.requirement) : 'No requirements specified.'}
+              </p>
             </div>
           </div>
         </div>
