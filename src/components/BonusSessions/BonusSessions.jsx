@@ -16,6 +16,15 @@ const BonusSessions = ({ user, userData, onVideoWatch }) => {
   const [selectedSession, setSelectedSession] = useState(null);
   const [hasTrackedVideo, setHasTrackedVideo] = useState(false);
   const [subscribedChapters, setSubscribedChapters] = useState([]);
+  const [showEnrollPopup, setShowEnrollPopup] = useState(false);
+
+  const handleEnrollClick = () => {
+    setShowEnrollPopup(true);
+  };
+
+  const closeEnrollPopup = () => {
+    setShowEnrollPopup(false);
+  };
 
   useEffect(() => {
     loadQuarters();
@@ -551,7 +560,7 @@ const handleSessionClick = (session) => {
       };
 
       return (
-        <div className="p-8 min-h-screen bg-white">
+        <div className="p-8 min-h-screen bg-white relative">
           <button 
             className="bonus-back-button"
             onClick={handleBack}
@@ -597,7 +606,7 @@ const handleSessionClick = (session) => {
 
                 <button 
                   className="w-full bg-[#FF8C42] text-white border-none py-4 px-6 rounded-lg text-lg font-bold cursor-pointer transition-all duration-300 mt-2.5 hover:bg-[#e67a35] hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(255,140,66,0.3)]" 
-                  onClick={() => console.log('Enroll Now clicked')}
+                  onClick={handleEnrollClick}
                 >
                   Enroll Now
                 </button>
@@ -608,6 +617,29 @@ const handleSessionClick = (session) => {
               </div>
             )}
           </div>
+
+          {showEnrollPopup && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+              <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full mx-4 p-6">
+                <h2 className="text-xl font-bold text-[#333] mb-3 text-center">Contact Admin</h2>
+                <p className="text-sm text-[#555] mb-4 text-center">
+                  To enroll, please contact the admin at{' '}
+                  <a href="mailto:contact@learningbix.com" className="text-[#FF8C42] font-semibold underline">
+                    contact@learningbix.com
+                  </a>
+                  .
+                </p>
+                <div className="mt-4 flex justify-center">
+                  <button
+                    className="px-6 border border-[#FF8C42] text-[#FF8C42] rounded-lg py-2 text-sm font-semibold hover:bg-[#FFF3EB] transition-colors"
+                    onClick={closeEnrollPopup}
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       );
     }
