@@ -36,13 +36,20 @@ const calculateUnlockedVideoIndex = (courseStartDate) => {
   
   const today = new Date();
   const start = new Date(courseStartDate);
+  
+  // Set time to midnight for accurate day calculation
+  today.setHours(0, 0, 0, 0);
+  start.setHours(0, 0, 0, 0);
+  
   const diffTime = Math.abs(today - start);
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
   
   // Count only Mon/Wed/Fri (Recorded Class days)
+  // Loop until yesterday (i < diffDays) to exclude today
+  // This ensures only videos up to yesterday are unlocked, matching what's shown in LiveClass today
   let recordedClassCount = 0;
   
-  for (let i = 0; i <= diffDays; i++) {
+  for (let i = 0; i < diffDays; i++) {
     const checkDate = new Date(courseStartDate);
     checkDate.setDate(checkDate.getDate() + i);
     const dayOfWeek = checkDate.getDay();
@@ -53,7 +60,7 @@ const calculateUnlockedVideoIndex = (courseStartDate) => {
     }
   }
   
-  return recordedClassCount; // This is how many videos should be unlocked
+  return recordedClassCount; // This is how many videos should be unlocked (up to yesterday)
 };
 
 // UPDATE: Modify loadQuarterSessions function to include lock/unlock logic
@@ -100,7 +107,32 @@ const loadQuarterSessions = async (quarterId) => {
       const mappedSessions = lessons.map((lesson, index) => {
         const content = lesson.content?.[0];
         const imageSource = content?.image || lesson.image;
-        const isLocked = index >= unlockedCount; // Lock videos beyond unlocked count
+        
+        // For Quarter 1 (id: 521), handle orientation video separately
+        // Orientation (index 0) is always unlocked, Day videos start from index 1
+        // For Quarter 2 (id: 790), all videos follow normal unlock logic
+        let isLocked = false;
+        const quarterIdStr = String(quarterId);
+        
+        if (quarterIdStr === '521') {
+          // Quarter 1: Orientation (index 0) is always unlocked
+          // Day videos (index 1+) are unlocked based on days passed (up to yesterday)
+          if (index === 0) {
+            // Orientation video - always unlocked
+            isLocked = false;
+          } else {
+            // Day videos: index 1 = Day 1, index 2 = Day 2, etc.
+            // unlockedCount represents number of Day videos unlocked (up to yesterday)
+            // So if unlockedCount = 6, unlock indices 1-6 (Day 1-6)
+            // Day 7 (index 7) should be locked
+            isLocked = index > unlockedCount;
+          }
+        } else {
+          // Quarter 2: Normal unlock logic (no orientation video)
+          // unlockedCount represents number of videos unlocked (up to yesterday)
+          // So if unlockedCount = 6, unlock indices 0-5 (Day 1-6)
+          isLocked = index >= unlockedCount;
+        }
         
         return {
           id: lesson.id,

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { profileAPI } from '../../../services/apiService';
+import { profileAPI, ageGroupsAPI } from '../../../services/apiService';
 import './EditProfile.css';
 
 const EditProfile = ({ user, onBack, onSave }) => {
@@ -26,15 +26,9 @@ const EditProfile = ({ user, onBack, onSave }) => {
     'Uttar Pradesh', 'Uttarakhand', 'West Bengal'
   ]);
 
-  const [ageGroups] = useState([
-    'Jr. KG (3.5 yr. - 4.5 yr.)',
-    'Sr. KG (4.5 yr. - 5.5 yr.)',
-    'Grade 1 (5.5 yr. - 6.5 yr.)',
-    'Grade 2 (6.5 yr. - 7.5 yr.)',
-    'Grade 3 (7.5 yr. - 8.5 yr.)',
-    'Grade 4 (8.5 yr. - 9.5 yr.)',
-    'Grade 5 (9.5 yr. - 10.5 yr.)'
-  ]);
+  // Age groups now come dynamically from backend (/age_group_list)
+  const [ageGroups, setAgeGroups] = useState([]);
+  const [ageGroupsLoading, setAgeGroupsLoading] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
@@ -48,6 +42,31 @@ const EditProfile = ({ user, onBack, onSave }) => {
     newPassword: ''
   });
   const [passwordLoading, setPasswordLoading] = useState(false);
+
+  // Load age groups from backend once on mount
+  useEffect(() => {
+    const fetchAgeGroups = async () => {
+      try {
+        setAgeGroupsLoading(true);
+        const response = await ageGroupsAPI.getAgeGroups();
+        if (response.success && Array.isArray(response.data)) {
+          const mapped = response.data.map(group => ({
+            id: String(group.id),
+            label: `${group.title} (${group.age_from} yr. - ${group.age_to} yr.)`,
+          }));
+          setAgeGroups(mapped);
+        } else {
+          console.warn('Failed to load age groups:', response);
+        }
+      } catch (error) {
+        console.error('Error fetching age groups:', error);
+      } finally {
+        setAgeGroupsLoading(false);
+      }
+    };
+
+    fetchAgeGroups();
+  }, []);
 
   // Map numeric gender to text value
   const mapNumericToGender = (gender) => {
@@ -69,7 +88,8 @@ const EditProfile = ({ user, onBack, onSave }) => {
         email: user.email || '',
         dateOfBirth: user.dateOfBirth || user.dob || '',
         schoolName: user.schoolName || user.school_name || '',
-        age: user.age || '',
+        // Prefer age_group_id; fall back to age if needed
+        age: user.age_group_id || user.age || '',
         address: user.address || '',
         parentName: user.parentName || user.parents_name || '',
         phoneNumber: user.phoneNumber || user.phone || '',
@@ -126,7 +146,11 @@ const EditProfile = ({ user, onBack, onSave }) => {
         gst: formData.gstNumber || '',
         parents_name: formData.parentName || '',
         school_name: formData.schoolName || '',
-        state: formData.state || ''
+        state: formData.state || '',
+        // Send selected age group ID to backend
+        age_group_id: formData.age || '',
+        // Keep age for backward compatibility if needed
+        age: formData.age || ''
       };
 
       const response = await profileAPI.updateProfile(studentId, payload);
@@ -302,8 +326,10 @@ const EditProfile = ({ user, onBack, onSave }) => {
                   onChange={handleInputChange}
                 >
                   <option value="">Select age group</option>
-                  {ageGroups.map((group, index) => (
-                    <option key={index} value={group}>{group}</option>
+                  {ageGroups.map((group) => (
+                    <option key={group.id} value={group.id}>
+                      {group.label}
+                    </option>
                   ))}
                 </select>
               </div>

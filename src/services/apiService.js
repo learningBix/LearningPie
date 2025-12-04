@@ -147,9 +147,40 @@ export const profileAPI = {
       gst: profileData.gst || profileData.gstNumber || '',
       parents_name: profileData.parents_name || profileData.parentName || '',
       school_name: profileData.school_name || profileData.schoolName || '',
-      state: profileData.state || ''
+      state: profileData.state || '',
+      // Use age_group_id as the source of truth for age selection
+      age_group_id:
+        profileData.age_group_id ||
+        profileData.ageGroupId ||
+        profileData.age ||
+        '',
+      // Keep age for backward compatibility if any API still uses it
+      age: profileData.age || ''
     };
     return apiCall('/update_student_profile', payload);
+  },
+  // Update only profile image (used by avatar change flow)
+  updateProfileImage: (userId, imageUrl) => {
+    return apiCall('/update_profile_image', {
+      id: userId,
+      image: imageUrl,
+    });
+  },
+  // Fetch user profile data from backend
+  // NOTE: This requires backend to have a getProfile endpoint or return profile_image in login response
+  // Currently, we don't have a dedicated getProfile API, so this is a placeholder
+  // For now, profile_image should come from login response or localStorage
+  // TODO: Backend team should add a getProfile endpoint or include profile_image in login response
+  getProfile: async (userId) => {
+    // For now, return null since we don't have a proper getProfile endpoint
+    // Calling updateProfile with empty values would overwrite user's profile data (DANGEROUS)
+    // Backend should provide a dedicated endpoint like: GET /get_student_profile?student_id={userId}
+    console.warn('⚠️ getProfile API not available - backend needs to provide getProfile endpoint or include profile_image in login response');
+    return {
+      success: false,
+      data: null,
+      profile_image: null
+    };
   },
   changePassword: ({ sid, currentPassword, newPassword }) => {
     return apiCall('/change_password', {
@@ -157,6 +188,16 @@ export const profileAPI = {
       current_password: currentPassword,
       password: newPassword
     });
+  },
+};
+
+/**
+ * AGE GROUPS
+ * Used for dynamic age group dropdowns (e.g. Edit Profile)
+ */
+export const ageGroupsAPI = {
+  getAgeGroups: ({ keyword = '', learning = '1' } = {}) => {
+    return apiCall('/age_group_list', { keyword, learning });
   },
 };
 
@@ -332,6 +373,45 @@ export const dashboardAPI = {
         success: false,
         data: null,
         message: error.message || 'Failed to fetch assessment list'
+      };
+    }
+  },
+  
+  getStudentTrackInfo: async ({ student_id, course_id }) => {
+    const numericStudentId = typeof student_id === 'string' ? parseInt(student_id, 10) : student_id;
+    const numericCourseId = typeof course_id === 'string' ? parseInt(course_id, 10) : course_id;
+    
+    if (!numericStudentId || isNaN(numericStudentId) || numericStudentId <= 0) {
+      return {
+        success: false,
+        data: null,
+        message: 'Invalid student ID'
+      };
+    }
+    
+    if (!numericCourseId || isNaN(numericCourseId) || numericCourseId <= 0) {
+      return {
+        success: false,
+        data: null,
+        message: 'Invalid course ID'
+      };
+    }
+    
+    console.log('📊 Fetching student track info:', { student_id: numericStudentId, course_id: numericCourseId });
+    
+    try {
+      const response = await apiCall('/student_track_info', {
+        student_id: numericStudentId,
+        course_id: numericCourseId
+      });
+      
+      return response;
+    } catch (error) {
+      console.error('❌ Student Track Info API error:', error);
+      return {
+        success: false,
+        data: null,
+        message: error.message || 'Failed to fetch course progress'
       };
     }
   },

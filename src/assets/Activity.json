@@ -1,0 +1,1014 @@
+{
+    "pg": {
+        "STORIES": [
+            {
+                "name": "Storytelling of letter C"
+            },
+            {
+                "name": "Storytelling of letter B"
+            },
+            {
+                "name": "Good Habits book"
+            },
+            {
+                "name": "Storytelling of D"
+            },
+            {
+                "name": "Storytelling of A"
+            },
+            {
+                "name": "I am Milo book"
+            },
+            {
+                "name": "Story narration"
+            },
+            {
+                "name": "Story of letter G"
+            },
+            {
+                "name": "Letter stories"
+            },
+            {
+                "name": "H letter story"
+            },
+            {
+                "name": "Food cloth book"
+            },
+            {
+                "name": "F story"
+            }
+        ],
+        "ART & CRAFT": [
+            {
+                "name": "Earbud painting"
+            },
+            {
+                "name": "Bird Feather Activity"
+            },
+            {
+                "name": "Tearing and pasting"
+            },
+            {
+                "name": "Making Caterpillar "
+            },
+            {
+                "name": "Sponge Painting "
+            },
+            {
+                "name": "Comb painting"
+            },
+            {
+                "name": "Sunglasses with colorful sheets"
+            },
+            {
+                "name": "Roller painting"
+            },
+            {
+                "name": "Tearing and Pasting"
+            },
+            {
+                "name": "Hand painting"
+            },
+            {
+                "name": "Bee Puppet"
+            },
+            {
+                "name": "Cupcake activity"
+            },
+            {
+                "name": "Finger Painting"
+            },
+            {
+                "name": "Foot painting "
+            },
+            {
+                "name": "Bug facemask"
+            },
+            {
+                "name": "Rainbow making"
+            },
+            {
+                "name": "Crab Making"
+            },
+            {
+                "name": "Colouring worksheet"
+            },
+            {
+                "name": "Pasting sand on shapes"
+            },
+            {
+                "name": "Sticking icecream sticks"
+            },
+            {
+                "name": "Giraffe art and craft"
+            },
+            {
+                "name": "Square bot activity"
+            },
+            {
+                "name": "Glitter pasting"
+            },
+            {
+                "name": "Coloring of F"
+            },
+            {
+                "name": "Hand painting"
+            }
+        ],
+        "PUZZLES": [
+            {
+                "name": "Number identification activity"
+            },
+            {
+                "name": "Matching body parts"
+            },
+            {
+                "name": "Placing fruits on tree"
+            },
+            {
+                "name": "Treasure Hunt"
+            },
+            {
+                "name": "Hanging fruits activity"
+            },
+            {
+                "name": "Sorting shapes"
+            },
+            {
+                "name": "Circle the objects with letter H "
+            },
+            {
+                "name": "Color identification activity"
+            },
+            {
+                "name": "Sticking body parts"
+            }
+        ],
+        "DEVELOPMENT ACTIVITIES": [
+            {
+                "name": "Scribbling"
+            },
+            {
+                "name": "Gripping Activity"
+            },
+            {
+                "name": "Spoon Feeding"
+            },
+            {
+                "name": "Drum Activity"
+            },
+            {
+                "name": "Sound Activity"
+            },
+            {
+                "name": "Touch activity"
+            },
+            {
+                "name": "Taste activity"
+            },
+            {
+                "name": "Touch and Feel Jelly beads"
+            },
+            {
+                "name": "Smell Activity"
+            },
+            {
+                "name": "Blowing Activity"
+            },
+            {
+                "name": "Taking out rubber bands with plastic fork from water"
+            },
+            {
+                "name": "Circle stamping"
+            },
+            {
+                "name": "Combing Hair activity"
+            },
+            {
+                "name": "Clay "
+            },
+            {
+                "name": "Bubble wand"
+            },
+            {
+                "name": "Balloon Balancing"
+            },
+            {
+                "name": "Tearing & Pasting"
+            },
+            {
+                "name": "Putting straws in sticks"
+            },
+            {
+                "name": "Lacing activity"
+            },
+            {
+                "name": "Table Mat"
+            },
+            {
+                "name": "Fishing activity"
+            },
+            {
+                "name": "Sensory Bag"
+            },
+            {
+                "name": "Brushing activity"
+            },
+            {
+                "name": "Combing activity"
+            }
+        ],
+        "GAMES": [
+            {
+                "name": "Stacking toy"
+            },
+            {
+                "name": "Fishing game "
+            },
+            {
+                "name": "Bead Balancing"
+            },
+            {
+                "name": "Maze Game"
+            },
+            {
+                "name": "Gratitude game"
+            }
+        ],
+        "MUSIC & MOVEMENT": [
+            {
+                "name": "Exercise"
+            },
+            {
+                "name": "Puppet show"
+            },
+            {
+                "name": "Jumping mat"
+            },
+            {
+                "name": "Rhymes"
+            },
+            {
+                "name": "Om chanting"
+            },
+            {
+                "name": "Deep Breathing"
+            },
+            {
+                "name": "Phonic sounds"
+            }
+        ],
+        "EXPLORATION": [
+            {
+                "name": "Salad making"
+            },
+            {
+                "name": "Exploring"
+            },
+            {
+                "name": "Salt and Sugar Activity"
+            },
+            {
+                "name": "Excursion- Zoo"
+            },
+            {
+                "name": "Plantation"
+            },
+            {
+                "name": "Sand Tracing"
+            },
+            {
+                "name": "Pasting leaves to make butterfly"
+            }
+        ]
+    },
+    "nursery": {
+        "STORIES": [
+            {
+                "name": "Body parts book"
+            },
+            {
+                "name": "Storytelling on Kindness"
+            },
+            {
+                "name": "Book Reading and understanding about Body Parts"
+            },
+            {
+                "name": "Let's be thankful"
+            },
+            {
+                "name": "Mighty Mouse storytelling"
+            },
+            {
+                "name": "3 Little Bears"
+            },
+            {
+                "name": "Magical Words"
+            },
+            {
+                "name": "Ant and Elephant"
+            },
+            {
+                "name": "Blue Fox"
+            },
+            {
+                "name": "Ela and Ema"
+            },
+            {
+                "name": "Lord Ganesh Race Round the World"
+            }
+        ],
+        "ART & CRAFT": [
+            {
+                "name": "Vegetable stamping"
+            },
+            {
+                "name": "Flower making activity"
+            },
+            {
+                "name": "Rainbow activity"
+            },
+            {
+                "name": "Caterpillar making"
+            },
+            {
+                "name": "Flowing colors activity with tissue paper"
+            },
+            {
+                "name": "Painting activity"
+            },
+            {
+                "name": "Sticking activity"
+            },
+            {
+                "name": "Finger painting"
+            },
+            {
+                "name": "Gratitude game"
+            },
+            {
+                "name": "Ear Bud painting"
+            },
+            {
+                "name": "Hand painting- fruits"
+            },
+            {
+                "name": "Crayon coloring making standing line "
+            },
+            {
+                "name": "Glitter sun activity"
+            },
+            {
+                "name": "Vegetables Activity"
+            },
+            {
+                "name": "Thread Pasting"
+            },
+            {
+                "name": "Make a face on standing line with craft materials"
+            },
+            {
+                "name": "Paste clay on Number 1"
+            },
+            {
+                "name": "Frog activity(In out)"
+            },
+            {
+                "name": "Paste buttons on worksheet of 7"
+            }
+        ],
+        "PUZZLES": [
+            {
+                "name": "3 D Season Tree"
+            },
+            {
+                "name": "Pizza veg placement/ Vegetable shadow worksheet "
+            },
+            {
+                "name": "Color Matching"
+            },
+            {
+                "name": "Puzzle solving"
+            },
+            {
+                "name": "3 Pc Puzzle"
+            },
+            {
+                "name": "Matching Fruits with Worksheet"
+            },
+            {
+                "name": "Stacking Puzzle"
+            },
+            {
+                "name": "Tracing "
+            },
+            {
+                "name": "Placing body parts"
+            },
+            {
+                "name": "Cat size difference"
+            },
+            {
+                "name": "Making circle shapes with different objects"
+            }
+        ],
+        "DEVELOPMENT ACTIVITIES": [
+            {
+                "name": "Spoon Feeding activity"
+            },
+            {
+                "name": "Tripod Grip"
+            },
+            {
+                "name": "Big/ small activity"
+            },
+            {
+                "name": "Lacing activity"
+            },
+            {
+                "name": "Zipping activity"
+            },
+            {
+                "name": "Sewing Activity"
+            },
+            {
+                "name": "Balloon with sand for Gripping skills"
+            },
+            {
+                "name": "Blowing Straw painting"
+            },
+            {
+                "name": "Screw and unscrew nuts and bolts"
+            },
+            {
+                "name": "Tracing activity"
+            },
+            {
+                "name": "Blowing caterpillar activity"
+            },
+            {
+                "name": "Clay sticks stacking"
+            },
+            {
+                "name": "Curves making"
+            },
+            {
+                "name": "E Tracing"
+            },
+            {
+                "name": "Writing worksheet"
+            },
+            {
+                "name": "Square Nut bolt activity"
+            },
+            {
+                "name": "Crayon gripping"
+            },
+            {
+                "name": "Hanging cloth"
+            },
+            {
+                "name": "Clay activity"
+            },
+            {
+                "name": "Hair cutting pattern"
+            },
+            {
+                "name": "Cutting activity"
+            }
+        ],
+        "GAMES": [
+            {
+                "name": "Chalkbook"
+            },
+            {
+                "name": "Tracing letters through stencil"
+            },
+            {
+                "name": "Stacking toy"
+            },
+            {
+                "name": "Felt cloth activity"
+            },
+            {
+                "name": "Pinboard Activity"
+            },
+            {
+                "name": "Pattern writing on Wooden stencil "
+            },
+            {
+                "name": "Gratitude game"
+            }
+        ],
+        "MUSIC & MOVEMENT": [
+            {
+                "name": "Exercises"
+            },
+            {
+                "name": "Om chanting"
+            },
+            {
+                "name": "Dancing session"
+            },
+            {
+                "name": "Physical development exercises"
+            },
+            {
+                "name": "Balancing and following Path"
+            },
+            {
+                "name": "Walk on the Tape Design"
+            },
+            {
+                "name": "Phonic sounds"
+            },
+            {
+                "name": "Thankyou prayer"
+            },
+            {
+                "name": "Deep Breathing"
+            },
+            {
+                "name": "bye bye song"
+            },
+            {
+                "name": "Balloon Badminton"
+            }
+        ],
+        "EXPLORATION": [
+            {
+                "name": "Shooter making"
+            },
+            {
+                "name": "Cloth Bag Designing"
+            },
+            {
+                "name": "Original leaf patterning"
+            },
+            {
+                "name": "Zoo"
+            },
+            {
+                "name": "Sand tracing"
+            },
+            {
+                "name": "DIY Clay"
+            }
+        ]
+    },
+    "jkg": {
+        "STORIES": [
+            {
+                "name": "Story on shapes"
+            },
+            {
+                "name": "Story narration of all the letters"
+            },
+            {
+                "name": "Lazy Donkey story"
+            },
+            {
+                "name": "Letter d phonic story"
+            },
+            {
+                "name": "Save Water story"
+            },
+            {
+                "name": "Hungry Caterpillar story"
+            },
+            {
+                "name": "Krishna Birth Story"
+            },
+            {
+                "name": "Selfish Alligator"
+            },
+            {
+                "name": "Bob the Builder"
+            },
+            {
+                "name": "Akbar and Birble"
+            }
+        ],
+        "ART & CRAFT": [
+            {
+                "name": "Alligator puppet"
+            },
+            {
+                "name": "Outlining and pasting skeleton with foam shapes"
+            },
+            {
+                "name": "Vegetable activity"
+            },
+            {
+                "name": "Jar worksheet"
+            },
+            {
+                "name": "Pasting glitter on Duck"
+            },
+            {
+                "name": "Hand Painting"
+            },
+            {
+                "name": "Quilling- Making Flower"
+            },
+            {
+                "name": "Mickey Mouse facemask"
+            },
+            {
+                "name": "Bubble Sheet colouring"
+            },
+            {
+                "name": "Original leaf painting"
+            },
+            {
+                "name": "Season activity"
+            },
+            {
+                "name": "Stones tracing on h worksheet"
+            },
+            {
+                "name": "Photo frame"
+            },
+            {
+                "name": "Brown bear activity"
+            },
+            {
+                "name": "feeding the hungry caterpillar"
+            }
+        ],
+        "PUZZLES": [
+            {
+                "name": "3 piece wooden puzzle of an Alligator"
+            },
+            {
+                "name": "Fruits shadow worksheet"
+            },
+            {
+                "name": "Puzzles"
+            },
+            {
+                "name": "vegetable shape matching worksheet"
+            },
+            {
+                "name": "Shape matching and pasting"
+            },
+            {
+                "name": "3 piece puzzle"
+            },
+            {
+                "name": "Stacking cube"
+            },
+            {
+                "name": "House worksheet - interlocking 3d"
+            },
+            {
+                "name": "Identifying odd one out activity"
+            }
+        ],
+        "DEVELOPMENT ACTIVITIES": [
+            {
+                "name": "Writing activity"
+            },
+            {
+                "name": "Beading"
+            },
+            {
+                "name": "Mixing pulses and sorting"
+            },
+            {
+                "name": "Bamboo sticks & beads"
+            },
+            {
+                "name": "Foam Shapes sorting"
+            },
+            {
+                "name": "b tracing worksheet"
+            },
+            {
+                "name": "c tracing - sensory bag,"
+            },
+            {
+                "name": "All letters tracing"
+            },
+            {
+                "name": "All letters writing"
+            },
+            {
+                "name": "Full and empty activity"
+            },
+            {
+                "name": "Writing number worksheet"
+            },
+            {
+                "name": "Buttoning, Hooking, cloth folding"
+            },
+            {
+                "name": "Lacing activity"
+            },
+            {
+                "name": "Heavy & light activity"
+            },
+            {
+                "name": "Nuts and Bolts to screw and unscrew"
+            }
+        ],
+        "GAMES": [
+            {
+                "name": "Small letter 'a' practice- toy way"
+            },
+            {
+                "name": "Spelling board"
+            },
+            {
+                "name": "Gratitude game"
+            },
+            {
+                "name": "Musical Instrument making"
+            },
+            {
+                "name": "Humpty Dumpty Game"
+            },
+            {
+                "name": "Snake and Ladder game"
+            },
+            {
+                "name": "Symbolic play activity"
+            },
+            {
+                "name": "Maze solving"
+            }
+        ],
+        "MUSIC & MOVEMENT": [
+            {
+                "name": "Thankyou prayer"
+            },
+            {
+                "name": "Om chanting"
+            },
+            {
+                "name": "Music & Movement Activity"
+            },
+            {
+                "name": "Dancing session by expert"
+            },
+            {
+                "name": "a, b ,c, d, e phonics"
+            }
+        ],
+        "EXPLORATION": [
+            {
+                "name": "Making a fruit salad"
+            },
+            {
+                "name": "Plantation"
+            },
+            {
+                "name": "Washing Hankerchief"
+            },
+            {
+                "name": "Zoo"
+            },
+            {
+                "name": "Learning of Evaporation process"
+            },
+            {
+                "name": "Catapult"
+            },
+            {
+                "name": "Germination"
+            },
+            {
+                "name": "Video explanation of Water cycle"
+            },
+            {
+                "name": "Robotics Fan"
+            },
+            {
+                "name": "First Aid activity"
+            },
+            {
+                "name": "Water cycle activity"
+            },
+            {
+                "name": "Paper Circuit"
+            }
+        ]
+    },
+    "skg": {
+        "STORIES": [
+            {
+                "name": "2 wise goats story"
+            },
+            {
+                "name": "Story- Mighty Mouse"
+            },
+            {
+                "name": "Story on He and She"
+            },
+            {
+                "name": "Story on Having a best friend"
+            },
+            {
+                "name": "A giving Tree"
+            },
+            {
+                "name": "Chain of Love"
+            },
+            {
+                "name": "Good Touch Bad Touch"
+            },
+            {
+                "name": "Krishna and Sudama"
+            },
+            {
+                "name": "The Angry Bee"
+            }
+        ],
+        "ART & CRAFT": [
+            {
+                "name": "Circle shape stamping"
+            },
+            {
+                "name": "Gratitude Jar"
+            },
+            {
+                "name": "Activity Related to C, K friends"
+            },
+            {
+                "name": "First aid kit body parts"
+            },
+            {
+                "name": "Face Painting with Straw"
+            },
+            {
+                "name": "Big & Small activity"
+            },
+            {
+                "name": "In and Out (Dog house worksheet)"
+            },
+            {
+                "name": "Tall & Short activity"
+            },
+            {
+                "name": "Inside and Outside activity"
+            },
+            {
+                "name": "Gender identification/differentiation (hands on activity)"
+            },
+            {
+                "name": "Vegetable activity"
+            },
+            {
+                "name": "Ice cream Stacking activity"
+            }
+        ],
+        "PUZZLES": [
+            {
+                "name": "Revision of placing organs inside cardboard body"
+            },
+            {
+                "name": "Dot tracing to form an image"
+            },
+            {
+                "name": "Sequence The Story"
+            },
+            {
+                "name": "Numbers 20-40 - Stick Puzzle"
+            },
+            {
+                "name": "Shadow Matching"
+            },
+            {
+                "name": "Zig Saw Puzzle"
+            },
+            {
+                "name": "3D Formations"
+            }
+        ],
+        "DEVELOPMENT ACTIVITIES": [
+            {
+                "name": "A to Z writing with Phonics (fluorescent Board)"
+            },
+            {
+                "name": "Number 1 to 20 Hands on Activity"
+            },
+            {
+                "name": "a to z writing with Phonics (fluorescent Board)"
+            },
+            {
+                "name": "Drawing an object by connecting a-z"
+            },
+            {
+                "name": "Counting 60-80 Worksheet"
+            },
+            {
+                "name": "Sewing lace and tying knot in the end"
+            },
+            {
+                "name": "Counting 80-100 - stacking Activity"
+            },
+            {
+                "name": "Counting 101-200"
+            },
+            {
+                "name": "What comes before activity"
+            },
+            {
+                "name": "Train Lacing"
+            },
+            {
+                "name": "Number Color Worksheet"
+            },
+            {
+                "name": "Activity related to What comes before"
+            },
+            {
+                "name": "Square and number counting"
+            },
+            {
+                "name": "Sewing activity"
+            },
+            {
+                "name": "Lacing circle shape numbers"
+            }
+        ],
+        "GAMES": [
+            {
+                "name": "Numbers 40-60 - maze"
+            },
+            {
+                "name": "Backward counting 20 to 0 -Maze activity"
+            },
+            {
+                "name": "Gratitude game"
+            },
+            {
+                "name": "Snake & Ladder game"
+            },
+            {
+                "name": "Fluroscent Board"
+            },
+            {
+                "name": "Letter Board"
+            },
+            {
+                "name": "Treasure Hund Sand"
+            }
+        ],
+        "MUSIC & MOVEMENT": [
+            {
+                "name": "Om Chanting"
+            },
+            {
+                "name": "Exercise Song"
+            },
+            {
+                "name": "Deep Breathing"
+            },
+            {
+                "name": "Physical development left and right, Up and down"
+            },
+            {
+                "name": "Physical Development Exercise"
+            },
+            {
+                "name": "Ocean Yoga exercise "
+            }
+        ],
+        "EXPLORATION": [
+            {
+                "name": "Coloring both genders on a worksheet"
+            },
+            {
+                "name": "Jelly beads activity"
+            },
+            {
+                "name": "Making Kaleidoscope"
+            },
+            {
+                "name": "Making a Frog- Paper Origami"
+            },
+            {
+                "name": "Zoo"
+            },
+            {
+                "name": "First Aid kit"
+            },
+            {
+                "name": "Apron washing"
+            },
+            {
+                "name": "Understanding the process of evaporation"
+            },
+            {
+                "name": "Life cycle butterfly"
+            },
+            {
+                "name": "Traffic Light paper circuit"
+            },
+            {
+                "name": "Seven Wonders video"
+            }
+        ]
+    }
+}

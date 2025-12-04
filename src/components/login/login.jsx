@@ -6,6 +6,7 @@ const Login = ({ onLoginSuccess }) => {
   const [step, setStep] = useState(1); // 1: Email, 2: OTP
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
+  const [serverOtp, setServerOtp] = useState(''); // OTP received from API (for display)
   const [keepLoggedIn, setKeepLoggedIn] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -20,6 +21,7 @@ const Login = ({ onLoginSuccess }) => {
 
     setError('');
     setSuccessMsg('');
+    setServerOtp('');
     setLoading(true);
 
     try {
@@ -34,6 +36,18 @@ const Login = ({ onLoginSuccess }) => {
 
       if (response.success) {
         setSuccessMsg(response.message || 'OTP sent successfully! Please check your email.');
+        // Try to pick OTP from different possible locations in the API response
+        const possibleOtp =
+          (response.data && (response.data.otp || response.data.OTP)) ||
+          (response.raw && (response.raw.otp || response.raw.OTP || (response.raw.data && (response.raw.data.otp || response.raw.data.OTP))));
+
+        if (possibleOtp) {
+          console.log('✅ OTP from API (for UI display):', possibleOtp);
+          setServerOtp(String(possibleOtp));
+        } else {
+          console.warn('⚠️ OTP not found in API response. Please verify response structure.');
+        }
+
         setStep(2);
         console.log('✅ OTP sent successfully');
       } else {
@@ -77,6 +91,19 @@ const Login = ({ onLoginSuccess }) => {
         console.log('User Data:', userData);
         console.log('Session ID:', sid);
 
+        // Check for profile_image in login response (might be in different fields)
+        // Backend might return it as profile_image, profileImage, user_profile, image, etc.
+        if (!userData.profile_image) {
+          userData.profile_image = userData.profileImage || 
+                                   userData.user_profile || 
+                                   userData.image || 
+                                   userData.avatar || 
+                                   null;
+          if (userData.profile_image) {
+            console.log('✅ Found profile_image in login response:', userData.profile_image);
+          }
+        }
+
         // Store session data
         const studentId = userData.student_id || userData.id || userData.user_id;
         
@@ -96,6 +123,28 @@ const Login = ({ onLoginSuccess }) => {
 
         // Store user data persistently. This ensures the app remains logged in
         // across refreshes/tabs until the logout action clears localStorage.
+        // Restore profile_image from persistent storage if login response doesn't have it
+        try {
+          // Check if we have a saved avatar for this student in persistent storage
+          if (!userData.profile_image && studentId) {
+            const savedAvatar = localStorage.getItem(`profile_image_${studentId}`) || 
+                               sessionStorage.getItem(`profile_image_${studentId}`);
+            if (savedAvatar) {
+              userData.profile_image = savedAvatar;
+              console.log('✅ Restored profile_image from persistent storage:', userData.profile_image);
+            }
+          }
+          
+          // Also check existing user object in localStorage (for backward compatibility)
+          const existingUser = JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user') || '{}');
+          if (!userData.profile_image && existingUser.profile_image) {
+            userData.profile_image = existingUser.profile_image;
+            console.log('✅ Preserved profile_image from localStorage:', userData.profile_image);
+          }
+        } catch (err) {
+          console.warn('Error checking existing user data:', err);
+        }
+        
         localStorage.setItem('user', JSON.stringify(userData));
         sessionStorage.setItem('user', JSON.stringify(userData));
 
@@ -106,6 +155,24 @@ const Login = ({ onLoginSuccess }) => {
             console.log('📚 Subscription Data:', subscriptionResponse.data);
           } catch (subErr) {
             console.warn('⚠️ Could not fetch subscription:', subErr);
+          }
+        }
+
+        // Step 4: For cross-device support, we need backend to return profile_image in login response
+        // Currently, we use localStorage as fallback which is device-specific
+        // TODO: Backend should include profile_image in login response for true cross-device support
+        if (studentId && !userData.profile_image) {
+          // Fallback to localStorage (device-specific, but better than nothing)
+          const savedAvatar = localStorage.getItem(`profile_image_${studentId}`) || 
+                             sessionStorage.getItem(`profile_image_${studentId}`);
+          if (savedAvatar) {
+            userData.profile_image = savedAvatar;
+            console.log('✅ Using profile_image from localStorage (device-specific):', savedAvatar);
+            // Update userData in storage
+            localStorage.setItem('user', JSON.stringify(userData));
+            sessionStorage.setItem('user', JSON.stringify(userData));
+          } else {
+            console.log('ℹ️ No profile_image found - backend should return it in login response for cross-device support');
           }
         }
 
@@ -130,6 +197,7 @@ const Login = ({ onLoginSuccess }) => {
     setStep(1);
     setOtp('');
     setError('');
+    setServerOtp('');
     setSuccessMsg('');
   };
 
@@ -181,6 +249,14 @@ const Login = ({ onLoginSuccess }) => {
             {successMsg && (
               <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-600 rounded-lg text-sm">
                 {successMsg}
+              </div>
+            )}
+
+            {/* Show OTP on UI so user doesn't need to open console (for simplicity / testing) */}
+            {step === 2 && serverOtp && (
+              <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 text-yellow-700 rounded-lg text-sm text-center">
+                <span className="font-medium">Your OTP:</span>{' '}
+                <span className="font-bold tracking-[0.35em] text-xl">{serverOtp}</span>
               </div>
             )}
 

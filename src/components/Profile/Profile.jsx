@@ -5,6 +5,7 @@ import MyStats from './MyStats/MyStats';
 import Assessments from './Assessments/Assessments';
 import ChangeAvatar from './Avatar/Avatar';
 import { profileAPI } from '../../services/apiService';
+import getBlobUrl from '../../utils/blob';
 
 const Profile = ({ user, userData: initialUserData, onBack, onLogout, onUserDataUpdate }) => {
   const [userData, setUserData] = useState(initialUserData || user);
@@ -31,16 +32,41 @@ const Profile = ({ user, userData: initialUserData, onBack, onLogout, onUserData
     // Update locally first for instant UI feedback
     const updatedUserData = { ...userData, profile_image: avatar };
     setUserData(updatedUserData);
+    
+    // Store profile_image in separate localStorage key that persists across logout
+    // This ensures avatar persists even after logout/login
+    try {
+      const studentId = userData?.id || user?.id || user?.student_id || user?.user_id;
+      if (studentId) {
+        // Store avatar with student ID as key so it persists per user
+        localStorage.setItem(`profile_image_${studentId}`, avatar);
+        sessionStorage.setItem(`profile_image_${studentId}`, avatar);
+        console.log('✅ Avatar saved to persistent storage for student:', studentId);
+      }
+      
+      // Also update in user object
+      const stored = JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user') || '{}');
+      const merged = { ...stored, profile_image: avatar };
+      localStorage.setItem('user', JSON.stringify(merged));
+      sessionStorage.setItem('user', JSON.stringify(merged));
+      console.log('✅ Avatar saved to localStorage');
+    } catch (err) {
+      console.warn('Failed to save avatar to localStorage:', err);
+    }
+    
     if (onUserDataUpdate) {
       onUserDataUpdate(updatedUserData);
     }
 
-    // Persist to server (optional): call profile API to update profile_image
+    // Persist to server: call dedicated API to update only profile image
     try {
       const studentId = userData?.id || user?.id || user?.student_id || user?.user_id;
       if (studentId) {
-        const res = await profileAPI.updateProfile(studentId, { profile_image: avatar });
-        if (!(res && (res.success === true || res.replyCode === 'success'))) {
+        // Send the full avatar URL to backend (/update_profile_image)
+        const res = await profileAPI.updateProfileImage(studentId, avatar);
+        if (res && (res.success === true || res.raw?.replyCode === 'success')) {
+          console.log('✅ Avatar saved to backend successfully');
+        } else {
           console.warn('Failed to persist avatar on server:', res);
         }
       }
@@ -102,7 +128,7 @@ const Profile = ({ user, userData: initialUserData, onBack, onLogout, onUserData
       <div className="profile-header-card">
         <div className="profile-image-placeholder">
           {userData?.profile_image ? (
-            <img src={userData.profile_image} alt="Profile" />
+            <img src={getBlobUrl(userData.profile_image) || userData.profile_image} alt="Profile" />
           ) : (
             <div className="profile-img-icon">🖼️</div>
           )}

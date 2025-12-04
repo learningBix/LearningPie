@@ -1,0 +1,333 @@
+
+{
+    "pg": [
+      {"month":"1","content":{"Literacy":"Letters A, B, C","Numeracy":"Number 1 and 2, Tall and Short","Concept":"Fruits & Vegetables, Primary Colours","Good Manners":"Brushing & Combing","Highlight of Month":"Gratitude, Parenting Seminar"},"course":"pg"},
+      {"month":"2","content":{"Literacy":"Letters D, E, F","Numeracy":"Number 3, 4, In & Out","Concept":"My Self, Shapes, Colours","Good Manners":"Toilet Training","Highlight of Month":"STEAM, Excursion"},"course":"pg"},
+      {"month":"3","content":{"Literacy":"Letters A to H","Numeracy":" Number 1 to 5, Big & Small","Concept":"Sense Organs, Body Parts","Good Manners":"What are hands for?","Highlight of Month":"Table Manners, Oral Health"},"course":"pg"},
+      {"month":"4","content":{"Literacy":"Letters I, J, K","Numeracy":"Number 6, 7 and 8","Concept":"Full and Empty, Day and Night","Good Manners":"Hand washing","Highlight of Month":"Mother's Day Celebration, Child Nutrition"},"course":"pg"},
+      {"month":"5","content":{"Literacy":"Letters L, M, N, O","Numeracy":"Number 9 and 10","Concept":"Animals, Light & Heavy","Good Manners":"Helping Others, Self Feeding","Highlight of Month":"Excursion, STEM"},"course":"pg"},
+      {"month":"6","content":{"Literacy":"Letters P, Q, R, S","Numeracy":"Number 11 and 12","Concept":"Community Helpers, Shapes","Good Manners":"Good Touch, Bad Touch","Highlight of Month":"Role Play, DIY"},"course":"pg"},
+      {"month":"7","content":{"Literacy":"Letters T, U, V, W","Numeracy":"Number 13, 14 and 15","Concept":"Family, Open & Shut","Good Manners":"Teeth are not for biting","Highlight of Month":"Father's Day, Parenting Seminar"},"course":"pg"},
+      {"month":"8","content":{"Literacy":"Letters X, Y, Z","Numeracy":"Number 16, 17","Concept":"Transport, Shapes","Good Manners":"What is nose for?","Highlight of Month":"STEM, Excursion"},"course":"pg"},
+      {"month":"9","content":{"Literacy":"Pattern Writing","Numeracy":"Number 18, 19 and 20","Concept":"Sun & Moon, Planets","Good Manners":"Forgiving Others","Highlight of Month":"DIY, Graduation Ceremony"},"course":"pg"},
+      {"month":"10","content":
+          {
+          "Literacy":"",
+          "Numeracy":"",
+          "Concept":"",
+          "Good Manners":"",
+          "Highlight of Month":""
+          },"course":"pg"},
+      {"month":"11","content":
+          {
+          "Literacy":"",
+          "Numeracy":"",
+          "Concept":"",
+          "Good Manners":"",
+          "Highlight of Month":""
+          },"course":"pg"},
+      {"month":"12","content":
+          {
+          "Literacy":"",
+          "Numeracy":"",
+          "Concept":"",
+          "Good Manners":"",
+          "Highlight of Month":""
+          },"course":"pg"}
+      ],
+    "nursery": [
+        {"month":"1","content":
+          {
+          "Literacy":"Pre-writing Skills, Pattern Writing, L, T",
+          "Numeracy":"Big & Small, Number 1",
+          "Concept":"Colors, Myself, Body Parts",
+          "Good Manners":"Gratitude",
+          "Highlight of Month":"Parenting Seminar"
+          },
+          "course":"nursery"},
+        {"month":"2","content":
+          {
+          "Literacy":"Letters I, H, E",
+          "Numeracy":"Numbers 4 and 7",
+          "Concept":"Shapes, Fruits, Vegetables",
+          "Good Manners":"Healthy Eating Habits",
+          "Highlight of Month":"STEM, Excursion"
+          },"course":"nursery"},
+        {"month":"3","content":
+          {
+          "Literacy":"Letters L, T, H, I, E, F",
+          "Numeracy":"Number 1 to 5, Big & Small",
+          "Concept":"Seasons, In and Out",
+          "Good Manners":"Self-Awareness",
+          "Highlight of Month":"DIY, Oral Health"
+          },"course":"nursery"},
+        {"month":"4","content":
+          {
+          "Literacy":"Letters A, K, V, W",
+          "Numeracy":"Number 2, 3, Long & Short",
+          "Concept":"Animals, Balancing",
+          "Good Manners":"Helping Others",
+          "Highlight of Month":"Mother's Day Celebration, Child Nutrition"
+          },"course":"nursery"},
+        {"month":"5","content":
+          {
+          "Literacy":"Letters X, M, N",
+          "Numeracy":"Number 5, 6, 8, More & Less",
+          "Concept":"Days of the Week, Shapes",
+          "Good Manners":"Good Touch & Bad Touch",
+          "Highlight of Month":"STEM,  Excursion"
+          },"course":"nursery"},
+        {"month":"6","content":
+          {
+          "Literacy":"Letters Y, Z, C",
+          "Numeracy":"Number 9, 10, 11, Up & Down",
+          "Concept":"Community Helpers",
+          "Good Manners":"What are feet for?",
+          "Highlight of Month":"Role Play, DIY"
+          },"course":"nursery"},
+        {"month":"7","content":
+          {
+          "Literacy":"Letters G, D, P, B",
+          "Numeracy":"Number 12, 13, Few & Many",
+          "Concept":"Family, Colors",
+          "Good Manners":"Forgiving Others",
+          "Highlight of Month":"Fathers Day, Parenting Seminar"
+          },"course":"nursery"},
+        {"month":"8","content":
+          {
+          "Literacy":"Letters R, O, Q",
+          "Numeracy":"Number 14, 15, 16",
+          "Concept":"Sun & Moon, Solar System",
+          "Good Manners":"As you sow, so you reap",
+          "Highlight of Month":"STEAM, Excursion"
+          },"course":"nursery"},
+        {"month":"9","content":
+          {
+          "Literacy":"Letters S, J, U",
+          "Numeracy":"Number 17, 18, 19, 20",
+          "Concept":"Transport, Air & Water",
+          "Good Manners":"Sharing is Caring",
+          "Highlight of Month":"DIY, Graduation Ceremony"
+          },"course":"nursery"},
+        {"month":"10","content":
+          {
+          "Literacy":"",
+          "Numeracy":"",
+          "Concept":"",
+          "Good Manners":"",
+          "Highlight of Month":""
+          },"course":"nursery"},
+        {"month":"11","content":
+          {
+          "Literacy":"",
+          "Numeracy":"",
+          "Concept":"",
+          "Good Manners":"",
+          "Highlight of Month":""
+          },"course":"nursery"},
+        {"month":"12","content":
+          {
+          "Literacy":"",
+          "Numeracy":"",
+          "Concept":"",
+          "Good Manners":"",
+          "Highlight of Month":""
+          },"course":"nursery"}
+      ],
+    "jkg": [
+      {"month":"1","content":
+          {
+          "Literacy":"Alphabets a,b,c (Phonics)",
+          "Numeracy":"Numbers 1-10, Pre Math Concepts - Big and Small, Sorting, Tall and Short",
+          "Concept":"Fruits, Vegetables, Heavy and Light",
+          "Good Manners":"Hardworking",
+          "Highlight of Month":"Gratitude, Parenting Seminar"
+          },"course":"jkg"},
+      {"month":"2","content":
+          {
+          "Literacy":"Letters d,e,f,g",
+          "Numeracy":"Numbers 10-20, Pre Math Concepts - More and Less, Full and Empty",
+          "Concept":"Colors, Myself, Evaporation, Seasons",
+          "Good Manners":"Faithful Friendship, Save Water",
+          "Highlight of Month":"STEAM, Excursion"
+          },"course":"jkg"},
+      {"month":"3","content":
+          {
+          "Literacy":"Letters h,i,j,k",
+          "Numeracy":"Numbers 1-30, Pre Math Concepts - Odd One Out",
+          "Concept":"First Aid,  Shapes, Balancing",
+          "Good Manners":"Independent Habits - Buttoning, Hooking, Cloth Folding",
+          "Highlight of Month":"Robotics, Oral Health"
+          },"course":"jkg"},
+      {"month":"4","content":
+          {
+          "Literacy":"Letters l,m,n,o,p",
+          "Numeracy":"Numbers 30-60, Near & Far",
+          "Concept":"Animals, Day & Night",
+          "Good Manners":"Gratitude",
+          "Highlight of Month":"Mother's Day Celebration, Parenting Seminar"
+          },"course":"jkg"},
+      {"month":"5","content":
+          {
+          "Literacy":"Letters q,r,s,t,u,v",
+          "Numeracy":"Numbers 60-90, Same & Different",
+          "Concept":"Solar System, Hard & Soft",
+          "Good Manners":"Helping Others",
+          "Highlight of Month":"STEM, Excursion"
+          },"course":"jkg"},
+      {"month":"6","content":
+          {
+          "Literacy":"Letters w,x,y,z",
+          "Numeracy":"Numbers 1-100, Shapes",
+          "Concept":"Community Helpers, Parts of the Plant",
+          "Good Manners":"Sharing is Caring, Managing Emotions",
+          "Highlight of Month":"Role Play, Best Out of Waste"
+          },"course":"jkg"},
+      {"month":"7","content":
+          {
+          "Literacy":"Vowels, CVC Words (a, e)",
+          "Numeracy":"Number Names",
+          "Concept":"Family, Open & Shut",
+          "Good Manners":"Good Touch & Bad Touch",
+          "Highlight of Month":"Fathers Day, Parenting Seminar"
+          },"course":"jkg"},
+      {"month":"8","content":
+          {
+          "Literacy":"CVC Words (i,o,u)",
+          "Numeracy":"Number Names, Concept of Zero",
+          "Concept":"Color Wheel, Animals",
+          "Good Manners":"Sharing is Caring",
+          "Highlight of Month":"STEM, Excursion"
+          },"course":"jkg"},
+      {"month":"9","content":
+          {
+          "Literacy":"Tricky Words, Sentence Reading",
+          "Numeracy":"Number Names , Shapes",
+          "Concept":"Transport, Colors",
+          "Good Manners":"Forgiving Others",
+          "Highlight of Month":"Robotics,  Graduation Ceremony"
+          },"course":"jkg"},
+      {"month":"10","content":
+          {
+          "Literacy":"",
+          "Numeracy":"",
+          "Concept":"",
+          "Good Manners":"",
+          "Highlight of Month":""
+          },"course":"jkg"},
+      {"month":"11","content":
+          {
+          "Literacy":"",
+          "Numeracy":"",
+          "Concept":"",
+          "Good Manners":"",
+          "Highlight of Month":""
+          },"course":"jkg"},
+      {"month":"12","content":
+          {
+          "Literacy":"",
+          "Numeracy":"",
+          "Concept":"",
+          "Good Manners":"",
+          "Highlight of Month":""
+          },"course":"jkg"}
+      ],
+    "skg": [
+      {"month":"1","content":
+          {
+          "Literacy":"Alphabets, CVC Words, Phonics",
+          "Numeracy":"Numbers 1-200, Backward Counting, Top & Bottom",
+          "Concept":"Gender Differentiation, Body Parts",
+          "Good Manners":" Gender Equality",
+          "Highlight of Month":"Gratitude, Parenting Seminar"
+          },"course":"skg"},
+      {"month":"2","content":
+          {
+          "Literacy":"Phonics Groups, Tricky Words",
+          "Numeracy":"What comes after, between, before, Superlatives",
+          "Concept":"Seasons, Evaporation, First Aid",
+          "Good Manners":"Anger Management",
+          "Highlight of Month":"STEM, Excursion"
+          },"course":"skg"},
+      {"month":"3","content":
+          {
+          "Literacy":"Phonics Groups, Prepositions",
+          "Numeracy":"Number Names",
+          "Concept":"Vegetables World Continents, Oceans, Monuments",
+          "Good Manners":"Being a Best friend",
+          "Highlight of Month":"Robotics, Oral Health"
+          },"course":"skg"},
+      {"month":"4","content":
+          {
+          "Literacy":"Phonics Groups, Tricky Words",
+          "Numeracy":"Concept of Zero, More & Less, Ascending & Descending",
+          "Concept":"Solar System, Dissolving",
+          "Good Manners":"Gratitude",
+          "Highlight of Month":"Mother's Day Celebration, Parenting Seminar"
+          },"course":"skg"},
+      {"month":"5","content":
+          {
+          "Literacy":"Phonics Groups, Sentence Reading",
+          "Numeracy":"Greater Than, Lesser Than, Equal To, Position",
+          "Concept":"Air & water, Animals",
+          "Good Manners":"Helping Other",
+          "Highlight of Month":"STEM,  Excursion"
+          },"course":"skg"},
+      {"month":"6","content":
+          {
+          "Literacy":"Phonics Groups, Picture Reading",
+          "Numeracy":"Skip Counting, Shapes",
+          "Concept":"Community Helpers",
+          "Good Manners":"Managing Emotions",
+          "Highlight of Month":"Role Play, Tie & Dye, Fireless Cooking"
+          },"course":"skg"},
+      {"month":"7","content":
+          {
+          "Literacy":"Opposites, Pair words",
+          "Numeracy":"Addition, Matching",
+          "Concept":"Flowers, Natural or Man Made, Family",
+          "Good Manners":"Be kind",
+          "Highlight of Month":"Fathers day, Parenting Seminar"
+          },"course":"skg"},
+      {"month":"8","content":
+          {
+          "Literacy":"Action Words, Questions & Answers",
+          "Numeracy":"Subtraction, Time",
+          "Concept":"Color Wheel, Months of the Year, Days of the Week",
+          "Good Manners":"Reduce, Reuse, Recycle",
+          "Highlight of Month":"STEM, Excursion"
+          },"course":"skg"},
+      {"month":"9","content":
+          {
+          "Literacy":"This/That, Reading Paragraphs",
+          "Numeracy":"Money, Ones & Tens",
+          "Concept":"Computers, Transport",
+          "Good Manners":"Being Loyal",
+          "Highlight of Month":"Robotics, Graduation Ceremony"
+          },"course":"skg"},
+      {"month":"10","content":
+          {
+          "Literacy":"",
+          "Numeracy":"",
+          "Concept":"",
+          "Good Manners":"",
+          "Highlight of Month":""
+          },"course":"skg"},
+      {"month":"11","content":
+          {
+          "Literacy":"",
+          "Numeracy":"",
+          "Concept":"",
+          "Good Manners":"",
+          "Highlight of Month":""
+          },"course":"skg"},
+      {"month":"12","content":
+          {
+          "Literacy":"",
+          "Numeracy":"",
+          "Concept":"",
+          "Good Manners":"",
+          "Highlight of Month":""
+          },"course":"skg"}
+      ]
+    }

@@ -4,10 +4,38 @@ import methodologyImage from '../../assets/Mmethodology.jpg';
 import courseImage from '../../assets/coursedemo.png';
 import signatureImage from '../../assets/Msignature.jpg';
 import { BLOB_BASE_URL } from '../../config/api';
+import journeyData from '../../assets/Journey.json';
 
-const MyCourses = () => {
+const MyCourses = ({ courseType: initialCourseType = 'jkg' }) => {
   const [activeTab, setActiveTab] = useState('course');
   const [activeMonth, setActiveMonth] = useState('month3');
+  const [showJourneyModal, setShowJourneyModal] = useState(false);
+  const [selectedJourneyData, setSelectedJourneyData] = useState(null);
+  const [selectedJourneyMonth, setSelectedJourneyMonth] = useState(null);
+
+  // Normalize course type key (pg, nursery, jkg, skg)
+  const courseTypeKey = (initialCourseType || 'jkg').toLowerCase();
+
+  const handleJourneyClick = (month) => {
+    const monthStr = String(month);
+    const courseArray = journeyData[courseTypeKey] || [];
+    const monthData = courseArray.find((item) => item.month === monthStr);
+
+    if (monthData) {
+      setSelectedJourneyData(monthData);
+      setSelectedJourneyMonth(monthStr);
+      setShowJourneyModal(true);
+    } else {
+      // If there is no data for this month, just close / do nothing
+      setShowJourneyModal(false);
+      setSelectedJourneyData(null);
+      setSelectedJourneyMonth(null);
+    }
+  };
+
+  const handleCloseJourneyModal = () => {
+    setShowJourneyModal(false);
+  };
 
   return (
     <div className="my-courses-container">
@@ -189,7 +217,10 @@ const MyCourses = () => {
                 return (
                   <div key={month} className="journey-month">
                     {/* Status Box */}
-                    <div className={`journey-status-box ${isUnlocked ? 'unlocked' : 'locked'}`}>
+                    <div
+                      className={`journey-status-box ${isUnlocked ? 'unlocked' : 'locked'}`}
+                      onClick={isUnlocked ? () => handleJourneyClick(month) : undefined}
+                    >
                       <div className="journey-padlock">
                         {isUnlocked ? (
                           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -225,6 +256,71 @@ const MyCourses = () => {
                 );
               })}
             </div>
+
+            {/* Journey Details Modal */}
+            {showJourneyModal && selectedJourneyData && (
+              <div className="journey-modal-backdrop" onClick={handleCloseJourneyModal}>
+                <div
+                  className="journey-modal"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="journey-modal-header">
+                    <h3 className="journey-modal-title">
+                      Details{selectedJourneyMonth ? ` - Month ${selectedJourneyMonth}` : ''}
+                    </h3>
+                    <button
+                      type="button"
+                      className="journey-modal-close"
+                      onClick={handleCloseJourneyModal}
+                      aria-label="Close"
+                    >
+                      ×
+                    </button>
+                  </div>
+
+                  <div className="journey-modal-body">
+                    {selectedJourneyData?.content && (
+                      <>
+                        <div className="journey-detail-row journey-detail-literacy">
+                          <span className="journey-detail-label">Literacy:</span>
+                          <span className="journey-detail-value">
+                            {selectedJourneyData.content.Literacy || '-'}
+                          </span>
+                        </div>
+
+                        <div className="journey-detail-row journey-detail-numeracy">
+                          <span className="journey-detail-label">Numeracy:</span>
+                          <span className="journey-detail-value">
+                            {selectedJourneyData.content.Numeracy || '-'}
+                          </span>
+                        </div>
+
+                        <div className="journey-detail-row journey-detail-concept">
+                          <span className="journey-detail-label">Concept:</span>
+                          <span className="journey-detail-value">
+                            {selectedJourneyData.content.Concept || '-'}
+                          </span>
+                        </div>
+
+                        <div className="journey-detail-row journey-detail-manners">
+                          <span className="journey-detail-label">Good Manners:</span>
+                          <span className="journey-detail-value">
+                            {selectedJourneyData.content['Good Manners'] || '-'}
+                          </span>
+                        </div>
+
+                        <div className="journey-detail-row journey-detail-highlight">
+                          <span className="journey-detail-label">Highlight of Month:</span>
+                          <span className="journey-detail-value">
+                            {selectedJourneyData.content['Highlight of Month'] || '-'}
+                          </span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

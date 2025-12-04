@@ -1,0 +1,130 @@
+{
+    "pg": {
+        "LANGUAGE AND READING": [
+            {
+                "name": "Language Development is the most crucial part of Child development. It supports the child's ability to communicate. It also helps to express and understand feelings, think and learn, solve problems, develop and maintain relationships."
+            }
+        ],
+        "MATHEMATICS": [
+            {
+                "name": "Learning Mathematics is an important part of learning for children in early years. It helps develop skills such as problem solving, understanding and using space and measures and develop their own spatial awareness."
+            }
+        ],
+        "GENERAL & SOCIAL AWARENESS": [
+            {
+                "name": "General and Social Awareness in Early Childhood Education help improve children's social skills, emotional skills, reasoning skills and thinking skills."
+            }
+        ],
+        "STEM LEARNING": [
+            {
+                "name": "STEM education helps young children better understand the world and relate to it. STEM involves introducing children to new concepts through activities and games. It essentially helps them live the concepts rather than only reading about them."
+            }
+        ],
+        "ART & COLORS": [
+            {
+                "name": "Art helps young children to develop both gross motor and fine motor skills. Fine motor skills are essential for a child's school readiness and include providing practice with hand-eye coordination & using small hands & fingers to grasp markers, crayons, & brushes and create scribbles and marks."
+            }
+        ],
+        "MUSIC & MOVEMENT/EXERCISE": [
+            {
+                "name": "Research shows that exposure to music improves children's ability to learn. Music and movement has improved children's memory, cognitive development, learning skills and expressive ability."
+            }
+        ]
+    },
+    "nursery": {
+        "LANGUAGE AND READING": [
+            {
+                "name": "Language Development is the most crucial part of Child development. It supports the child's ability to communicate. It also helps to express and understand feelings, think and learn, solve problems, develop and maintain relationships."
+            }
+        ],
+        "MATHEMATICS": [
+            {
+                "name": "Learning Mathematics is an important part of learning for children in early years. It helps develop skills such as problem solving, understanding and using space and measures and develop their own spatial awareness."
+            }
+        ],
+        "GENERAL & SOCIAL AWARENESS": [
+            {
+                "name": "General and Social Awareness in Early Childhood Education help improve children's social skills, emotional skills, reasoning skills and thinking skills."
+            }
+        ],
+        "STEM LEARNING": [
+            {
+                "name": "STEM education helps young children better understand the world and relate to it. STEM involves introducing children to new concepts through activities and games. It essentially helps them live the concepts rather than only reading about them."
+            }
+        ],
+        "ART & COLORS": [
+            {
+                "name": "Art helps young children to develop both gross motor and fine motor skills. Fine motor skills are essential for a child's school readiness and include providing practice with hand-eye coordination & using small hands & fingers to grasp markers, crayons, & brushes and create scribbles and marks."
+            }
+        ],
+        "MUSIC & MOVEMENT/EXERCISE": [
+            {
+                "name": "Research shows that exposure to music improves children's ability to learn. Music and movement has improved children's memory, cognitive development, learning skills and expressive ability."
+            }
+        ]
+    },
+    "jkg": {
+        "LANGUAGE AND READING": [
+            {
+                "name": "Language Development is the most crucial part of Child development. It supports the child's ability to communicate. It also helps to express and understand feelings, think and learn, solve problems, develop and maintain relationships."
+            }
+        ],
+        "MATHEMATICS": [
+            {
+                "name": "Learning Mathematics is an important part of learning for children in early years. It helps develop skills such as problem solving, understanding and using space and measures and develop their own spatial awareness."
+            }
+        ],
+        "GENERAL & SOCIAL AWARENESS": [
+            {
+                "name": "General and Social Awareness in Early Childhood Education help improve children's social skills, emotional skills, reasoning skills and thinking skills."
+            }
+        ],
+        "STEM LEARNING": [
+            {
+                "name": "STEM education helps young children better understand the world and relate to it. STEM involves introducing children to new concepts through activities and games. It essentially helps them live the concepts rather than only reading about them."
+            }
+        ],
+        "ART & COLORS": [
+            {
+                "name": "Art helps young children to develop both gross motor and fine motor skills. Fine motor skills are essential for a child's school readiness and include providing practice with hand-eye coordination & using small hands & fingers to grasp markers, crayons, & brushes and create scribbles and marks."
+            }
+        ],
+        "MUSIC & MOVEMENT/EXERCISE": [
+            {
+                "name": "Research shows that exposure to music improves children's ability to learn. Music and movement has improved children's memory, cognitive development, learning skills and expressive ability."
+            }
+        ]
+    },
+    "skg": {
+        "LANGUAGE AND READING": [
+            {
+                "name": "Language Development is the most crucial part of Child development. It supports the child's ability to communicate. It also helps to express and understand feelings, think and learn, solve problems, develop and maintain relationships."
+            }
+        ],
+        "MATHEMATICS": [
+            {
+                "name": "Learning Mathematics is an important part of learning for children in early years. It helps develop skills such as problem solving, understanding and using space and measures and develop their own spatial awareness."
+            }
+        ],
+        "GENERAL & SOCIAL AWARENESS": [
+            {
+                "name": "General and Social Awareness in Early Childhood Education help improve children's social skills, emotional skills, reasoning skills and thinking skills."
+            }
+        ],
+        "STEM LEARNING": [
+            {
+                "name": "STEM education helps young children better understand the world and relate to it. STEM involves introducing children to new concepts through activities and games. It essentially helps them live the concepts rather than only reading about them."
+            }
+        ],
+        "ART & COLORS": [
+            {
+                "name": "Art helps young children to develop both gross motor and fine motor skills. Fine motor skills are essential for a child's school readiness and include providing practice with hand-eye coordination & using small hands & fingers to grasp markers, crayons, & brushes and create scribbles and marks."
+            }
+        ],
+        "MUSIC & MOVEMENT/EXERCISE": [
+            {
+                "name": "Research shows that exposure to music improves children's ability to learn. Music and movement has improved children's memory, cognitive development, learning skills and expressive ability."
+            }
+        ]
+    }
+}

@@ -52,6 +52,7 @@ const Dashboard = ({ user, onLogout }) => {
   const [studentSubscriptions, setStudentSubscriptions] = useState([]);
   const [groupPosts, setGroupPosts] = useState([]);
   const [demoClassDetails, setDemoClassDetails] = useState(null);
+  const [journeyCourseType, setJourneyCourseType] = useState('jkg');
 
 
   // Save activeSection to localStorage whenever it changes
@@ -69,6 +70,25 @@ const Dashboard = ({ user, onLogout }) => {
     if (studentId) {
       localStorage.setItem('student_id', studentId.toString());
       sessionStorage.setItem('student_id', studentId.toString());
+      
+      // Restore profile_image from persistent storage if user object doesn't have it
+      if (user && !user.profile_image) {
+        try {
+          const savedAvatar = localStorage.getItem(`profile_image_${studentId}`) || 
+                             sessionStorage.getItem(`profile_image_${studentId}`);
+          if (savedAvatar) {
+            const updatedUser = { ...user, profile_image: savedAvatar };
+            setUserData(updatedUser);
+            // Update localStorage user object too
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+            sessionStorage.setItem('user', JSON.stringify(updatedUser));
+            console.log('✅ Restored profile_image in Dashboard:', savedAvatar);
+          }
+        } catch (err) {
+          console.warn('Error restoring profile_image:', err);
+        }
+      }
+      
       fetchDashboardData();
     }
   }, [user]);
@@ -151,6 +171,25 @@ const Dashboard = ({ user, onLogout }) => {
       if (subscriptionResponse.success && subscriptionResponse.data) {
         const subscriptions = subscriptionResponse.data || [];
         setStudentSubscriptions(subscriptions);
+
+        // Derive course type for Journey (pg, nursery, jkg, skg) from subscription data
+        if (subscriptions.length > 0) {
+          const primarySub = subscriptions[0];
+          const rawName = (primarySub.course_name || primarySub.course || '').toString().toLowerCase();
+
+          let derivedType = 'jkg';
+          if (rawName.includes('senior') || rawName.includes('skg')) {
+            derivedType = 'skg';
+          } else if (rawName.includes('junior') || rawName.includes('jkg')) {
+            derivedType = 'jkg';
+          } else if (rawName.includes('nursery')) {
+            derivedType = 'nursery';
+          } else if (rawName.includes('playgroup') || rawName.includes('pg') || rawName.includes('play group')) {
+            derivedType = 'pg';
+          }
+
+          setJourneyCourseType(derivedType);
+        }
 
         setCourseProgress(prev => ({
           ...prev,
@@ -290,6 +329,15 @@ const Dashboard = ({ user, onLogout }) => {
       const merged = { ...stored, ...updatedUserData };
       localStorage.setItem('user', JSON.stringify(merged));
       sessionStorage.setItem('user', JSON.stringify(merged));
+      
+      // Also store profile_image in persistent storage if it exists
+      if (updatedUserData.profile_image) {
+        const studentId = getStudentId(userData || user);
+        if (studentId) {
+          localStorage.setItem(`profile_image_${studentId}`, updatedUserData.profile_image);
+          sessionStorage.setItem(`profile_image_${studentId}`, updatedUserData.profile_image);
+        }
+      }
     } catch (err) {
       // ignore
     }
@@ -371,7 +419,7 @@ const Dashboard = ({ user, onLogout }) => {
         <div className="header-right">
           <div className="user-menu-wrapper">
             <div className="user-menu" onClick={() => setShowUserDropdown(!showUserDropdown)}>
-              <span className="user-name">Hi, {userData.name || user.name || 'Student'} ▼</span>
+              <span className="user-name">{userData.name || user.name || 'Student'} ▼</span>
               <div className="user-avatar">
                 {userData.profile_image || user.profile_image ? (
                   <img src={userData.profile_image || user.profile_image} alt="User" />
@@ -448,9 +496,9 @@ const Dashboard = ({ user, onLogout }) => {
               ))}
             </div>
           ) : activeSection === 'Parent Section' ? (
-            <ParentSection user={userData} />
+            <ParentSection user={userData} courseType={journeyCourseType} />
           ) : activeSection === 'My Courses' ? (
-            <MyCourses />
+            <MyCourses courseType={journeyCourseType} />
           ) : activeSection === 'Live Class' ? (
             <LiveClass />
           ) : activeSection === 'Recorded Classes' ? (

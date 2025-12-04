@@ -282,13 +282,20 @@ const calculateUnlockedBonusVideoIndex = (courseStartDate) => {
   
   const today = new Date();
   const start = new Date(courseStartDate);
+  
+  // Set time to midnight for accurate day calculation
+  today.setHours(0, 0, 0, 0);
+  start.setHours(0, 0, 0, 0);
+  
   const diffTime = Math.abs(today - start);
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
   
   // Count only Tue/Thu (Bonus Session days)
+  // Loop until yesterday (i < diffDays) to exclude today
+  // This ensures only videos up to yesterday are unlocked, matching what's shown in LiveClass today
   let bonusSessionCount = 0;
   
-  for (let i = 0; i <= diffDays; i++) {
+  for (let i = 0; i < diffDays; i++) {
     const checkDate = new Date(courseStartDate);
     checkDate.setDate(checkDate.getDate() + i);
     const dayOfWeek = checkDate.getDay();
@@ -299,7 +306,7 @@ const calculateUnlockedBonusVideoIndex = (courseStartDate) => {
     }
   }
   
-  return bonusSessionCount; // This is how many videos should be unlocked
+  return bonusSessionCount; // This is how many videos should be unlocked (up to yesterday)
 };
 
 // UPDATE: Modify loadQuarterSessions function to include lock/unlock logic
@@ -333,18 +340,39 @@ const loadQuarterSessions = async (chapterId) => {
     const mappedSessions = response.raw.lessons.map((lesson, index) => {
       const content = lesson.content?.[0] || null;
       const isLocked = index >= unlockedCount; // Lock videos beyond unlocked count
+
+      // Prefer backend-provided class_summary_pdf (day-wise PDF) if available, otherwise fall back to video_url
+      let contentUrl = '';
+      if (content) {
+        const summaryPdf = content.class_summary_pdf;
+        let pdfPath = '';
+        if (Array.isArray(summaryPdf) && summaryPdf.length > 0) {
+          pdfPath = summaryPdf[0] || '';
+        } else if (typeof summaryPdf === 'string' && summaryPdf.trim() !== '') {
+          pdfPath = summaryPdf.trim();
+        }
+
+        if (pdfPath) {
+          // Ensure PDF path is converted to full Blob URL if it's not already absolute
+          contentUrl = getBlobUrl(pdfPath);
+        } else {
+          const videoUrl = content.video_url || content.video || '';
+          contentUrl = videoUrl;
+        }
+      }
       
       return {
         id: lesson.id,
         title: lesson.lesson_title,
         thumbnail: getBlobUrl(lesson.image),
-        videoUrl: content?.video_url || '',
+        videoUrl: contentUrl,
         description: content ? formatRichText(content.class_description) : '',
         requirement: content ? formatRichText(content.class_requirement) : '',
         isLocked: isLocked,
         index: index
       };
     });
+
     setSessions(mappedSessions);
   }
 };
@@ -456,14 +484,25 @@ const handleSessionClick = (session) => {
           <div className="flex-1 min-w-0">
             <div className="w-full aspect-video bg-black rounded-lg overflow-hidden flex items-center justify-center shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
               {selectedSession.videoUrl ? (
+                (() => {
+                  const url = selectedSession.videoUrl || '';
+                  const isPdf = url.toLowerCase().includes('.pdf');
+
+                  return (
                 <iframe
-                  src={selectedSession.videoUrl}
+                      src={url}
                   className="w-full h-full border-none"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
+                      allow={
+                        isPdf
+                          ? ''
+                          : 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture'
+                      }
+                      allowFullScreen={!isPdf}
                   title={selectedSession.title}
                   frameBorder="0"
                 ></iframe>
+                  );
+                })()
               ) : (
                 <div className="text-white text-center p-5">
                   <p className="my-2.5 text-sm text-[#ccc]">Video player will be displayed here</p>

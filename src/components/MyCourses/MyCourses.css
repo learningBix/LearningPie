@@ -553,6 +553,110 @@
   background: linear-gradient(135deg, #FFC107 0%, #FFA000 100%);
 }
 
+/* Journey Details Modal */
+.journey-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.journey-modal {
+  width: 100%;
+  max-width: 640px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  background: #ffffff;
+  font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.journey-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  background: linear-gradient(180deg, #ffe4f5 0%, #f8e6ff 100%);
+}
+
+.journey-modal-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+  color: #444;
+}
+
+.journey-modal-close {
+  border: none;
+  background: transparent;
+  font-size: 22px;
+  cursor: pointer;
+  line-height: 1;
+  color: #666;
+}
+
+.journey-modal-close:hover {
+  color: #222;
+}
+
+.journey-modal-body {
+  padding: 0;
+}
+
+.journey-detail-row {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #212121;
+}
+
+.journey-detail-label {
+  margin-right: 8px;
+}
+
+.journey-detail-value {
+  flex: 1;
+}
+
+.journey-detail-literacy {
+  background: #b5cfff;
+}
+
+.journey-detail-numeracy {
+  background: #ffe9a3;
+}
+
+.journey-detail-concept {
+  background: #ffc3c7;
+}
+
+.journey-detail-manners {
+  background: #c8ecb4;
+}
+
+.journey-detail-highlight {
+  background: #fff5b9;
+}
+
+@media (max-width: 768px) {
+  .journey-modal {
+    max-width: 90%;
+  }
+
+  .journey-detail-row {
+    font-size: 14px;
+    padding: 10px 14px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+}
+
 /* Responsive Design */
 @media (max-width: 1024px) {
   .courses-content {
