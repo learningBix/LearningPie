@@ -37,19 +37,35 @@ const LiveClass = ({ user = {}, userData = {}, onVideoWatch }) => {
   const getDaysSinceCourseStart = (startDate) => {
     const today = new Date();
     const start = new Date(startDate);
-    const diffTime = Math.abs(today - start);
+    
+    // Set time to midnight for accurate day calculation
+    today.setHours(0, 0, 0, 0);
+    start.setHours(0, 0, 0, 0);
+    
+    const diffTime = today - start;
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
     return diffDays;
   };
 
   // Helper: Get video index based on session count
-  const getVideoIndexForSession = (sessionType, daysPassed) => {
+  const getVideoIndexForSession = (sessionType, daysPassed, startDateStr) => {
     // Count only relevant days (Mon/Wed/Fri for RC, Tue/Thu for BS)
+    // Count up to and including today's session
     let sessionCount = 0;
     
+    if (!startDateStr) {
+      console.warn('⚠️ startDate not provided, returning 0');
+      return 0;
+    }
+    
+    const startDate = new Date(startDateStr);
+    startDate.setHours(0, 0, 0, 0);
+    
+    // Count sessions from start date up to and including today
     for (let i = 0; i <= daysPassed; i++) {
-      const checkDate = new Date(courseStartDate);
+      const checkDate = new Date(startDate);
       checkDate.setDate(checkDate.getDate() + i);
+      checkDate.setHours(0, 0, 0, 0);
       const dayType = getSessionTypeForDay(checkDate.getDay());
       
       if (dayType === sessionType) {
@@ -57,8 +73,12 @@ const LiveClass = ({ user = {}, userData = {}, onVideoWatch }) => {
       }
     }
     
-    // Return index (0-based)
-    return sessionCount > 0 ? sessionCount - 1 : 0;
+    // Return index (0-based): sessionCount - 1 gives us the correct index
+    // If today is the 5th session (sessionCount = 5), return index 4 (0-based)
+    // This means: Day 1 → index 0, Day 2 → index 1, ..., Day 5 → index 4
+    const videoIndex = sessionCount > 0 ? sessionCount - 1 : 0;
+    console.log(`🔢 Session counting: sessionType=${sessionType}, daysPassed=${daysPassed}, sessionCount=${sessionCount}, videoIndex=${videoIndex} (Day ${sessionCount})`);
+    return videoIndex;
   };
 
   // Helper: Get unlocked quarters
@@ -185,10 +205,10 @@ const LiveClass = ({ user = {}, userData = {}, onVideoWatch }) => {
 
       // Step 3: Calculate which video to show
       const daysPassed = getDaysSinceCourseStart(startDate);
-      const videoIndex = getVideoIndexForSession(sessionType, daysPassed);
+      const videoIndex = getVideoIndexForSession(sessionType, daysPassed, startDate);
       
       console.log('📊 Days Passed:', daysPassed);
-      console.log('🎯 Video Index:', videoIndex);
+      console.log('🎯 Video Index:', videoIndex, `(This should correspond to Day ${videoIndex + 1} session)`);
 
       // Step 4: Get unlocked quarters
       const studentId = user?.id || userData?.id || userData?.student_id;
@@ -219,15 +239,63 @@ const LiveClass = ({ user = {}, userData = {}, onVideoWatch }) => {
               return null;
             }
 
-            // Get the video at calculated index
-            const targetLesson = lessons[videoIndex] || lessons[0];
+            // For Quarter 1 (id: 521), check if we need to skip orientation video
+            // Orientation video only exists for recorded classes (type '0'), not for bonus sessions (type '1')
+            // For Quarter 2 (id: 790), use videoIndex directly as it doesn't have orientation
+            let effectiveIndex = videoIndex;
+            if (quarter.id === '521' && type === '0') {
+              // Quarter 1 Recorded Classes: Skip orientation video (index 0), so add 1 to videoIndex
+              // videoIndex 0 (Day 1 session) = Day 1 video (index 1 in lessons array)
+              // videoIndex 4 (Day 5 session) = Day 5 video (index 5 in lessons array)
+              effectiveIndex = videoIndex + 1;
+              
+              // If only orientation video exists or effectiveIndex is out of bounds, skip
+              if (effectiveIndex >= lessons.length || lessons.length <= 1) {
+                console.log(`⚠️ Quarter 1: No valid Day video available (only orientation or out of bounds)`);
+                return null;
+              }
+              
+              console.log(`📊 Quarter 1 Recorded: videoIndex=${videoIndex} (Day ${videoIndex + 1}), effectiveIndex=${effectiveIndex} (skipping orientation)`);
+            } else if (quarter.id === '521' && type === '1') {
+              // Quarter 1 Bonus Sessions: No orientation video, use videoIndex directly
+              // videoIndex 0 = Day 1, videoIndex 4 = Day 5
+              effectiveIndex = videoIndex;
+              console.log(`📊 Quarter 1 Bonus: videoIndex=${videoIndex} (Day ${videoIndex + 1}), effectiveIndex=${effectiveIndex} (no orientation)`);
+            } else {
+              // Quarter 2: No orientation video, videoIndex directly maps to day number
+              // videoIndex 0 = Day 1, videoIndex 4 = Day 5
+              console.log(`📊 Quarter 2: videoIndex=${videoIndex} (Day ${videoIndex + 1}), effectiveIndex=${effectiveIndex}`);
+            }
+            
+            // Get the video at calculated effective index
+            // Fallback: for Quarter 1, use index 1 (Day 1), for Quarter 2, use index 0 (Day 1)
+            const targetLesson = lessons[effectiveIndex] || lessons[quarter.id === '521' ? 1 : 0];
             const content = targetLesson.content?.[0];
+
+            // Prefer backend-provided class_summary_pdf (day-wise PDF) if available, otherwise fall back to video_url
+            let contentUrl = '';
+            if (content) {
+              const summaryPdf = content.class_summary_pdf;
+              let pdfPath = '';
+              if (Array.isArray(summaryPdf) && summaryPdf.length > 0) {
+                pdfPath = summaryPdf[0] || '';
+              } else if (typeof summaryPdf === 'string' && summaryPdf.trim() !== '') {
+                pdfPath = summaryPdf.trim();
+              }
+
+              if (pdfPath) {
+                contentUrl = constructImageUrl(pdfPath);
+              } else {
+                const videoUrl = content.video_url || content.video || '';
+                contentUrl = videoUrl;
+              }
+            }
 
             return {
               id: targetLesson.id,
               title: targetLesson.lesson_title,
               thumbnail: constructImageUrl(targetLesson.image || content?.image),
-              videoUrl: content?.video_url || '',
+              videoUrl: contentUrl,
               description: formatRichText(targetLesson.lesson_description || content?.class_description || ''),
               requirement: formatRichText(targetLesson.requirements || content?.class_requirement || ''),
               sessionType: sessionType,
@@ -348,14 +416,25 @@ const LiveClass = ({ user = {}, userData = {}, onVideoWatch }) => {
           <div className="flex-1 min-w-0">
             <div className="w-full aspect-video bg-black rounded-lg overflow-hidden flex items-center justify-center shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
               {sessionDetails.videoUrl ? (
-                <iframe
-                  src={sessionDetails.videoUrl}
-                  className="w-full h-full border-none"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  title={sessionDetails.title}
-                  frameBorder="0"
-                ></iframe>
+                (() => {
+                  const url = sessionDetails.videoUrl || '';
+                  const isPdf = url.toLowerCase().includes('.pdf');
+
+                  return (
+                    <iframe
+                      src={url}
+                      className="w-full h-full border-none"
+                      allow={
+                        isPdf
+                          ? ''
+                          : 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture'
+                      }
+                      allowFullScreen={!isPdf}
+                      title={sessionDetails.title}
+                      frameBorder="0"
+                    ></iframe>
+                  );
+                })()
               ) : (
                 <div className="text-white text-center p-5">
                   <p className="my-2.5 text-sm text-[#ccc]">Video player will be displayed here</p>
