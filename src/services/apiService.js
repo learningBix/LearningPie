@@ -235,6 +235,27 @@ export const dashboardAPI = {
     return apiCall('/demo_class_details', { sid });
   },
   
+  // Update student lesson status for assessment pie (stories, rhymes, bonus, recorded, live, diy)
+  updateCourseStatusPie: ({
+    student_id,
+    type,
+    lesson_id = '0',
+    chapter_id = '0',
+    ref_id = '0',
+    percentage = '100',
+    duration = '0'
+  }) => {
+    return apiCall('/update_course_status_pie', {
+      student_id,
+      lesson_id,
+      chapter_id,
+      ref_id,
+      type,
+      percentage,
+      duration
+    });
+  },
+  
   getGroupPostList: ({ group_id = '', keyword = '', learning = '1', user_id = '' } = {}) => {
     // Convert user_id to number if it's a string
     const numericUserId = typeof user_id === 'string' ? parseInt(user_id, 10) : user_id;

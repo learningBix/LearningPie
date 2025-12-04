@@ -11,6 +11,7 @@ const LiveClass = ({ user = {}, userData = {}, onVideoWatch }) => {
   const [loading, setLoading] = useState(false);
   const [courseStartDate, setCourseStartDate] = useState(null);
   const [currentDayType, setCurrentDayType] = useState(null); // 'recorded' or 'bonus'
+  const [hasTrackedVideo, setHasTrackedVideo] = useState(false);
 
   useEffect(() => {
     loadLiveClassVideo();
@@ -362,13 +363,25 @@ const LiveClass = ({ user = {}, userData = {}, onVideoWatch }) => {
         requirement: video.requirement || formatRichText(content.class_requirement || '')
       });
       setShowVideoDetails(true);
+      setHasTrackedVideo(false);
     }
   };
 
   const handleBackClick = () => {
     setShowVideoDetails(false);
     setSessionDetails(null);
+    setHasTrackedVideo(false);
   };
+
+  // Track live/recorded class watch for stats (backend + Dashboard)
+  useEffect(() => {
+    if (sessionDetails?.videoUrl && !hasTrackedVideo && onVideoWatch && currentDayType) {
+      const videoType = currentDayType === 'recorded' ? 'recorded_class' : 'live_class';
+      console.log('📺 LiveClass - Calling onVideoWatch with type:', videoType);
+      onVideoWatch(videoType);
+      setHasTrackedVideo(true);
+    }
+  }, [sessionDetails, hasTrackedVideo, onVideoWatch, currentDayType]);
 
   if (loading) {
     return (

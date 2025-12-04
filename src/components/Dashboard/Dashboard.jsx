@@ -343,7 +343,7 @@ const Dashboard = ({ user, onLogout }) => {
     }
   };
 
-  // Function to track video watch and update stats
+  // Function to track video watch and update stats (both frontend state + backend)
   const handleVideoWatch = async (videoType) => {
     console.log('🎥 handleVideoWatch called with videoType:', videoType);
     
@@ -371,13 +371,47 @@ const Dashboard = ({ user, onLogout }) => {
 
       // Optimistically update local state immediately (don't wait for API)
       setAssessmentData(prev => {
-        const newCount = (prev[assessmentKey] || 0) + 1;
-        console.log(`✅ Updated ${assessmentKey} from ${prev[assessmentKey]} to ${newCount}`);
+        const currentValue = Number.isFinite(prev[assessmentKey]) ? prev[assessmentKey] : 0;
+        const newCount = currentValue + 1;
+        console.log(`✅ Updated ${assessmentKey} from ${currentValue} to ${newCount}`);
         return {
           ...prev,
           [assessmentKey]: newCount
         };
       });
+
+      // Map to backend "type" used in student_lessons_status_pie
+      const backendTypeMap = {
+        recorded_class: 'recorded',
+        live_class: 'live',
+        stories: 'story',
+        rhymes: 'rhyme',
+        bonus: 'bonus',
+        robotics: 'diy',
+        diy_home: 'diy'
+      };
+
+      const backendType = backendTypeMap[assessmentKey];
+
+      if (backendType) {
+        try {
+          console.log('📡 Calling updateCourseStatusPie with type:', backendType);
+          await dashboardAPI.updateCourseStatusPie({
+            student_id: studentId,
+            type: backendType,
+            // lesson_id / chapter_id / ref_id optional here; we're just incrementing counts
+            lesson_id: '0',
+            chapter_id: '0',
+            ref_id: '0',
+            percentage: '100',
+            duration: '0'
+          });
+        } catch (updateError) {
+          console.warn('⚠️ Error calling updateCourseStatusPie:', updateError);
+        }
+      } else {
+        console.warn('⚠️ No backendType mapping found for assessmentKey:', assessmentKey);
+      }
 
       // Refresh assessment data from server to ensure accuracy
       try {
@@ -500,7 +534,7 @@ const Dashboard = ({ user, onLogout }) => {
           ) : activeSection === 'My Courses' ? (
             <MyCourses courseType={journeyCourseType} />
           ) : activeSection === 'Live Class' ? (
-            <LiveClass />
+            <LiveClass user={userData} userData={userData} onVideoWatch={handleVideoWatch} />
           ) : activeSection === 'Recorded Classes' ? (
             <RecordedClasses user={userData} userData={userData} onVideoWatch={handleVideoWatch} />
           ) : activeSection === 'Bonus Sessions' ? (
@@ -525,7 +559,7 @@ const Dashboard = ({ user, onLogout }) => {
           ) : activeSection === 'Community' ? (
             <Community user={user} />
           ) : activeSection === 'Live Class' ? (
-            <LiveClass />
+            <LiveClass user={userData} userData={userData} onVideoWatch={handleVideoWatch} />
           ) : activeSection === 'Invite & Earn' ? (
             <Invite />
           ) : (
