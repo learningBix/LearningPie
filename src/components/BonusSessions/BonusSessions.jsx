@@ -147,8 +147,8 @@ const BonusSessions = ({ user, userData, onVideoWatch }) => {
         }
       }
 
-      // For Quarter 3, check if Q1 + Q2 are complete
-      if (quarterId !== '521' && quarterId !== '790') {
+      // For Quarter 3 (id: 772), check if Q1 + Q2 are complete
+      if (quarterId === '772') {
         const quarter1Sessions = await getTotalSessionsInQuarter('521', studentId);
         const quarter2Sessions = await getTotalSessionsInQuarter('790', studentId);
         const totalPreviousSessions = quarter1Sessions.totalSessions + quarter2Sessions.totalSessions;
@@ -187,7 +187,7 @@ const loadQuarters = async () => {
     const subscribed = await fetchSubscribedChapters();
     
     // Determine chosen terms using check_student_subscription
-    let chosenTerms = { term1: false, term2: false };
+    let chosenTerms = { term1: false, term2: false, term3: false };
     try {
       const sid = user?.sid || userData?.sid || localStorage.getItem('sid') || sessionStorage.getItem('sid');
       if (sid) {
@@ -196,11 +196,17 @@ const loadQuarters = async () => {
           subscriptionRes.data.forEach(s => {
             const courseName = (s.course_name || s.course || '').toString().toLowerCase();
             const courseIdSub = s.course_id || s.courseId || s.courseid || s.course || '';
+            const terms = (s.terms || '').toString();
+            
             if (courseName.includes('term 1') || courseName.includes('term1') || String(courseIdSub) === '82') {
               chosenTerms.term1 = true;
             }
             if (courseName.includes('term 2') || courseName.includes('term2')) {
               chosenTerms.term2 = true;
+            }
+            // Check if Term 3 is in the terms string (e.g., "1,2,3" or "3")
+            if (terms.includes('3') || courseName.includes('term 3') || courseName.includes('term3')) {
+              chosenTerms.term3 = true;
             }
           });
         }
@@ -213,8 +219,8 @@ const loadQuarters = async () => {
 
     const quarterData = [];
 
-    // Fetch Quarter 1 and Quarter 2
-    const [quarter1Res, quarter2Res, quarter3Res] = await Promise.all([
+    // Fetch Quarter 1, Quarter 2, and Quarter 3
+    const [quarter1Res, quarter2Res, quarter3Res, quarter3ChapterRes] = await Promise.all([
       recordedClassesAPI.viewChapterLessonsInfo({ 
         course_chapter_id: '521',
         student_id: studentId,
@@ -228,7 +234,13 @@ const loadQuarters = async () => {
       recordedClassesAPI.fetchTermsCourses({ 
         age_group_id: ageGroupId,
         terms: ['3']
-      })
+      }),
+      // Fetch Quarter 3 chapter data if Term 3 is purchased
+      chosenTerms.term3 ? recordedClassesAPI.viewChapterLessonsInfo({ 
+        course_chapter_id: '772',
+        student_id: studentId,
+        type: '1'
+      }).catch(() => ({ success: false })) : Promise.resolve({ success: false })
     ]);
 
     // Map Quarter 1
@@ -285,21 +297,57 @@ const loadQuarters = async () => {
       });
     }
 
-    // Map Quarter 3
+    // Map Quarter 3 - Check if Term 3 is purchased
     if (quarter3Res.success) {
       const quarter3Data = quarter3Res.raw?.data || quarter3Res.data || [];
       if (quarter3Data.length > 0) {
         const course = quarter3Data[0];
-        quarterData.push({
-          id: 3,
-          title: course.course_name || 'Buy Quarter 3',
-          description: cleanDescription(course.description || course.course_detail),
-          image: quarter_3,
-          type: 'buy_plan',
-          terms: ['3'],
-          courseData: course,
-          isLocked: false
-        });
+        
+        // If Term 3 is purchased, show Quarter 3 as normal quarter (like Q1/Q2)
+        if (chosenTerms.term3 && quarter3ChapterRes.success && quarter3ChapterRes.raw?.data?.[0]) {
+          const chapterData = quarter3ChapterRes.raw.data[0];
+          // Check if previous quarters (Q1+Q2) are complete for sequential unlock
+          let isSequentiallyUnlocked = true;
+          let courseStartDate = null;
+          try {
+            const sid = user?.sid || userData?.sid || localStorage.getItem('sid') || sessionStorage.getItem('sid');
+            if (sid) {
+              const subscriptionRes = await subjectsAPI.checkStudentSubscription(sid);
+              if (subscriptionRes.success && subscriptionRes.data?.[0]?.course_start_date) {
+                courseStartDate = subscriptionRes.data[0].course_start_date;
+                isSequentiallyUnlocked = await isPreviousQuartersComplete('772', courseStartDate, studentId);
+              }
+            }
+          } catch (err) {
+            console.warn('⚠️ [Bonus] Could not check sequential unlock for Quarter 3:', err);
+          }
+          
+          // Quarter 3 is locked if: previous quarters not complete
+          const isLocked = !isSequentiallyUnlocked;
+          console.log('[Bonus] Quarter 3 - isLocked:', isLocked, 'term3:', chosenTerms.term3, 'sequentiallyUnlocked:', isSequentiallyUnlocked);
+          
+          quarterData.push({
+            id: 3,
+            title: chapterData.chapter_title || 'Quarter 3',
+            description: chapterData.chapter_description || 'Browse through unlocked sessions for better understanding.',
+            image: getBlobUrl(chapterData.image),
+            type: 'quarter',
+            chapterId: '772',
+            isLocked: isLocked
+          });
+        } else {
+          // Term 3 not purchased - show Buy Quarter 3 option
+          quarterData.push({
+            id: 3,
+            title: course.course_name || 'Buy Quarter 3',
+            description: cleanDescription(course.description || course.course_detail),
+            image: quarter_3,
+            type: 'buy_plan',
+            terms: ['3'],
+            courseData: course,
+            isLocked: false
+          });
+        }
       }
     }
 
@@ -354,6 +402,12 @@ const loadQuarters = async () => {
         // Quarter 2 (790): Always show (will be locked if Term 2 is not selected)
         if (q.chapterId === '790') {
           console.log(`  ✅ [Bonus] Quarter 2 - Always visible (locked if Term 2 not selected)`);
+          return true;
+        }
+        
+        // Quarter 3 (772): Always show (will be locked if Term 3 is not purchased or previous quarters not complete)
+        if (q.chapterId === '772') {
+          console.log(`  ✅ [Bonus] Quarter 3 - Always visible (locked if Term 3 not purchased or Q1+Q2 not complete)`);
           return true;
         }
         
