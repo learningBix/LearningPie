@@ -104,7 +104,7 @@ const LiveClass = ({ user = {}, userData = {}, onVideoWatch }) => {
       }
 
       // Check selected terms
-      let chosenTerms = { term1: false, term2: false };
+      let chosenTerms = { term1: false, term2: false, term3: false };
       try {
         if (sid) {
           const subscriptionRes = await subjectsAPI.checkStudentSubscription(sid);
@@ -118,6 +118,9 @@ const LiveClass = ({ user = {}, userData = {}, onVideoWatch }) => {
               if (courseName.includes('term 2') || courseName.includes('term2')) {
                 chosenTerms.term2 = true;
               }
+              if (courseName.includes('term 3') || courseName.includes('term3')) {
+                chosenTerms.term3 = true;
+              }
             });
           }
         }
@@ -128,13 +131,20 @@ const LiveClass = ({ user = {}, userData = {}, onVideoWatch }) => {
       // Quarter 1 (chapter_id: 521)
       const quarter1Unlocked = chosenTerms.term1 || subscribedChapters.includes('521');
       if (quarter1Unlocked) {
-        unlockedQuarters.push({ id: '521', title: 'Quarter 1' });
+        unlockedQuarters.push({ id: '521', title: 'Quarter 1', order: 1 });
       }
 
       // Quarter 2 (chapter_id: 790)
       const quarter2Unlocked = chosenTerms.term2 || subscribedChapters.includes('790');
       if (quarter2Unlocked) {
-        unlockedQuarters.push({ id: '790', title: 'Quarter 2' });
+        unlockedQuarters.push({ id: '790', title: 'Quarter 2', order: 2 });
+      }
+
+      // Quarter 3 (if subscribed)
+      if (chosenTerms.term3 || subscribedChapters.some(id => id.includes('3'))) {
+        // Note: Quarter 3 chapter ID needs to be determined based on your system
+        // For now, we'll check if term3 is selected
+        unlockedQuarters.push({ id: 'quarter3', title: 'Quarter 3', order: 3 });
       }
 
       console.log('🔓 Unlocked quarters check:', {
@@ -147,10 +157,162 @@ const LiveClass = ({ user = {}, userData = {}, onVideoWatch }) => {
     } catch (error) {
       console.error('❌ Error getting unlocked quarters:', error);
       // Default to Quarter 1 if error
-      unlockedQuarters.push({ id: '521', title: 'Quarter 1' });
+      unlockedQuarters.push({ id: '521', title: 'Quarter 1', order: 1 });
     }
 
+    // Sort by order to ensure Q1 → Q2 → Q3 sequence
+    unlockedQuarters.sort((a, b) => (a.order || 0) - (b.order || 0));
     return unlockedQuarters;
+  };
+
+  // Helper: Get total sessions count (Recorded + Bonus) for a quarter
+  const getTotalSessionsInQuarter = async (quarterId, studentId) => {
+    try {
+      // Fetch both Recorded (type '0') and Bonus (type '1') lessons
+      const [recordedRes, bonusRes] = await Promise.all([
+        recordedClassesAPI.viewChapterLessonsInfo({
+          course_chapter_id: quarterId,
+          student_id: studentId,
+          type: '0' // Recorded
+        }),
+        recordedClassesAPI.viewChapterLessonsInfo({
+          course_chapter_id: quarterId,
+          student_id: studentId,
+          type: '1' // Bonus
+        })
+      ]);
+
+      let recordedCount = 0;
+      let bonusCount = 0;
+
+      // For Quarter 1 (521), Recorded classes have orientation video at index 0, so subtract 1
+      // For other quarters, count all lessons
+      if (recordedRes.success && recordedRes.raw?.lessons) {
+        recordedCount = recordedRes.raw.lessons.length;
+        if (quarterId === '521') {
+          // Subtract orientation video (index 0) for Quarter 1
+          recordedCount = Math.max(0, recordedCount - 1);
+        }
+      }
+
+      if (bonusRes.success && bonusRes.raw?.lessons) {
+        bonusCount = bonusRes.raw.lessons.length;
+      }
+
+      const totalSessions = recordedCount + bonusCount;
+      console.log(`📊 Quarter ${quarterId} total sessions: Recorded=${recordedCount}, Bonus=${bonusCount}, Total=${totalSessions}`);
+      
+      return {
+        recordedCount,
+        bonusCount,
+        totalSessions
+      };
+    } catch (error) {
+      console.error(`❌ Error getting total sessions for quarter ${quarterId}:`, error);
+      return { recordedCount: 0, bonusCount: 0, totalSessions: 0 };
+    }
+  };
+
+  // Helper: Determine which quarter should be active based on sequential progress
+  const getActiveQuarter = async (unlockedQuarters, daysPassed, startDate, studentId) => {
+    if (unlockedQuarters.length === 0) {
+      return null;
+    }
+
+    // If only one quarter unlocked, it's always active
+    if (unlockedQuarters.length === 1) {
+      return unlockedQuarters[0];
+    }
+
+    // Calculate total sessions completed so far (across all session types)
+    let totalSessionsCompleted = 0;
+    const start = new Date(startDate);
+    start.setHours(0, 0, 0, 0);
+    
+    // Count all sessions (Recorded + Bonus) up to and including today
+    for (let i = 0; i <= daysPassed; i++) {
+      const checkDate = new Date(start);
+      checkDate.setDate(checkDate.getDate() + i);
+      checkDate.setHours(0, 0, 0, 0);
+      const dayType = getSessionTypeForDay(checkDate.getDay());
+      
+      if (dayType === 'recorded' || dayType === 'bonus') {
+        totalSessionsCompleted++;
+      }
+    }
+
+    console.log(`📊 Total sessions completed so far: ${totalSessionsCompleted}`);
+
+    // Sequentially check each quarter
+    let cumulativeSessions = 0;
+    
+    for (const quarter of unlockedQuarters) {
+      const quarterSessions = await getTotalSessionsInQuarter(quarter.id, studentId);
+      const quarterTotal = quarterSessions.totalSessions;
+      
+      console.log(`🔍 Checking Quarter ${quarter.title} (${quarter.id}): Total=${quarterTotal}, Cumulative=${cumulativeSessions}, Completed=${totalSessionsCompleted}`);
+      
+      // If current quarter hasn't been completed yet, it's the active one
+      // If totalSessionsCompleted >= cumulativeSessions + quarterTotal, this quarter is complete, move to next
+      if (totalSessionsCompleted < cumulativeSessions + quarterTotal) {
+        console.log(`✅ Active Quarter: ${quarter.title} (${quarter.id})`);
+        return quarter;
+      }
+      
+      // Move to next quarter (this quarter is complete)
+      cumulativeSessions += quarterTotal;
+    }
+
+    // If all quarters completed, return the last one
+    const lastQuarter = unlockedQuarters[unlockedQuarters.length - 1];
+    console.log(`✅ All quarters completed, using last: ${lastQuarter.title}`);
+    return lastQuarter;
+  };
+
+  // Helper: Calculate video index within the active quarter
+  const getVideoIndexInActiveQuarter = async (activeQuarter, unlockedQuarters, daysPassed, startDate, sessionType, studentId) => {
+    if (!activeQuarter) return 0;
+
+    const start = new Date(startDate);
+    start.setHours(0, 0, 0, 0);
+    
+    // Find active quarter's position
+    const activeQuarterIndex = unlockedQuarters.findIndex(q => q.id === activeQuarter.id);
+    
+    // Calculate sessions of current type (recorded/bonus) in previous quarters
+    let previousQuartersSessionsOfType = 0;
+    for (let i = 0; i < activeQuarterIndex; i++) {
+      const quarter = unlockedQuarters[i];
+      const quarterSessions = await getTotalSessionsInQuarter(quarter.id, studentId);
+      if (sessionType === 'recorded') {
+        previousQuartersSessionsOfType += quarterSessions.recordedCount;
+      } else {
+        previousQuartersSessionsOfType += quarterSessions.bonusCount;
+      }
+    }
+
+    // Calculate total sessions of current type (recorded/bonus) completed so far
+    let sessionsOfCurrentType = 0;
+    for (let i = 0; i <= daysPassed; i++) {
+      const checkDate = new Date(start);
+      checkDate.setDate(checkDate.getDate() + i);
+      checkDate.setHours(0, 0, 0, 0);
+      const dayType = getSessionTypeForDay(checkDate.getDay());
+      
+      if (dayType === sessionType) {
+        sessionsOfCurrentType++;
+      }
+    }
+
+    // Video index within active quarter = current type sessions - previous quarters' sessions of same type
+    // Subtract 1 because we want 0-based index (Day 1 = index 0)
+    const videoIndex = Math.max(0, sessionsOfCurrentType - previousQuartersSessionsOfType - 1);
+    
+    console.log(`🎯 Active Quarter: ${activeQuarter.title}, Session Type: ${sessionType}, Video Index: ${videoIndex}`);
+    console.log(`   Previous quarters ${sessionType} sessions: ${previousQuartersSessionsOfType}`);
+    console.log(`   Total ${sessionType} sessions completed: ${sessionsOfCurrentType}`);
+    
+    return videoIndex;
   };
 
   const loadLiveClassVideo = async () => {
@@ -223,105 +385,125 @@ const LiveClass = ({ user = {}, userData = {}, onVideoWatch }) => {
         return;
       }
 
-      // Step 5: Fetch videos from all unlocked quarters
+      // Step 5: Determine active quarter based on sequential progress
+      const activeQuarter = await getActiveQuarter(unlockedQuarters, daysPassed, startDate, studentId);
+      
+      if (!activeQuarter) {
+        console.log('⚠️ No active quarter found');
+        setLoading(false);
+        return;
+      }
+
+      console.log('✅ Active Quarter:', activeQuarter.title, `(${activeQuarter.id})`);
+
+      // Step 6: Calculate video index within the active quarter
+      const videoIndexInQuarter = await getVideoIndexInActiveQuarter(
+        activeQuarter,
+        unlockedQuarters,
+        daysPassed,
+        startDate,
+        sessionType,
+        studentId
+      );
+
+      // Step 7: Fetch video from active quarter only
       const type = sessionType === 'recorded' ? '0' : '1';
-      const videosPromises = unlockedQuarters.map(async (quarter) => {
-        try {
-          const response = await recordedClassesAPI.viewChapterLessonsInfo({
-            course_chapter_id: quarter.id,
-            student_id: studentId,
-            type: type
-          });
+      
+      try {
+        const response = await recordedClassesAPI.viewChapterLessonsInfo({
+          course_chapter_id: activeQuarter.id,
+          student_id: studentId,
+          type: type
+        });
 
-          if (response.success && response.raw?.lessons) {
-            const lessons = response.raw.lessons;
-            
-            if (lessons.length === 0) {
-              return null;
-            }
-
-            // For Quarter 1 (id: 521), check if we need to skip orientation video
-            // Orientation video only exists for recorded classes (type '0'), not for bonus sessions (type '1')
-            // For Quarter 2 (id: 790), use videoIndex directly as it doesn't have orientation
-            let effectiveIndex = videoIndex;
-            if (quarter.id === '521' && type === '0') {
-              // Quarter 1 Recorded Classes: Skip orientation video (index 0), so add 1 to videoIndex
-              // videoIndex 0 (Day 1 session) = Day 1 video (index 1 in lessons array)
-              // videoIndex 4 (Day 5 session) = Day 5 video (index 5 in lessons array)
-              effectiveIndex = videoIndex + 1;
-              
-              // If only orientation video exists or effectiveIndex is out of bounds, skip
-              if (effectiveIndex >= lessons.length || lessons.length <= 1) {
-                console.log(`⚠️ Quarter 1: No valid Day video available (only orientation or out of bounds)`);
-                return null;
-              }
-              
-              console.log(`📊 Quarter 1 Recorded: videoIndex=${videoIndex} (Day ${videoIndex + 1}), effectiveIndex=${effectiveIndex} (skipping orientation)`);
-            } else if (quarter.id === '521' && type === '1') {
-              // Quarter 1 Bonus Sessions: No orientation video, use videoIndex directly
-              // videoIndex 0 = Day 1, videoIndex 4 = Day 5
-              effectiveIndex = videoIndex;
-              console.log(`📊 Quarter 1 Bonus: videoIndex=${videoIndex} (Day ${videoIndex + 1}), effectiveIndex=${effectiveIndex} (no orientation)`);
-            } else {
-              // Quarter 2: No orientation video, videoIndex directly maps to day number
-              // videoIndex 0 = Day 1, videoIndex 4 = Day 5
-              console.log(`📊 Quarter 2: videoIndex=${videoIndex} (Day ${videoIndex + 1}), effectiveIndex=${effectiveIndex}`);
-            }
-            
-            // Get the video at calculated effective index
-            // Fallback: for Quarter 1, use index 1 (Day 1), for Quarter 2, use index 0 (Day 1)
-            const targetLesson = lessons[effectiveIndex] || lessons[quarter.id === '521' ? 1 : 0];
-            const content = targetLesson.content?.[0];
-
-            // Prefer backend-provided class_summary_pdf (day-wise PDF) if available, otherwise fall back to video_url
-            let contentUrl = '';
-            if (content) {
-              const summaryPdf = content.class_summary_pdf;
-              let pdfPath = '';
-              if (Array.isArray(summaryPdf) && summaryPdf.length > 0) {
-                pdfPath = summaryPdf[0] || '';
-              } else if (typeof summaryPdf === 'string' && summaryPdf.trim() !== '') {
-                pdfPath = summaryPdf.trim();
-              }
-
-              if (pdfPath) {
-                contentUrl = constructImageUrl(pdfPath);
-              } else {
-                const videoUrl = content.video_url || content.video || '';
-                contentUrl = videoUrl;
-              }
-            }
-
-            return {
-              id: targetLesson.id,
-              title: targetLesson.lesson_title,
-              thumbnail: constructImageUrl(targetLesson.image || content?.image),
-              videoUrl: contentUrl,
-              description: formatRichText(targetLesson.lesson_description || content?.class_description || ''),
-              requirement: formatRichText(targetLesson.requirements || content?.class_requirement || ''),
-              sessionType: sessionType,
-              videoIndex: videoIndex,
-              totalVideos: lessons.length,
-              content: content,
-              quarterId: quarter.id,
-              quarterTitle: quarter.title
-            };
+        if (response.success && response.raw?.lessons) {
+          const lessons = response.raw.lessons;
+          
+          if (lessons.length === 0) {
+            console.log('⚠️ No lessons found for active quarter');
+            setLoading(false);
+            return;
           }
-          return null;
-        } catch (error) {
-          console.error(`❌ Error fetching video for quarter ${quarter.id}:`, error);
-          return null;
+
+          // For Quarter 1 (id: 521), check if we need to skip orientation video
+          // Orientation video only exists for recorded classes (type '0'), not for bonus sessions (type '1')
+          // For Quarter 2 (id: 790), use videoIndexInQuarter directly as it doesn't have orientation
+          let effectiveIndex = videoIndexInQuarter;
+          if (activeQuarter.id === '521' && type === '0') {
+            // Quarter 1 Recorded Classes: Skip orientation video (index 0), so add 1 to videoIndexInQuarter
+            // videoIndexInQuarter 0 (Day 1 session) = Day 1 video (index 1 in lessons array)
+            effectiveIndex = videoIndexInQuarter + 1;
+            
+            // If only orientation video exists or effectiveIndex is out of bounds, skip
+            if (effectiveIndex >= lessons.length || lessons.length <= 1) {
+              console.log(`⚠️ Quarter 1: No valid Day video available (only orientation or out of bounds)`);
+              setLoading(false);
+              return;
+            }
+            
+            console.log(`📊 Quarter 1 Recorded: videoIndexInQuarter=${videoIndexInQuarter} (Day ${videoIndexInQuarter + 1}), effectiveIndex=${effectiveIndex} (skipping orientation)`);
+          } else if (activeQuarter.id === '521' && type === '1') {
+            // Quarter 1 Bonus Sessions: No orientation video, use videoIndexInQuarter directly
+            effectiveIndex = videoIndexInQuarter;
+            console.log(`📊 Quarter 1 Bonus: videoIndexInQuarter=${videoIndexInQuarter} (Day ${videoIndexInQuarter + 1}), effectiveIndex=${effectiveIndex} (no orientation)`);
+          } else {
+            // Quarter 2 and others: No orientation video, videoIndexInQuarter directly maps to day number
+            console.log(`📊 ${activeQuarter.title}: videoIndexInQuarter=${videoIndexInQuarter} (Day ${videoIndexInQuarter + 1}), effectiveIndex=${effectiveIndex}`);
+          }
+          
+          // Get the video at calculated effective index
+          // Fallback: for Quarter 1, use index 1 (Day 1), for others, use index 0 (Day 1)
+          const targetLesson = lessons[effectiveIndex] || lessons[activeQuarter.id === '521' ? 1 : 0];
+          
+          if (!targetLesson) {
+            console.log('⚠️ Target lesson not found');
+            setLoading(false);
+            return;
+          }
+
+          const content = targetLesson.content?.[0];
+
+          // Prefer backend-provided class_summary_pdf (day-wise PDF) if available, otherwise fall back to video_url
+          let contentUrl = '';
+          if (content) {
+            const summaryPdf = content.class_summary_pdf;
+            let pdfPath = '';
+            if (Array.isArray(summaryPdf) && summaryPdf.length > 0) {
+              pdfPath = summaryPdf[0] || '';
+            } else if (typeof summaryPdf === 'string' && summaryPdf.trim() !== '') {
+              pdfPath = summaryPdf.trim();
+            }
+
+            if (pdfPath) {
+              contentUrl = constructImageUrl(pdfPath);
+            } else {
+              const videoUrl = content.video_url || content.video || '';
+              contentUrl = videoUrl;
+            }
+          }
+
+          const video = {
+            id: targetLesson.id,
+            title: targetLesson.lesson_title,
+            thumbnail: constructImageUrl(targetLesson.image || content?.image),
+            videoUrl: contentUrl,
+            description: formatRichText(targetLesson.lesson_description || content?.class_description || ''),
+            requirement: formatRichText(targetLesson.requirements || content?.class_requirement || ''),
+            sessionType: sessionType,
+            videoIndex: videoIndexInQuarter,
+            totalVideos: lessons.length,
+            content: content,
+            quarterId: activeQuarter.id,
+            quarterTitle: activeQuarter.title
+          };
+
+          setCurrentVideos([video]);
+          console.log('✅ Current Live Video:', `${video.quarterTitle}: ${video.title}`);
+        } else {
+          console.log('⚠️ No valid video found for active quarter');
         }
-      });
-
-      const videos = await Promise.all(videosPromises);
-      const validVideos = videos.filter(v => v !== null);
-
-      if (validVideos.length > 0) {
-        setCurrentVideos(validVideos);
-        console.log('✅ Current Live Videos:', validVideos.map(v => `${v.quarterTitle}: ${v.title}`));
-      } else {
-        console.log('⚠️ No valid videos found');
+      } catch (error) {
+        console.error(`❌ Error fetching video for active quarter ${activeQuarter.id}:`, error);
       }
 
     } catch (error) {

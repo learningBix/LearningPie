@@ -38,6 +38,107 @@ const RecordedClasses = ({ user = {}, userData = {}, onVideoWatch }) => {
     }
   }, [sessionDetails, hasTrackedVideo, onVideoWatch]);
 
+  // Helper: Get total sessions count (Recorded + Bonus) for a quarter
+  const getTotalSessionsInQuarter = async (quarterId, studentId) => {
+    try {
+      const [recordedRes, bonusRes] = await Promise.all([
+        recordedClassesAPI.viewChapterLessonsInfo({
+          course_chapter_id: quarterId,
+          student_id: studentId,
+          type: '0' // Recorded
+        }),
+        recordedClassesAPI.viewChapterLessonsInfo({
+          course_chapter_id: quarterId,
+          student_id: studentId,
+          type: '1' // Bonus
+        })
+      ]);
+
+      let recordedCount = 0;
+      let bonusCount = 0;
+
+      if (recordedRes.success && recordedRes.raw?.lessons) {
+        recordedCount = recordedRes.raw.lessons.length;
+        if (quarterId === '521') {
+          // Subtract orientation video (index 0) for Quarter 1
+          recordedCount = Math.max(0, recordedCount - 1);
+        }
+      }
+
+      if (bonusRes.success && bonusRes.raw?.lessons) {
+        bonusCount = bonusRes.raw.lessons.length;
+      }
+
+      return {
+        recordedCount,
+        bonusCount,
+        totalSessions: recordedCount + bonusCount
+      };
+    } catch (error) {
+      console.error(`❌ Error getting total sessions for quarter ${quarterId}:`, error);
+      return { recordedCount: 0, bonusCount: 0, totalSessions: 0 };
+    }
+  };
+
+  // Helper: Check if previous quarters are complete (for sequential lock logic)
+  const isPreviousQuartersComplete = async (quarterId, courseStartDate, studentId) => {
+    try {
+      // Get total sessions completed so far
+      const today = new Date();
+      const start = new Date(courseStartDate);
+      today.setHours(0, 0, 0, 0);
+      start.setHours(0, 0, 0, 0);
+      
+      const diffTime = today - start;
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      
+      let totalSessionsCompleted = 0;
+      for (let i = 0; i <= diffDays; i++) {
+        const checkDate = new Date(start);
+        checkDate.setDate(checkDate.getDate() + i);
+        checkDate.setHours(0, 0, 0, 0);
+        const dayOfWeek = checkDate.getDay();
+        
+        // Monday (1), Wednesday (3), Friday (5) = Recorded
+        // Tuesday (2), Thursday (4) = Bonus
+        if ([1, 2, 3, 4, 5].includes(dayOfWeek)) {
+          totalSessionsCompleted++;
+        }
+      }
+
+      // Check if Quarter 1 needs to be complete before Quarter 2
+      if (quarterId === '790') { // Quarter 2
+        const quarter1Sessions = await getTotalSessionsInQuarter('521', studentId);
+        const quarter1Total = quarter1Sessions.totalSessions;
+        
+        // If Quarter 1 is not complete, Quarter 2 should be locked
+        if (totalSessionsCompleted < quarter1Total) {
+          console.log(`🔒 Quarter 2 locked: Q1 not complete (${totalSessionsCompleted}/${quarter1Total})`);
+          return false;
+        }
+      }
+
+      // For Quarter 3, check if Q1 + Q2 are complete
+      // Note: Quarter 3 chapter ID needs to be determined
+      // For now, we'll assume if it's not Q1 or Q2, it's Q3
+      if (quarterId !== '521' && quarterId !== '790') {
+        const quarter1Sessions = await getTotalSessionsInQuarter('521', studentId);
+        const quarter2Sessions = await getTotalSessionsInQuarter('790', studentId);
+        const totalPreviousSessions = quarter1Sessions.totalSessions + quarter2Sessions.totalSessions;
+        
+        if (totalSessionsCompleted < totalPreviousSessions) {
+          console.log(`🔒 Quarter 3 locked: Q1+Q2 not complete (${totalSessionsCompleted}/${totalPreviousSessions})`);
+          return false;
+        }
+      }
+
+      return true; // Previous quarters are complete
+    } catch (error) {
+      console.error('❌ Error checking previous quarters:', error);
+      return true; // Default to unlocked if error
+    }
+  };
+
   // UPDATE: Add this helper function at the top of RecordedClasses component (after state declarations)
 
 const calculateUnlockedVideoIndex = (courseStartDate) => {
@@ -329,8 +430,30 @@ const handleSessionClick = (session) => {
       // Quarter 2
       if (term2Response.success && term2Response.raw?.data?.[0]) {
         const chapterData = term2Response.raw.data[0];
-        const isLocked = !(chosenTerms.term2 || subscribed.includes('790'));
-        console.log('Quarter 2 - isLocked:', isLocked, 'subscribed:', subscribed);
+        // Check if Quarter 2 is subscribed/unlocked
+        const isSubscribed = chosenTerms.term2 || subscribed.includes('790');
+        
+        // Check if previous quarters (Q1) are complete for sequential unlock
+        let isSequentiallyUnlocked = true;
+        let courseStartDate = null;
+        try {
+          const sid = user?.sid || userData?.sid || localStorage.getItem('sid') || sessionStorage.getItem('sid');
+          if (sid) {
+            const subscriptionRes = await subjectsAPI.checkStudentSubscription(sid);
+            if (subscriptionRes.success && subscriptionRes.data?.[0]?.course_start_date) {
+              courseStartDate = subscriptionRes.data[0].course_start_date;
+              if (isSubscribed) {
+                isSequentiallyUnlocked = await isPreviousQuartersComplete('790', courseStartDate, studentId);
+              }
+            }
+          }
+        } catch (err) {
+          console.warn('⚠️ Could not check sequential unlock for Quarter 2:', err);
+        }
+        
+        // Quarter 2 is locked if: not subscribed OR previous quarters not complete
+        const isLocked = !isSubscribed || !isSequentiallyUnlocked;
+        console.log('Quarter 2 - isLocked:', isLocked, 'subscribed:', isSubscribed, 'sequentiallyUnlocked:', isSequentiallyUnlocked);
         quartersList.push({
           id: '790',
           title: chapterData.chapter_title || 'Quarter 2',
@@ -367,13 +490,17 @@ const handleSessionClick = (session) => {
       }
 
       // Filter quarters based on chosenTerms if any selection exists
+      // Always show Quarter 2 as locked if Term 2 is not selected (don't hide it)
       const filteredQuarters = (() => {
         const hasSelection = chosenTerms.term1 || chosenTerms.term2;
         if (!hasSelection) return quartersList;
         return quartersList.filter(q => {
+          // Quarter 1: Show only if Term 1 is selected
           if (q.id === '521' && chosenTerms.term1) return true;
-          if (q.id === '790' && chosenTerms.term2) return true;
-          if (q.isPurchasable) return true; // keep buy option visible always
+          // Quarter 2: Always show (will be locked if Term 2 is not selected)
+          if (q.id === '790') return true;
+          // Buy option (Quarter 3): Always show
+          if (q.isPurchasable) return true;
           return false;
         });
       })();
