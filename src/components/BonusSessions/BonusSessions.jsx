@@ -536,7 +536,7 @@ const loadQuarters = async () => {
 
   // UPDATE: Add this helper function at the top of BonusSessions component (after state declarations)
 
-const calculateUnlockedBonusVideoIndex = (courseStartDate) => {
+const calculateUnlockedBonusVideoIndex = async (quarterId, courseStartDate, studentId) => {
   if (!courseStartDate) return 0;
   
   const today = new Date();
@@ -565,7 +565,44 @@ const calculateUnlockedBonusVideoIndex = (courseStartDate) => {
     }
   }
   
-  return bonusSessionCount; // This is how many videos should be unlocked (up to yesterday)
+  const quarterIdStr = String(quarterId);
+  
+  // Sequential unlock logic: Each quarter unlocks only after previous quarters complete
+  if (quarterIdStr === '521') {
+    // Quarter 1: Unlock from day 1 (no previous quarters)
+    return bonusSessionCount;
+  } else if (quarterIdStr === '790') {
+    // Quarter 2: Only start unlocking AFTER Quarter 1 completes
+    const quarter1Sessions = await getTotalSessionsInQuarter('521', studentId);
+    const quarter1Total = quarter1Sessions.bonusCount; // Only bonus sessions for this calculation
+    
+    // If Quarter 1 is not complete, Quarter 2 should be locked (return 0)
+    if (bonusSessionCount < quarter1Total) {
+      return 0;
+    }
+    
+    // Quarter 1 is complete, now unlock Quarter 2 videos sequentially
+    // Calculate how many Q2 videos should be unlocked (days after Q1 completes)
+    const q2UnlockedDays = bonusSessionCount - quarter1Total;
+    return Math.max(0, q2UnlockedDays);
+  } else if (quarterIdStr === '772') {
+    // Quarter 3: Only start unlocking AFTER Quarter 1 + Quarter 2 complete
+    const quarter1Sessions = await getTotalSessionsInQuarter('521', studentId);
+    const quarter2Sessions = await getTotalSessionsInQuarter('790', studentId);
+    const totalPreviousSessions = quarter1Sessions.bonusCount + quarter2Sessions.bonusCount;
+    
+    // If previous quarters are not complete, Quarter 3 should be locked (return 0)
+    if (bonusSessionCount < totalPreviousSessions) {
+      return 0;
+    }
+    
+    // Previous quarters are complete, now unlock Quarter 3 videos sequentially
+    // Calculate how many Q3 videos should be unlocked (days after Q1+Q2 complete)
+    const q3UnlockedDays = bonusSessionCount - totalPreviousSessions;
+    return Math.max(0, q3UnlockedDays);
+  }
+  
+  return bonusSessionCount; // Fallback
 };
 
 // UPDATE: Modify loadQuarterSessions function to include lock/unlock logic
@@ -588,8 +625,8 @@ const loadQuarterSessions = async (chapterId) => {
         const subscriptionRes = await subjectsAPI.checkStudentSubscription(sid);
         if (subscriptionRes.success && subscriptionRes.data?.[0]?.course_start_date) {
           const courseStartDate = subscriptionRes.data[0].course_start_date;
-          unlockedCount = calculateUnlockedBonusVideoIndex(courseStartDate);
-          console.log('🔓 [Bonus] Unlocked videos count:', unlockedCount);
+          unlockedCount = await calculateUnlockedBonusVideoIndex(chapterId, courseStartDate, studentId);
+          console.log(`🔓 [Bonus] Quarter ${chapterId} - Unlocked videos count:`, unlockedCount);
         }
       }
     } catch (err) {
@@ -797,8 +834,6 @@ const handleSessionClick = (session) => {
       setSessions([]);
     }
   };
-
-  // Duplicate simple handleSessionClick removed; keep the lock-aware version defined above
 
   useEffect(() => {
     if (selectedSession?.videoUrl && !hasTrackedVideo && onVideoWatch) {
