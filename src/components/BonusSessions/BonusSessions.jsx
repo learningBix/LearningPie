@@ -148,8 +148,14 @@ const BonusSessions = ({ user, userData, onVideoWatch }) => {
         }
       }
 
-      // For Quarter 3 (id: 772), check if Q1 + Q2 are complete
-      if (quarterId === '772') {
+      // For Quarter 3, check if Q1 + Q2 are complete
+      // Support both Junior KG (772) and Play Group (767) Quarter 3 IDs, or any other Quarter 3 ID
+      const quarterIdStr = String(quarterId);
+      const isQuarter3 = quarterIdStr === '772' || quarterIdStr === '767' || 
+                         (selectedQuarter && selectedQuarter.id === 3) ||
+                         (selectedQuarter && selectedQuarter.title && selectedQuarter.title.toLowerCase().includes('quarter 3'));
+      
+      if (isQuarter3) {
         const quarter1Sessions = await getTotalSessionsInQuarter('521', studentId);
         const quarter2Sessions = await getTotalSessionsInQuarter('790', studentId);
         const totalPreviousSessions = quarter1Sessions.totalSessions + quarter2Sessions.totalSessions;
@@ -186,6 +192,7 @@ const loadQuarters = async () => {
     
     // Determine chosen terms using check_student_subscription
     let chosenTerms = { term1: false, term2: false, term3: false };
+    let case3CourseId = null; // Store course_id for Case 3
     try {
       const sid = user?.sid || userData?.sid || localStorage.getItem('sid') || sessionStorage.getItem('sid');
       if (sid) {
@@ -196,6 +203,16 @@ const loadQuarters = async () => {
             const courseIdSub = s.course_id || s.courseId || s.courseid || s.course || '';
             const terms = (s.terms || '').toString();
             
+            // Check for "Term 1, 2 & 3" or "1,2,3" (Case 3 - all terms)
+            if (courseName.includes('term 1, 2 & 3') || courseName.includes('term 1,2,3') || 
+                courseName.includes('term 1, 2 and 3') || terms === '1,2,3' || terms.includes('1,2,3')) {
+              chosenTerms.term1 = true;
+              chosenTerms.term2 = true;
+              chosenTerms.term3 = true;
+              // Store the course_id for Case 3 to use in viewCourseInfo
+              case3CourseId = String(courseIdSub);
+            } else {
+              // Individual term checks
             if (courseName.includes('term 1') || courseName.includes('term1') || String(courseIdSub) === '82') {
               chosenTerms.term1 = true;
             }
@@ -205,6 +222,7 @@ const loadQuarters = async () => {
             // Check if Term 3 is in the terms string (e.g., "1,2,3" or "3")
             if (terms.includes('3') || courseName.includes('term 3') || courseName.includes('term3')) {
               chosenTerms.term3 = true;
+              }
             }
           });
         }
@@ -213,7 +231,27 @@ const loadQuarters = async () => {
       console.warn('⚠️ [Bonus] Unable to determine chosen terms:', err);
     }
 
-    console.log('🔑 [Bonus] Chosen Terms:', chosenTerms);
+    // Detect Case 3: All quarters purchased
+    const isCase3 = chosenTerms.term1 && chosenTerms.term2 && chosenTerms.term3;
+    console.log('🔑 [Bonus] Chosen Terms:', chosenTerms, 'Case 3:', isCase3, 'Case3CourseId:', case3CourseId);
+    
+    // In Case 3, fetch course info to get all chapters (for fallback if individual API calls fail)
+    let courseInfoData = null;
+    if (isCase3 && case3CourseId) {
+      try {
+        // Use the course_id from subscription for Case 3
+        const courseInfoRes = await recordedClassesAPI.viewCourseInfo({
+          id: case3CourseId,
+          student_id: studentId
+        });
+        if (courseInfoRes.success && courseInfoRes.raw?.data?.[0]) {
+          courseInfoData = courseInfoRes.raw.data[0];
+          console.log('✅ [Bonus] Case 3 - Fetched course info with course_id:', case3CourseId, 'chapters:', courseInfoData.chapters?.length);
+        }
+      } catch (err) {
+        console.warn('⚠️ [Bonus] Could not fetch course info for Case 3:', err);
+      }
+    }
 
     // Determine Term 3 API call based on Case
     // Case 1 (only Q1): Buy Quarter 3 shows only "Term 3" plan -> terms: ['3']
@@ -230,12 +268,12 @@ const loadQuarters = async () => {
         course_chapter_id: '521',
         student_id: studentId,
         type: '1'
-      }),
+      }).catch(() => ({ success: false })),
       recordedClassesAPI.viewChapterLessonsInfo({ 
         course_chapter_id: '790',
         student_id: studentId,
         type: '1'
-      }),
+      }).catch(() => ({ success: false })),
       // Fetch Term 2 courses (Term 2 + Term 2 & 3)
       recordedClassesAPI.fetchTermsCourses({ 
         age_group_id: ageGroupId,
@@ -255,10 +293,12 @@ const loadQuarters = async () => {
     ]);
 
     // Map Quarter 1
-    if (quarter1Res.success && quarter1Res.raw?.data?.[0]) {
+    if (quarter1Res?.success && quarter1Res?.raw?.data?.[0]) {
       const data = quarter1Res.raw.data[0];
-      const isLocked = !(chosenTerms.term1 || subscribed.includes('521'));
-      console.log('[Bonus] Quarter 1 - isLocked:', isLocked, 'term1:', chosenTerms.term1, 'subscribed:', subscribed);
+      // For Case 3 (all quarters purchased), all quarter cards should be unlocked
+      // In Case 1 and Case 2, Quarter 1 is unlocked if Term 1 is purchased
+      const isLocked = isCase3 ? false : !(chosenTerms.term1 || subscribed.includes('521'));
+      console.log('[Bonus] Quarter 1 - isLocked:', isLocked, 'term1:', chosenTerms.term1, 'subscribed:', subscribed, 'isCase3:', isCase3);
       quarterData.push({
         id: 1,
         title: data.chapter_title || 'Quarter 1',
@@ -271,33 +311,19 @@ const loadQuarters = async () => {
     }
 
     // Map Quarter 2 - Check if Term 2 is purchased
-    const term2CoursesData = quarter2CoursesRes.raw?.data || quarter2CoursesRes.data || [];
-    if (quarter2Res.success && quarter2Res.raw?.data?.[0]) {
+    const term2CoursesData = quarter2CoursesRes?.raw?.data || quarter2CoursesRes?.data || [];
+    if (quarter2Res?.success && quarter2Res?.raw?.data?.[0]) {
       const data = quarter2Res.raw.data[0];
       // Check if Quarter 2 is subscribed/unlocked
       const isSubscribed = chosenTerms.term2 || subscribed.includes('790');
       
       // If Term 2 is purchased, show Quarter 2 as normal quarter (like Q1)
       if (isSubscribed) {
-      // Check if previous quarters (Q1) are complete for sequential unlock
-      let isSequentiallyUnlocked = true;
-      let courseStartDate = null;
-      try {
-        const sid = user?.sid || userData?.sid || localStorage.getItem('sid') || sessionStorage.getItem('sid');
-        if (sid) {
-          const subscriptionRes = await subjectsAPI.checkStudentSubscription(sid);
-          if (subscriptionRes.success && subscriptionRes.data?.[0]?.course_start_date) {
-            courseStartDate = subscriptionRes.data[0].course_start_date;
-              isSequentiallyUnlocked = await isPreviousQuartersComplete('790', courseStartDate, studentId);
-          }
-        }
-      } catch (err) {
-        console.warn('⚠️ [Bonus] Could not check sequential unlock for Quarter 2:', err);
-      }
-      
-        // Quarter 2 is locked if: previous quarters not complete
-        const isLocked = !isSequentiallyUnlocked;
-      console.log('[Bonus] Quarter 2 - isLocked:', isLocked, 'term2:', chosenTerms.term2, 'subscribed:', isSubscribed, 'sequentiallyUnlocked:', isSequentiallyUnlocked);
+      // For Case 2 and Case 3: Main cards should be unlocked
+      // Sequential unlock is handled at video level, not card level
+      // Videos inside will follow day-wise sequential unlock logic
+      const isLocked = false;
+      console.log('[Bonus] Quarter 2 - isLocked:', isLocked, 'term2:', chosenTerms.term2, 'subscribed:', isSubscribed, 'isCase3:', isCase3);
       quarterData.push({
         id: 2,
         title: data.chapter_title || 'Quarter 2',
@@ -309,7 +335,7 @@ const loadQuarters = async () => {
       });
       } else {
         // Term 2 not purchased - show Buy Quarter 2 option
-        if (quarter2CoursesRes.success && term2CoursesData.length > 0) {
+        if (quarter2CoursesRes?.success && term2CoursesData.length > 0) {
           // Filter courses that include Term 2 (Term 2 or Term 2 & 3)
           const term2Plans = term2CoursesData.filter(course => {
             const courseTerms = (course.terms || '').toString();
@@ -342,40 +368,48 @@ const loadQuarters = async () => {
     }
 
     // Map Quarter 3 - Check if Term 3 is purchased
-    const term3CoursesData = quarter3CoursesRes.raw?.data || quarter3CoursesRes.data || [];
-    console.log('🔍 [Bonus] Term 3 check - term3:', chosenTerms.term3, 'quarter3CoursesRes:', quarter3CoursesRes.success, 'term3CoursesData:', term3CoursesData.length);
+    const term3CoursesData = quarter3CoursesRes?.raw?.data || quarter3CoursesRes?.data || [];
+    console.log('🔍 [Bonus] Term 3 check - term3:', chosenTerms.term3, 'quarter3CoursesRes:', quarter3CoursesRes?.success, 'term3CoursesData:', term3CoursesData.length);
     console.log('🔍 [Bonus] Term 3 courses raw data:', term3CoursesData);
     
     // If Term 3 is purchased, show Quarter 3 as normal quarter (like Q1/Q2)
-    if (chosenTerms.term3 && quarter3ChapterRes.success && quarter3ChapterRes.raw?.data?.[0]) {
-      const chapterData = quarter3ChapterRes.raw.data[0];
-      // Check if previous quarters (Q1+Q2) are complete for sequential unlock
-      let isSequentiallyUnlocked = true;
-      let courseStartDate = null;
-      try {
-        const sid = user?.sid || userData?.sid || localStorage.getItem('sid') || sessionStorage.getItem('sid');
-        if (sid) {
-          const subscriptionRes = await subjectsAPI.checkStudentSubscription(sid);
-          if (subscriptionRes.success && subscriptionRes.data?.[0]?.course_start_date) {
-            courseStartDate = subscriptionRes.data[0].course_start_date;
-            isSequentiallyUnlocked = await isPreviousQuartersComplete('772', courseStartDate, studentId);
-          }
-        }
-      } catch (err) {
-        console.warn('⚠️ [Bonus] Could not check sequential unlock for Quarter 3:', err);
+    // In Case 3, if API call fails, use fallback from courseInfoData or subscribed chapters
+    let quarter3ChapterData = null;
+    let quarter3ChapterId = '772'; // Default to Junior KG Quarter 3 ID
+    if (quarter3ChapterRes?.success && quarter3ChapterRes?.raw?.data?.[0]) {
+      quarter3ChapterData = quarter3ChapterRes.raw.data[0];
+    } else if (isCase3 && courseInfoData?.chapters) {
+      // Fallback: In Case 3, get Quarter 3 from courseInfoData chapters
+      const quarter3Chapter = courseInfoData.chapters.find(ch => {
+        const chId = String(ch.id);
+        // Quarter 3 chapter IDs: 772 (Junior KG) or other IDs for different courses
+        return chId === '772' || ch.chapter_title?.toLowerCase().includes('quarter 3') || ch.s_no === 3;
+      });
+      if (quarter3Chapter) {
+        quarter3ChapterId = String(quarter3Chapter.id); // Use actual chapter ID from courseInfoData
+        quarter3ChapterData = {
+          chapter_title: quarter3Chapter.chapter_title || 'Quarter 3',
+          chapter_description: quarter3Chapter.chapter_description || 'Browse through unlocked sessions for better understanding.',
+          image: quarter3Chapter.image
+        };
+        console.log('✅ [Bonus] Using Quarter 3 data from courseInfoData fallback, chapterId:', quarter3ChapterId);
       }
-      
-      // Quarter 3 is locked if: previous quarters not complete
-      const isLocked = !isSequentiallyUnlocked;
-      console.log('[Bonus] Quarter 3 - isLocked:', isLocked, 'term3:', chosenTerms.term3, 'sequentiallyUnlocked:', isSequentiallyUnlocked);
+    }
+    
+    if (chosenTerms.term3 && quarter3ChapterData) {
+      // For Case 2 and Case 3: Main cards should be unlocked
+      // Sequential unlock is handled at video level, not card level
+      // Videos inside will follow day-wise sequential unlock logic
+      const isLocked = false;
+      console.log('[Bonus] Quarter 3 - isLocked:', isLocked, 'term3:', chosenTerms.term3, 'isCase3:', isCase3);
       
         quarterData.push({
           id: 3,
-        title: chapterData.chapter_title || 'Quarter 3',
-        description: chapterData.chapter_description || 'Browse through unlocked sessions for better understanding.',
-        image: getBlobUrl(chapterData.image),
+        title: quarter3ChapterData.chapter_title || 'Quarter 3',
+        description: quarter3ChapterData.chapter_description || 'Browse through unlocked sessions for better understanding.',
+        image: getBlobUrl(quarter3ChapterData.image),
         type: 'quarter',
-        chapterId: '772',
+        chapterId: quarter3ChapterId, // Use the actual chapter ID (from API or fallback)
         isLocked: isLocked
       });
     } else {
@@ -447,8 +481,14 @@ const loadQuarters = async () => {
 
     console.log('📦 [Bonus] Total quarters before filtering:', quarterData.length);
 
-    // Always show Quarter 2 as locked if Term 2 is not selected (don't hide it)
+    // Filter quarters based on selected terms
     const filtered = (() => {
+      // Case 3: Show all quarters (all unlocked)
+      if (isCase3) {
+        console.log('🔓 [Bonus] Case 3 detected - showing all quarters');
+        return quarterData;
+      }
+      
       const hasSelection = chosenTerms.term1 || chosenTerms.term2;
       
       // If no terms selected, show all quarters (default behavior)
@@ -480,8 +520,9 @@ const loadQuarters = async () => {
           return true;
         }
         
-        // Quarter 3 (772): Always show (will be locked if Term 3 is not purchased or previous quarters not complete)
-        if (q.chapterId === '772') {
+        // Quarter 3: Always show (will be locked if Term 3 is not purchased or previous quarters not complete)
+        // Check by id (3) or chapterId ('772' for Junior KG, '767' for Play Group, etc.)
+        if (q.id === 3 || q.chapterId === '772' || q.chapterId === '767' || (q.title && q.title.toLowerCase().includes('quarter 3'))) {
           console.log(`  ✅ [Bonus] Quarter 3 - Always visible (locked if Term 3 not purchased or Q1+Q2 not complete)`);
           return true;
         }
@@ -536,7 +577,7 @@ const loadQuarters = async () => {
 
   // UPDATE: Add this helper function at the top of BonusSessions component (after state declarations)
 
-const calculateUnlockedBonusVideoIndex = async (quarterId, courseStartDate, studentId) => {
+const calculateUnlockedBonusVideoIndex = async (quarterId, courseStartDate, studentId, quarterNumber = null) => {
   if (!courseStartDate) return 0;
   
   const today = new Date();
@@ -567,11 +608,28 @@ const calculateUnlockedBonusVideoIndex = async (quarterId, courseStartDate, stud
   
   const quarterIdStr = String(quarterId);
   
+  // Determine quarter number: use provided quarterNumber, or fall back to checking chapter ID
+  let qNum = quarterNumber;
+  if (!qNum) {
+    if (quarterIdStr === '521') {
+      qNum = 1;
+    } else if (quarterIdStr === '790') {
+      qNum = 2;
+    } else if (quarterIdStr === '772' || quarterIdStr === '767') {
+      // Support both Junior KG (772) and Play Group (767) Quarter 3 IDs
+      qNum = 3;
+    } else {
+      // Try to determine from selectedQuarter if available
+      // If we can't determine, assume it's Quarter 3 if it's not 1 or 2
+      qNum = 3; // Default fallback
+    }
+  }
+  
   // Sequential unlock logic: Each quarter unlocks only after previous quarters complete
-  if (quarterIdStr === '521') {
+  if (qNum === 1) {
     // Quarter 1: Unlock from day 1 (no previous quarters)
     return bonusSessionCount;
-  } else if (quarterIdStr === '790') {
+  } else if (qNum === 2) {
     // Quarter 2: Only start unlocking AFTER Quarter 1 completes
     const quarter1Sessions = await getTotalSessionsInQuarter('521', studentId);
     const quarter1Total = quarter1Sessions.bonusCount; // Only bonus sessions for this calculation
@@ -585,7 +643,7 @@ const calculateUnlockedBonusVideoIndex = async (quarterId, courseStartDate, stud
     // Calculate how many Q2 videos should be unlocked (days after Q1 completes)
     const q2UnlockedDays = bonusSessionCount - quarter1Total;
     return Math.max(0, q2UnlockedDays);
-  } else if (quarterIdStr === '772') {
+  } else if (qNum === 3) {
     // Quarter 3: Only start unlocking AFTER Quarter 1 + Quarter 2 complete
     const quarter1Sessions = await getTotalSessionsInQuarter('521', studentId);
     const quarter2Sessions = await getTotalSessionsInQuarter('790', studentId);
@@ -619,14 +677,20 @@ const loadQuarterSessions = async (chapterId) => {
     // Get course_start_date to calculate unlocked videos
     let unlockedCount = response.raw.lessons.length; // Default: all unlocked
     
+    // Determine quarter number from selectedQuarter if available
+    let quarterNumber = null;
+    if (selectedQuarter && selectedQuarter.id) {
+      quarterNumber = selectedQuarter.id; // id: 1, 2, or 3
+    }
+    
     try {
       const sid = user?.sid || userData?.sid || localStorage.getItem('sid') || sessionStorage.getItem('sid');
       if (sid) {
         const subscriptionRes = await subjectsAPI.checkStudentSubscription(sid);
         if (subscriptionRes.success && subscriptionRes.data?.[0]?.course_start_date) {
           const courseStartDate = subscriptionRes.data[0].course_start_date;
-          unlockedCount = await calculateUnlockedBonusVideoIndex(chapterId, courseStartDate, studentId);
-          console.log(`🔓 [Bonus] Quarter ${chapterId} - Unlocked videos count:`, unlockedCount);
+          unlockedCount = await calculateUnlockedBonusVideoIndex(chapterId, courseStartDate, studentId, quarterNumber);
+          console.log(`🔓 [Bonus] Quarter ${chapterId} (qNum: ${quarterNumber}) - Unlocked videos count:`, unlockedCount);
         }
       }
     } catch (err) {
@@ -664,6 +728,7 @@ const loadQuarterSessions = async (chapterId) => {
         videoUrl: contentUrl,
         description: content ? formatRichText(content.class_description) : '',
         requirement: content ? formatRichText(content.class_requirement) : '',
+        classTopic: content?.class_topic || lesson.class_topic || '', // Include class_topic if available
         isLocked: isLocked,
         index: index
       };
@@ -673,7 +738,7 @@ const loadQuarterSessions = async (chapterId) => {
   }
 };
 
-// UPDATE: Modify handleSessionClick to check if video is locked
+// Modify handleSessionClick to check if video is locked
 
 const handleSessionClick = (session) => {
   if (session.isLocked) {

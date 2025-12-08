@@ -416,6 +416,14 @@ const handleSessionClick = (session) => {
               const courseIdSub = s.course_id || s.courseId || s.courseid || s.course || '';
               const terms = (s.terms || '').toString();
               
+              // Check for "Term 1, 2 & 3" or "1,2,3" (Case 3 - all terms)
+              if (courseName.includes('term 1, 2 & 3') || courseName.includes('term 1,2,3') || 
+                  courseName.includes('term 1, 2 and 3') || terms === '1,2,3' || terms.includes('1,2,3')) {
+                chosenTerms.term1 = true;
+                chosenTerms.term2 = true;
+                chosenTerms.term3 = true;
+              } else {
+                // Individual term checks
               if (courseName.includes('term 1') || courseName.includes('term1') || String(courseIdSub) === '82') {
                 chosenTerms.term1 = true;
               }
@@ -425,6 +433,7 @@ const handleSessionClick = (session) => {
               // Check if Term 3 is in the terms string (e.g., "1,2,3" or "3")
               if (terms.includes('3') || courseName.includes('term 3') || courseName.includes('term3')) {
                 chosenTerms.term3 = true;
+                }
               }
             });
           }
@@ -432,6 +441,10 @@ const handleSessionClick = (session) => {
       } catch (err) {
         console.warn('⚠️ Unable to determine chosen terms:', err);
       }
+      
+      // Detect Case 3: All quarters purchased
+      const isCase3 = chosenTerms.term1 && chosenTerms.term2 && chosenTerms.term3;
+      console.log('🔍 [Recorded] Case 3 detected:', isCase3, 'chosenTerms:', chosenTerms);
       
       // Determine Term 3 API call based on Case
       // Case 1 (only Q1): Buy Quarter 3 shows only "Term 3" plan -> terms: ['3']
@@ -498,25 +511,11 @@ const handleSessionClick = (session) => {
         
         // If Term 2 is purchased, show Quarter 2 as normal quarter (like Q1)
         if (isSubscribed) {
-        // Check if previous quarters (Q1) are complete for sequential unlock
-        let isSequentiallyUnlocked = true;
-        let courseStartDate = null;
-        try {
-          const sid = user?.sid || userData?.sid || localStorage.getItem('sid') || sessionStorage.getItem('sid');
-          if (sid) {
-            const subscriptionRes = await subjectsAPI.checkStudentSubscription(sid);
-            if (subscriptionRes.success && subscriptionRes.data?.[0]?.course_start_date) {
-              courseStartDate = subscriptionRes.data[0].course_start_date;
-                isSequentiallyUnlocked = await isPreviousQuartersComplete('790', courseStartDate, studentId);
-            }
-          }
-        } catch (err) {
-          console.warn('⚠️ Could not check sequential unlock for Quarter 2:', err);
-        }
-        
-          // Quarter 2 is locked if: previous quarters not complete
-          const isLocked = !isSequentiallyUnlocked;
-        console.log('Quarter 2 - isLocked:', isLocked, 'subscribed:', isSubscribed, 'sequentiallyUnlocked:', isSequentiallyUnlocked);
+        // For Case 2 and Case 3: Main cards should be unlocked
+        // Sequential unlock is handled at video level, not card level
+        // Videos inside will follow day-wise sequential unlock logic
+        const isLocked = false;
+        console.log('Quarter 2 - isLocked:', isLocked, 'subscribed:', isSubscribed, 'isCase3:', isCase3);
         quartersList.push({
           id: '790',
           title: chapterData.chapter_title || 'Quarter 2',
@@ -565,25 +564,11 @@ const handleSessionClick = (session) => {
       // If Term 3 is purchased, show Quarter 3 as normal quarter (like Q1/Q2)
       if (chosenTerms.term3 && term3ChapterResponse.success && term3ChapterResponse.raw?.data?.[0]) {
         const chapterData = term3ChapterResponse.raw.data[0];
-        // Check if previous quarters (Q1+Q2) are complete for sequential unlock
-        let isSequentiallyUnlocked = true;
-        let courseStartDate = null;
-        try {
-          const sid = user?.sid || userData?.sid || localStorage.getItem('sid') || sessionStorage.getItem('sid');
-          if (sid) {
-            const subscriptionRes = await subjectsAPI.checkStudentSubscription(sid);
-            if (subscriptionRes.success && subscriptionRes.data?.[0]?.course_start_date) {
-              courseStartDate = subscriptionRes.data[0].course_start_date;
-              isSequentiallyUnlocked = await isPreviousQuartersComplete('772', courseStartDate, studentId);
-            }
-          }
-        } catch (err) {
-          console.warn('⚠️ Could not check sequential unlock for Quarter 3:', err);
-        }
-        
-        // Quarter 3 is locked if: previous quarters not complete
-        const isLocked = !isSequentiallyUnlocked;
-        console.log('Quarter 3 - isLocked:', isLocked, 'term3:', chosenTerms.term3, 'sequentiallyUnlocked:', isSequentiallyUnlocked);
+        // For Case 2 and Case 3: Main cards should be unlocked
+        // Sequential unlock is handled at video level, not card level
+        // Videos inside will follow day-wise sequential unlock logic
+        const isLocked = false;
+        console.log('Quarter 3 - isLocked:', isLocked, 'term3:', chosenTerms.term3, 'isCase3:', isCase3);
         
         quartersList.push({
           id: '772',
@@ -643,6 +628,12 @@ const handleSessionClick = (session) => {
       // Filter quarters based on chosenTerms if any selection exists
       // Always show Quarter 2 as locked if Term 2 is not selected (don't hide it)
       const filteredQuarters = (() => {
+        // Case 3: Show all quarters (all unlocked)
+        if (isCase3) {
+          console.log('🔓 [Recorded] Case 3 detected - showing all quarters');
+          return quartersList;
+        }
+        
         const hasSelection = chosenTerms.term1 || chosenTerms.term2;
         if (!hasSelection) return quartersList;
         return quartersList.filter(q => {
