@@ -4,6 +4,7 @@ import { recordedClassesAPI, subjectsAPI } from '../../services/apiService';
 import { BLOB_BASE_URL } from '../../config/api';
 import './BonusSessions.css';
 import quarter_3 from '../../assets/Quarter3.jpg';
+import quarter_2 from '../../assets/Quarter2.jpg';
 import diy_home from '../../assets/diyhomethumb.jpg'; 
 import excursion from '../../assets/Excursionsthumb.jpg';
 
@@ -148,7 +149,13 @@ const BonusSessions = ({ user, userData, onVideoWatch }) => {
       }
 
       // For Quarter 3, check if Q1 + Q2 are complete
-      if (quarterId !== '521' && quarterId !== '790') {
+      // Support both Junior KG (772) and Play Group (767) Quarter 3 IDs, or any other Quarter 3 ID
+      const quarterIdStr = String(quarterId);
+      const isQuarter3 = quarterIdStr === '772' || quarterIdStr === '767' || 
+                         (selectedQuarter && selectedQuarter.id === 3) ||
+                         (selectedQuarter && selectedQuarter.title && selectedQuarter.title.toLowerCase().includes('quarter 3'));
+      
+      if (isQuarter3) {
         const quarter1Sessions = await getTotalSessionsInQuarter('521', studentId);
         const quarter2Sessions = await getTotalSessionsInQuarter('790', studentId);
         const totalPreviousSessions = quarter1Sessions.totalSessions + quarter2Sessions.totalSessions;
@@ -165,9 +172,6 @@ const BonusSessions = ({ user, userData, onVideoWatch }) => {
       return true; // Default to unlocked if error
     }
   };
-
- // COMPLETE FIXED BonusSessions.js
-// Replace your entire loadQuarters function with this (around line 60-220):
 
 const loadQuarters = async () => {
   setLoading(true);
@@ -187,7 +191,8 @@ const loadQuarters = async () => {
     const subscribed = await fetchSubscribedChapters();
     
     // Determine chosen terms using check_student_subscription
-    let chosenTerms = { term1: false, term2: false };
+    let chosenTerms = { term1: false, term2: false, term3: false };
+    let case3CourseId = null; // Store course_id for Case 3
     try {
       const sid = user?.sid || userData?.sid || localStorage.getItem('sid') || sessionStorage.getItem('sid');
       if (sid) {
@@ -196,11 +201,28 @@ const loadQuarters = async () => {
           subscriptionRes.data.forEach(s => {
             const courseName = (s.course_name || s.course || '').toString().toLowerCase();
             const courseIdSub = s.course_id || s.courseId || s.courseid || s.course || '';
+            const terms = (s.terms || '').toString();
+            
+            // Check for "Term 1, 2 & 3" or "1,2,3" (Case 3 - all terms)
+            if (courseName.includes('term 1, 2 & 3') || courseName.includes('term 1,2,3') || 
+                courseName.includes('term 1, 2 and 3') || terms === '1,2,3' || terms.includes('1,2,3')) {
+              chosenTerms.term1 = true;
+              chosenTerms.term2 = true;
+              chosenTerms.term3 = true;
+              // Store the course_id for Case 3 to use in viewCourseInfo
+              case3CourseId = String(courseIdSub);
+            } else {
+              // Individual term checks
             if (courseName.includes('term 1') || courseName.includes('term1') || String(courseIdSub) === '82') {
               chosenTerms.term1 = true;
             }
             if (courseName.includes('term 2') || courseName.includes('term2')) {
               chosenTerms.term2 = true;
+            }
+            // Check if Term 3 is in the terms string (e.g., "1,2,3" or "3")
+            if (terms.includes('3') || courseName.includes('term 3') || courseName.includes('term3')) {
+              chosenTerms.term3 = true;
+              }
             }
           });
         }
@@ -209,33 +231,74 @@ const loadQuarters = async () => {
       console.warn('⚠️ [Bonus] Unable to determine chosen terms:', err);
     }
 
-    console.log('🔑 [Bonus] Chosen Terms:', chosenTerms);
+    // Detect Case 3: All quarters purchased
+    const isCase3 = chosenTerms.term1 && chosenTerms.term2 && chosenTerms.term3;
+    console.log('🔑 [Bonus] Chosen Terms:', chosenTerms, 'Case 3:', isCase3, 'Case3CourseId:', case3CourseId);
+    
+    // In Case 3, fetch course info to get all chapters (for fallback if individual API calls fail)
+    let courseInfoData = null;
+    if (isCase3 && case3CourseId) {
+      try {
+        // Use the course_id from subscription for Case 3
+        const courseInfoRes = await recordedClassesAPI.viewCourseInfo({
+          id: case3CourseId,
+          student_id: studentId
+        });
+        if (courseInfoRes.success && courseInfoRes.raw?.data?.[0]) {
+          courseInfoData = courseInfoRes.raw.data[0];
+          console.log('✅ [Bonus] Case 3 - Fetched course info with course_id:', case3CourseId, 'chapters:', courseInfoData.chapters?.length);
+        }
+      } catch (err) {
+        console.warn('⚠️ [Bonus] Could not fetch course info for Case 3:', err);
+      }
+    }
+
+    // Determine Term 3 API call based on Case
+    // Case 1 (only Q1): Buy Quarter 3 shows only "Term 3" plan -> terms: ['3']
+    // Case 2 (Q1 & Q2): Buy Quarter 3 shows only "Term 3" plan -> terms: ['3']
+    // Both cases use the same API call for Buy Quarter 3
+    const term3ApiTerms = ['3'];
+    console.log('🔍 [Bonus] Term 3 API terms:', term3ApiTerms, 'Case:', chosenTerms.term2 ? 'Case 2 (Q1+Q2 purchased)' : 'Case 1 (only Q1)');
 
     const quarterData = [];
 
-    // Fetch Quarter 1 and Quarter 2
-    const [quarter1Res, quarter2Res, quarter3Res] = await Promise.all([
+    // Fetch Quarter 1, Quarter 2, and Quarter 3
+    const [quarter1Res, quarter2Res, quarter2CoursesRes, quarter3Res, quarter3CoursesRes, quarter3ChapterRes] = await Promise.all([
       recordedClassesAPI.viewChapterLessonsInfo({ 
         course_chapter_id: '521',
         student_id: studentId,
         type: '1'
-      }),
+      }).catch(() => ({ success: false })),
       recordedClassesAPI.viewChapterLessonsInfo({ 
         course_chapter_id: '790',
         student_id: studentId,
         type: '1'
-      }),
+      }).catch(() => ({ success: false })),
+      // Fetch Term 2 courses (Term 2 + Term 2 & 3)
       recordedClassesAPI.fetchTermsCourses({ 
         age_group_id: ageGroupId,
-        terms: ['3']
-      })
+        terms: ['2,3', '2']
+      }).catch(() => ({ success: false })),
+      // Fetch Term 3 courses - Conditional based on Case
+      recordedClassesAPI.fetchTermsCourses({ 
+        age_group_id: ageGroupId,
+        terms: term3ApiTerms
+      }).catch(() => ({ success: false })),
+      // Fetch Quarter 3 chapter data if Term 3 is purchased
+      chosenTerms.term3 ? recordedClassesAPI.viewChapterLessonsInfo({ 
+        course_chapter_id: '772',
+        student_id: studentId,
+        type: '1'
+      }).catch(() => ({ success: false })) : Promise.resolve({ success: false })
     ]);
 
     // Map Quarter 1
-    if (quarter1Res.success && quarter1Res.raw?.data?.[0]) {
+    if (quarter1Res?.success && quarter1Res?.raw?.data?.[0]) {
       const data = quarter1Res.raw.data[0];
-      const isLocked = !(chosenTerms.term1 || subscribed.includes('521'));
-      console.log('[Bonus] Quarter 1 - isLocked:', isLocked, 'term1:', chosenTerms.term1, 'subscribed:', subscribed);
+      // For Case 3 (all quarters purchased), all quarter cards should be unlocked
+      // In Case 1 and Case 2, Quarter 1 is unlocked if Term 1 is purchased
+      const isLocked = isCase3 ? false : !(chosenTerms.term1 || subscribed.includes('521'));
+      console.log('[Bonus] Quarter 1 - isLocked:', isLocked, 'term1:', chosenTerms.term1, 'subscribed:', subscribed, 'isCase3:', isCase3);
       quarterData.push({
         id: 1,
         title: data.chapter_title || 'Quarter 1',
@@ -247,33 +310,20 @@ const loadQuarters = async () => {
       });
     }
 
-    // Map Quarter 2
-    if (quarter2Res.success && quarter2Res.raw?.data?.[0]) {
+    // Map Quarter 2 - Check if Term 2 is purchased
+    const term2CoursesData = quarter2CoursesRes?.raw?.data || quarter2CoursesRes?.data || [];
+    if (quarter2Res?.success && quarter2Res?.raw?.data?.[0]) {
       const data = quarter2Res.raw.data[0];
       // Check if Quarter 2 is subscribed/unlocked
       const isSubscribed = chosenTerms.term2 || subscribed.includes('790');
       
-      // Check if previous quarters (Q1) are complete for sequential unlock
-      let isSequentiallyUnlocked = true;
-      let courseStartDate = null;
-      try {
-        const sid = user?.sid || userData?.sid || localStorage.getItem('sid') || sessionStorage.getItem('sid');
-        if (sid) {
-          const subscriptionRes = await subjectsAPI.checkStudentSubscription(sid);
-          if (subscriptionRes.success && subscriptionRes.data?.[0]?.course_start_date) {
-            courseStartDate = subscriptionRes.data[0].course_start_date;
-            if (isSubscribed) {
-              isSequentiallyUnlocked = await isPreviousQuartersComplete('790', courseStartDate, studentId);
-            }
-          }
-        }
-      } catch (err) {
-        console.warn('⚠️ [Bonus] Could not check sequential unlock for Quarter 2:', err);
-      }
-      
-      // Quarter 2 is locked if: not subscribed OR previous quarters not complete
-      const isLocked = !isSubscribed || !isSequentiallyUnlocked;
-      console.log('[Bonus] Quarter 2 - isLocked:', isLocked, 'term2:', chosenTerms.term2, 'subscribed:', isSubscribed, 'sequentiallyUnlocked:', isSequentiallyUnlocked);
+      // If Term 2 is purchased, show Quarter 2 as normal quarter (like Q1)
+      if (isSubscribed) {
+      // For Case 2 and Case 3: Main cards should be unlocked
+      // Sequential unlock is handled at video level, not card level
+      // Videos inside will follow day-wise sequential unlock logic
+      const isLocked = false;
+      console.log('[Bonus] Quarter 2 - isLocked:', isLocked, 'term2:', chosenTerms.term2, 'subscribed:', isSubscribed, 'isCase3:', isCase3);
       quarterData.push({
         id: 2,
         title: data.chapter_title || 'Quarter 2',
@@ -283,21 +333,129 @@ const loadQuarters = async () => {
         chapterId: '790',
         isLocked: isLocked
       });
+      } else {
+        // Term 2 not purchased - show Buy Quarter 2 option
+        if (quarter2CoursesRes?.success && term2CoursesData.length > 0) {
+          // Filter courses that include Term 2 (Term 2 or Term 2 & 3)
+          const term2Plans = term2CoursesData.filter(course => {
+            const courseTerms = (course.terms || '').toString();
+            return courseTerms.includes('2');
+          });
+          
+          quarterData.push({
+            id: 2,
+            title: 'Buy Quarter 2',
+            description: term2Plans[0]?.description || term2Plans[0]?.course_detail || '',
+            image: quarter_2,
+            type: 'buy_plan',
+            terms: ['2'],
+            courseData: term2Plans.map(course => ({
+              id: course.id,
+              courseName: course.course_name || 'Buy Quarter 2',
+              tag: course.tag || '(3 months)',
+              amount: course.amount || 0,
+              fake_price: course.fake_price || course.amount || 0,
+              discount: course.discount || 0,
+              curriculum: course.curriculum || course.description || '',
+              course_detail: course.course_detail || '',
+              description: course.description || '',
+              hands_on_activities: course.hands_on_activities || ''
+            })),
+            isLocked: false
+          });
+        }
+      }
     }
 
-    // Map Quarter 3
-    if (quarter3Res.success) {
-      const quarter3Data = quarter3Res.raw?.data || quarter3Res.data || [];
-      if (quarter3Data.length > 0) {
-        const course = quarter3Data[0];
+    // Map Quarter 3 - Check if Term 3 is purchased
+    const term3CoursesData = quarter3CoursesRes?.raw?.data || quarter3CoursesRes?.data || [];
+    console.log('🔍 [Bonus] Term 3 check - term3:', chosenTerms.term3, 'quarter3CoursesRes:', quarter3CoursesRes?.success, 'term3CoursesData:', term3CoursesData.length);
+    console.log('🔍 [Bonus] Term 3 courses raw data:', term3CoursesData);
+    
+    // If Term 3 is purchased, show Quarter 3 as normal quarter (like Q1/Q2)
+    // In Case 3, if API call fails, use fallback from courseInfoData or subscribed chapters
+    let quarter3ChapterData = null;
+    let quarter3ChapterId = '772'; // Default to Junior KG Quarter 3 ID
+    if (quarter3ChapterRes?.success && quarter3ChapterRes?.raw?.data?.[0]) {
+      quarter3ChapterData = quarter3ChapterRes.raw.data[0];
+    } else if (isCase3 && courseInfoData?.chapters) {
+      // Fallback: In Case 3, get Quarter 3 from courseInfoData chapters
+      const quarter3Chapter = courseInfoData.chapters.find(ch => {
+        const chId = String(ch.id);
+        // Quarter 3 chapter IDs: 772 (Junior KG) or other IDs for different courses
+        return chId === '772' || ch.chapter_title?.toLowerCase().includes('quarter 3') || ch.s_no === 3;
+      });
+      if (quarter3Chapter) {
+        quarter3ChapterId = String(quarter3Chapter.id); // Use actual chapter ID from courseInfoData
+        quarter3ChapterData = {
+          chapter_title: quarter3Chapter.chapter_title || 'Quarter 3',
+          chapter_description: quarter3Chapter.chapter_description || 'Browse through unlocked sessions for better understanding.',
+          image: quarter3Chapter.image
+        };
+        console.log('✅ [Bonus] Using Quarter 3 data from courseInfoData fallback, chapterId:', quarter3ChapterId);
+      }
+    }
+    
+    if (chosenTerms.term3 && quarter3ChapterData) {
+      // For Case 2 and Case 3: Main cards should be unlocked
+      // Sequential unlock is handled at video level, not card level
+      // Videos inside will follow day-wise sequential unlock logic
+      const isLocked = false;
+      console.log('[Bonus] Quarter 3 - isLocked:', isLocked, 'term3:', chosenTerms.term3, 'isCase3:', isCase3);
+      
         quarterData.push({
           id: 3,
-          title: course.course_name || 'Buy Quarter 3',
-          description: cleanDescription(course.description || course.course_detail),
+        title: quarter3ChapterData.chapter_title || 'Quarter 3',
+        description: quarter3ChapterData.chapter_description || 'Browse through unlocked sessions for better understanding.',
+        image: getBlobUrl(quarter3ChapterData.image),
+        type: 'quarter',
+        chapterId: quarter3ChapterId, // Use the actual chapter ID (from API or fallback)
+        isLocked: isLocked
+      });
+    } else {
+      // Term 3 not purchased - show Buy Quarter 3 option
+      console.log('🔍 [Bonus] Term 3 NOT purchased - showing Buy Quarter 3 card');
+      // Filter courses that include Term 3
+      // Both Case 1 and Case 2: API fetches only ['3'], so show only "Term 3" plan
+      const term3Plans = term3CoursesData.filter(course => {
+        const courseTerms = (course.terms || '').toString();
+        return courseTerms === '3';
+      });
+      console.log('🔍 [Bonus] Term 3 plans found:', term3Plans.length, 'plans:', term3Plans);
+      
+      // Always show Buy Quarter 3 card if Term 3 is not purchased
+      if (term3Plans.length > 0) {
+        quarterData.push({
+          id: 3,
+          title: 'Buy Quarter 3',
+          description: term3Plans[0]?.description || term3Plans[0]?.course_detail || '',
           image: quarter_3,
           type: 'buy_plan',
           terms: ['3'],
-          courseData: course,
+          courseData: term3Plans.map(course => ({
+            id: course.id,
+            courseName: course.course_name || 'Buy Quarter 3',
+            tag: course.tag || '(3 months)',
+            amount: course.amount || 0,
+            fake_price: course.fake_price || course.amount || 0,
+            discount: course.discount || 0,
+            curriculum: course.curriculum || course.description || '',
+            course_detail: course.course_detail || '',
+            description: course.description || '',
+            hands_on_activities: course.hands_on_activities || ''
+          })),
+          isLocked: false
+        });
+      } else {
+        // Fallback: Show Buy Quarter 3 card even if API fails or no plans found
+        quarterData.push({
+          id: 3,
+          title: 'Buy Quarter 3',
+          description: '',
+          image: quarter_3,
+          type: 'buy_plan',
+          terms: ['3'],
+          courseData: [],
           isLocked: false
         });
       }
@@ -323,9 +481,14 @@ const loadQuarters = async () => {
 
     console.log('📦 [Bonus] Total quarters before filtering:', quarterData.length);
 
-    // ✅ CORRECTED FILTERING LOGIC
-    // Always show Quarter 2 as locked if Term 2 is not selected (don't hide it)
+    // Filter quarters based on selected terms
     const filtered = (() => {
+      // Case 3: Show all quarters (all unlocked)
+      if (isCase3) {
+        console.log('🔓 [Bonus] Case 3 detected - showing all quarters');
+        return quarterData;
+      }
+      
       const hasSelection = chosenTerms.term1 || chosenTerms.term2;
       
       // If no terms selected, show all quarters (default behavior)
@@ -354,6 +517,13 @@ const loadQuarters = async () => {
         // Quarter 2 (790): Always show (will be locked if Term 2 is not selected)
         if (q.chapterId === '790') {
           console.log(`  ✅ [Bonus] Quarter 2 - Always visible (locked if Term 2 not selected)`);
+          return true;
+        }
+        
+        // Quarter 3: Always show (will be locked if Term 3 is not purchased or previous quarters not complete)
+        // Check by id (3) or chapterId ('772' for Junior KG, '767' for Play Group, etc.)
+        if (q.id === 3 || q.chapterId === '772' || q.chapterId === '767' || (q.title && q.title.toLowerCase().includes('quarter 3'))) {
+          console.log(`  ✅ [Bonus] Quarter 3 - Always visible (locked if Term 3 not purchased or Q1+Q2 not complete)`);
           return true;
         }
         
@@ -407,7 +577,7 @@ const loadQuarters = async () => {
 
   // UPDATE: Add this helper function at the top of BonusSessions component (after state declarations)
 
-const calculateUnlockedBonusVideoIndex = (courseStartDate) => {
+const calculateUnlockedBonusVideoIndex = async (quarterId, courseStartDate, studentId, quarterNumber = null) => {
   if (!courseStartDate) return 0;
   
   const today = new Date();
@@ -436,7 +606,61 @@ const calculateUnlockedBonusVideoIndex = (courseStartDate) => {
     }
   }
   
-  return bonusSessionCount; // This is how many videos should be unlocked (up to yesterday)
+  const quarterIdStr = String(quarterId);
+  
+  // Determine quarter number: use provided quarterNumber, or fall back to checking chapter ID
+  let qNum = quarterNumber;
+  if (!qNum) {
+    if (quarterIdStr === '521') {
+      qNum = 1;
+    } else if (quarterIdStr === '790') {
+      qNum = 2;
+    } else if (quarterIdStr === '772' || quarterIdStr === '767') {
+      // Support both Junior KG (772) and Play Group (767) Quarter 3 IDs
+      qNum = 3;
+    } else {
+      // Try to determine from selectedQuarter if available
+      // If we can't determine, assume it's Quarter 3 if it's not 1 or 2
+      qNum = 3; // Default fallback
+    }
+  }
+  
+  // Sequential unlock logic: Each quarter unlocks only after previous quarters complete
+  if (qNum === 1) {
+    // Quarter 1: Unlock from day 1 (no previous quarters)
+    return bonusSessionCount;
+  } else if (qNum === 2) {
+    // Quarter 2: Only start unlocking AFTER Quarter 1 completes
+    const quarter1Sessions = await getTotalSessionsInQuarter('521', studentId);
+    const quarter1Total = quarter1Sessions.bonusCount; // Only bonus sessions for this calculation
+    
+    // If Quarter 1 is not complete, Quarter 2 should be locked (return 0)
+    if (bonusSessionCount < quarter1Total) {
+      return 0;
+    }
+    
+    // Quarter 1 is complete, now unlock Quarter 2 videos sequentially
+    // Calculate how many Q2 videos should be unlocked (days after Q1 completes)
+    const q2UnlockedDays = bonusSessionCount - quarter1Total;
+    return Math.max(0, q2UnlockedDays);
+  } else if (qNum === 3) {
+    // Quarter 3: Only start unlocking AFTER Quarter 1 + Quarter 2 complete
+    const quarter1Sessions = await getTotalSessionsInQuarter('521', studentId);
+    const quarter2Sessions = await getTotalSessionsInQuarter('790', studentId);
+    const totalPreviousSessions = quarter1Sessions.bonusCount + quarter2Sessions.bonusCount;
+    
+    // If previous quarters are not complete, Quarter 3 should be locked (return 0)
+    if (bonusSessionCount < totalPreviousSessions) {
+      return 0;
+    }
+    
+    // Previous quarters are complete, now unlock Quarter 3 videos sequentially
+    // Calculate how many Q3 videos should be unlocked (days after Q1+Q2 complete)
+    const q3UnlockedDays = bonusSessionCount - totalPreviousSessions;
+    return Math.max(0, q3UnlockedDays);
+  }
+  
+  return bonusSessionCount; // Fallback
 };
 
 // UPDATE: Modify loadQuarterSessions function to include lock/unlock logic
@@ -453,14 +677,20 @@ const loadQuarterSessions = async (chapterId) => {
     // Get course_start_date to calculate unlocked videos
     let unlockedCount = response.raw.lessons.length; // Default: all unlocked
     
+    // Determine quarter number from selectedQuarter if available
+    let quarterNumber = null;
+    if (selectedQuarter && selectedQuarter.id) {
+      quarterNumber = selectedQuarter.id; // id: 1, 2, or 3
+    }
+    
     try {
       const sid = user?.sid || userData?.sid || localStorage.getItem('sid') || sessionStorage.getItem('sid');
       if (sid) {
         const subscriptionRes = await subjectsAPI.checkStudentSubscription(sid);
         if (subscriptionRes.success && subscriptionRes.data?.[0]?.course_start_date) {
           const courseStartDate = subscriptionRes.data[0].course_start_date;
-          unlockedCount = calculateUnlockedBonusVideoIndex(courseStartDate);
-          console.log('🔓 [Bonus] Unlocked videos count:', unlockedCount);
+          unlockedCount = await calculateUnlockedBonusVideoIndex(chapterId, courseStartDate, studentId, quarterNumber);
+          console.log(`🔓 [Bonus] Quarter ${chapterId} (qNum: ${quarterNumber}) - Unlocked videos count:`, unlockedCount);
         }
       }
     } catch (err) {
@@ -498,6 +728,7 @@ const loadQuarterSessions = async (chapterId) => {
         videoUrl: contentUrl,
         description: content ? formatRichText(content.class_description) : '',
         requirement: content ? formatRichText(content.class_requirement) : '',
+        classTopic: content?.class_topic || lesson.class_topic || '', // Include class_topic if available
         isLocked: isLocked,
         index: index
       };
@@ -507,7 +738,7 @@ const loadQuarterSessions = async (chapterId) => {
   }
 };
 
-// UPDATE: Modify handleSessionClick to check if video is locked
+// Modify handleSessionClick to check if video is locked
 
 const handleSessionClick = (session) => {
   if (session.isLocked) {
@@ -528,17 +759,101 @@ const handleSessionClick = (session) => {
       return;
     }
 
+    // If it's a buy_plan and courseData is empty, try to fetch it
+    if (quarter.type === 'buy_plan') {
+      if (!quarter.courseData || (Array.isArray(quarter.courseData) && quarter.courseData.length === 0)) {
+        // Try to fetch the data again
+        try {
+          setLoadingSessions(true);
+          const ageGroupId = user?.age_group_id || userData?.age_group_id;
+          
+          // Determine which terms to fetch based on quarter
+          let termsToFetch = [];
+          if (quarter.id === 2 || quarter.title?.includes('Quarter 2') || quarter.title?.includes('Buy Quarter 2')) {
+            termsToFetch = ['2,3', '2'];
+          } else if (quarter.id === 3 || quarter.title?.includes('Quarter 3') || quarter.title?.includes('Buy Quarter 3')) {
+            // Buy Quarter 3 should only fetch "Term 3" plan (not "Term 2 & 3")
+            termsToFetch = ['3'];
+          }
+          
+          console.log('🔍 [Bonus] Quarter info for fetching:', { id: quarter.id, title: quarter.title, termsToFetch });
+          
+          if (termsToFetch.length > 0 && ageGroupId) {
+            console.log('🔄 [Bonus] Fetching plan data on click - ageGroupId:', ageGroupId, 'terms:', termsToFetch);
+            const coursesResponse = await recordedClassesAPI.fetchTermsCourses({ 
+              age_group_id: ageGroupId,
+              terms: termsToFetch
+            });
+            
+            console.log('📥 [Bonus] Courses response:', coursesResponse);
+            const coursesData = coursesResponse.raw?.data || coursesResponse.data || [];
+            console.log('📦 [Bonus] Courses data:', coursesData);
+            
+            // Filter courses based on quarter
+            let filteredPlans = [];
+            if (quarter.id === 2 || quarter.title?.includes('Quarter 2') || quarter.title?.includes('Buy Quarter 2')) {
+              filteredPlans = coursesData.filter(course => {
+                const courseTerms = (course.terms || '').toString();
+                console.log('🔍 [Bonus] Filtering Q2 - course:', course.course_name, 'terms:', courseTerms);
+                return courseTerms.includes('2');
+              });
+            } else if (quarter.id === 3 || quarter.title?.includes('Quarter 3') || quarter.title?.includes('Buy Quarter 3')) {
+              filteredPlans = coursesData.filter(course => {
+                const courseTerms = (course.terms || '').toString();
+                console.log('🔍 [Bonus] Filtering Q3 - course:', course.course_name, 'terms:', courseTerms);
+                // Only show "Term 3" plan, not "Term 2 & 3"
+                return courseTerms === '3';
+              });
+            }
+            
+            console.log('✅ [Bonus] Filtered plans:', filteredPlans.length, filteredPlans);
+            
+            if (filteredPlans.length > 0) {
+              // Update quarter with fetched data
+              quarter.courseData = filteredPlans.map(course => ({
+                id: course.id,
+                courseName: course.course_name || quarter.title || 'Quarter',
+                tag: course.tag || '(3 months)',
+                amount: course.amount || 0,
+                fake_price: course.fake_price || course.amount || 0,
+                discount: course.discount || 0,
+                curriculum: course.curriculum || course.description || '',
+                course_detail: course.course_detail || '',
+                description: course.description || '',
+                hands_on_activities: course.hands_on_activities || ''
+              }));
+            } else {
+              alert('Plan details are not available. Please try again later.');
+              setLoadingSessions(false);
+              return;
+            }
+          } else {
+            alert('Plan details are not available. Please try again later.');
+            setLoadingSessions(false);
+            return;
+          }
+        } catch (error) {
+          console.error('❌ [Bonus] Error fetching plan data:', error);
+          alert('Failed to load plan details. Please try again later.');
+          setLoadingSessions(false);
+          return;
+        }
+      }
+    }
+
     setSelectedQuarter(quarter);
     setSessions([]);
-    setLoadingSessions(true);
+    setLoadingSessions(false);
 
     try {
       switch (quarter.type) {
         case 'quarter':
+          setLoadingSessions(true);
           await loadQuarterSessions(quarter.chapterId);
           break;
         case 'buy_plan':
           // Plan selection is handled in render
+          setLoadingSessions(false);
           break;
         case 'diy_home':
           await loadPixSessions(2); // type: 2 for DIY Home
@@ -584,8 +899,6 @@ const handleSessionClick = (session) => {
       setSessions([]);
     }
   };
-
-  // Duplicate simple handleSessionClick removed; keep the lock-aware version defined above
 
   useEffect(() => {
     if (selectedSession?.videoUrl && !hasTrackedVideo && onVideoWatch) {
@@ -664,21 +977,45 @@ const handleSessionClick = (session) => {
   if (selectedQuarter) {
     // Buy Plan view
     if (selectedQuarter.type === 'buy_plan') {
-      if (!selectedQuarter.courseData) return null;
+      if (!selectedQuarter.courseData || (Array.isArray(selectedQuarter.courseData) && selectedQuarter.courseData.length === 0)) {
+        return (
+          <div className="p-8 min-h-screen bg-white relative">
+            <button 
+              className="bonus-back-button"
+              onClick={handleBack}
+            >
+              Back
+            </button>
+            <h1 className="text-center text-[32px] font-bold text-[#333] mb-10">Select Plan</h1>
+            <div className="plan-card-container flex justify-center items-center min-h-[400px]">
+              <div className="plan-error w-full md:w-1/3 flex justify-center items-center p-10 text-center text-[#d32f2f] text-base">
+                <p>Failed to load plan details. Please try again.</p>
+              </div>
+            </div>
+          </div>
+        );
+      }
       
-      const courseData = selectedQuarter.courseData;
-      const descriptionSections = parseDescriptionSections(courseData.description || courseData.curriculum || '');
+      // Check if courseData is an array (multiple plans) or single object
+      const isArray = Array.isArray(selectedQuarter.courseData);
+      const plans = isArray ? selectedQuarter.courseData : [selectedQuarter.courseData];
       
-      const planData = {
-        courseName: selectedQuarter.title || 'Quarter 3',
+      // Map plans to include parsed description sections
+      const mappedPlans = plans.map(courseData => {
+        const descriptionSections = parseDescriptionSections(courseData.description || courseData.curriculum || '');
+        return {
+          id: courseData.id,
+          courseName: courseData.courseName || selectedQuarter.title || 'Quarter',
         tag: courseData.tag || '(3 months)',
         amount: courseData.amount || 0,
         fakePrice: courseData.fake_price || courseData.amount || 0,
+          discount: courseData.discount || 0,
         image: selectedQuarter.image || null,
         curriculum: descriptionSections.curriculum || courseData.curriculum || courseData.description || '',
         activityBox: descriptionSections.activityBox || courseData.hands_on_activities || '',
         moreFromLearningPie: descriptionSections.moreFromLearningPie || courseData.course_detail || ''
       };
+      });
 
       return (
         <div className="p-8 min-h-screen bg-white relative">
@@ -689,49 +1026,60 @@ const handleSessionClick = (session) => {
             Back
           </button>
           <h1 className="text-center text-[32px] font-bold text-[#333] mb-10">Select Plan</h1>
-          <div className="plan-card-container flex justify-start items-start max-w-[1400px] mx-auto">
-            {planData ? (
-              <div className="plan-card w-full md:w-1/3 bg-white rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.1)] p-5 flex flex-col gap-[18px]">
+          <div className="plan-card-container flex flex-wrap justify-center gap-6 max-w-[1400px] mx-auto">
+            {mappedPlans.length > 0 ? (
+              mappedPlans.map((plan, index) => {
+                // Determine card color based on plan (Term 2 & 3 = orange, Term 2/3 only = purple)
+                const isTerm2And3 = plan.courseName?.includes('Term 2 & 3') || plan.courseName?.includes('Term 2 and 3');
+                const cardColor = isTerm2And3 ? '#FF8C42' : '#9C27B0';
+                const tagBgColor = isTerm2And3 ? '#FFE5D4' : '#E1BEE7';
+                const tagTextColor = isTerm2And3 ? '#FF8C42' : '#9C27B0';
+                
+                return (
+                  <div key={plan.id || index} className="plan-card w-full md:w-[calc(50%-12px)] bg-white rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.1)] p-5 flex flex-col gap-[18px]">
                 <div className="flex gap-3 items-start">
-                  {planData.image ? (
-                    <img src={planData.image} alt={planData.courseName} className="w-20 h-20 rounded-lg object-cover flex-shrink-0" />
+                      {plan.image ? (
+                        <img src={plan.image} alt={plan.courseName} className="w-20 h-20 rounded-lg object-cover flex-shrink-0" />
                   ) : (
-                    <div className="w-20 h-20 bg-[#FF8C42] rounded-lg flex-shrink-0"></div>
+                        <div className="w-20 h-20 rounded-lg flex-shrink-0" style={{ backgroundColor: cardColor }}></div>
                   )}
                   <div className="flex flex-col gap-1.5 flex-1">
-                    <span className="inline-block bg-[#FFE5D4] text-[#FF8C42] py-1.5 px-3 rounded-md text-sm font-semibold w-fit">
-                      {planData.tag}
+                        <span className="inline-block py-1.5 px-3 rounded-md text-sm font-semibold w-fit" style={{ backgroundColor: tagBgColor, color: tagTextColor }}>
+                          {plan.tag}
                     </span>
-                    <h2 className="text-2xl font-bold text-[#333] m-0">{planData.courseName}</h2>
+                        <h2 className="text-2xl font-bold text-[#333] m-0">{plan.courseName}</h2>
                     <div className="flex items-baseline gap-3">
-                      <span className="text-[32px] font-bold text-[#FF8C42]">₹{planData.amount}</span>
-                      <span className="text-xl font-medium text-[#999] line-through">₹{planData.fakePrice}</span>
+                          <span className="text-[32px] font-bold" style={{ color: cardColor }}>₹{plan.amount}</span>
+                          <span className="text-xl font-medium text-[#999] line-through">₹{plan.fakePrice}</span>
                     </div>
                   </div>
                 </div>
                 
                 <div className="flex flex-col gap-2">
                   <h3 className="text-lg font-bold text-[#333] m-0">Curriculum</h3>
-                  <div className="text-base text-[#666] leading-relaxed m-0" dangerouslySetInnerHTML={{ __html: planData.curriculum || 'No curriculum information available.' }} />
+                      <div className="text-base text-[#666] leading-relaxed m-0" dangerouslySetInnerHTML={{ __html: plan.curriculum || 'No curriculum information available.' }} />
                 </div>
 
                 <div className="flex flex-col gap-2">
                   <h3 className="text-lg font-bold text-[#333] m-0">Activity Box Includes</h3>
-                  <div className="text-base text-[#666] leading-relaxed m-0" dangerouslySetInnerHTML={{ __html: planData.activityBox || 'No activity box information available.' }} />
+                      <div className="text-base text-[#666] leading-relaxed m-0" dangerouslySetInnerHTML={{ __html: plan.activityBox || 'No activity box information available.' }} />
                 </div>
 
                 <div className="flex flex-col gap-2">
                   <h3 className="text-lg font-bold text-[#333] m-0">More from Learning Pie</h3>
-                  <div className="text-base text-[#666] leading-relaxed m-0" dangerouslySetInnerHTML={{ __html: planData.moreFromLearningPie || 'No additional information available.' }} />
+                      <div className="text-base text-[#666] leading-relaxed m-0" dangerouslySetInnerHTML={{ __html: plan.moreFromLearningPie || 'No additional information available.' }} />
                 </div>
 
                 <button 
-                  className="w-full bg-[#FF8C42] text-white border-none py-4 px-6 rounded-lg text-lg font-bold cursor-pointer transition-all duration-300 mt-2.5 hover:bg-[#e67a35] hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(255,140,66,0.3)]" 
+                      className="w-full text-white border-none py-4 px-6 rounded-lg text-lg font-bold cursor-pointer transition-all duration-300 mt-2.5 hover:opacity-90 hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(0,0,0,0.3)]" 
+                      style={{ backgroundColor: cardColor }}
                   onClick={handleEnrollClick}
                 >
                   Enroll Now
                 </button>
               </div>
+                );
+              })
             ) : (
               <div className="plan-error w-full md:w-1/3 flex justify-center items-center p-10 text-center text-[#d32f2f] text-base">
                 <p>Failed to load plan details. Please try again.</p>
