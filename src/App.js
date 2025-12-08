@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Login from './components/login/login';
 import Dashboard from './components/Dashboard/Dashboard';
+import LearningPieHome from './components/LearningPieHome/LearningPieHome';
 import './App.css';
 
 export default function App() {
@@ -14,6 +15,9 @@ export default function App() {
       return null;
     }
   });
+
+  // State to track if we should show login page
+  const [showLogin, setShowLogin] = useState(false);
 
   const handleLoginSuccess = (loggedUser) => {
     console.log("Login Successful:", loggedUser);
@@ -45,6 +49,7 @@ export default function App() {
       console.warn('Failed to persist user to storage:', err);
     }
     setUser(loggedUser);
+    setShowLogin(false); // Hide login page after successful login
   };
 
   // Synchronize auth state across tabs
@@ -76,15 +81,18 @@ export default function App() {
     } catch (err) {
       console.warn('Error clearing storage on logout:', err);
     }
-    setUser(null); // logout pe dubara login page dikhega
+    setUser(null); // logout pe dubara landing page dikhega
+    setShowLogin(false); // Reset to show landing page
   };
 
   return (
     <div className="App">
       {user ? (
         <Dashboard user={user} onLogout={handleLogout} />
+      ) : showLogin ? (
+        <Login onLoginSuccess={handleLoginSuccess} onBack={() => setShowLogin(false)} />
       ) : (
-        <Login onLoginSuccess={handleLoginSuccess} />
+        <LearningPieHome onLoginClick={() => setShowLogin(true)} />
       )}
     </div>
   );

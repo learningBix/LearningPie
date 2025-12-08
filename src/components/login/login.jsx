@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { apiCall } from '../../services/apiService';
 import loginImg from "../../assets/loginImage2.jpg";
 
-const Login = ({ onLoginSuccess }) => {
+const Login = ({ onLoginSuccess, onBack }) => {
   const [step, setStep] = useState(1); // 1: Email, 2: OTP
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
@@ -230,6 +230,17 @@ const Login = ({ onLoginSuccess }) => {
           </div>
 
           <div className="bg-white rounded-lg shadow-sm p-8">
+            {onBack && (
+              <button
+                onClick={onBack}
+                className="mb-4 flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                <span className="text-sm font-medium">Back to Home</span>
+              </button>
+            )}
             <h2 className="text-2xl font-bold text-gray-800 mb-2 text-center">
               Student Sign In
             </h2>
