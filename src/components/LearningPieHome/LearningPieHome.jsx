@@ -126,12 +126,17 @@ const LearningPieHome = ({ onLoginClick }) => {
 
       {/* About */}
       <section id="description" className="py-16">
-        <AgeGroupSelection selectedAgeGroup={selectedAgeGroup} setSelectedAgeGroup={setSelectedAgeGroup} />
+        {/* About content can go here if needed */}
       </section>
 
       {/* Programs */}
       <section id="offer">
         <ProgramSection />
+      </section>
+
+      {/* Age Group Selection - Right below YouTube video section */}
+      <section className="py-8">
+        <AgeGroupSelection selectedAgeGroup={selectedAgeGroup} setSelectedAgeGroup={setSelectedAgeGroup} />
       </section>
 
       {/* Pricing */}

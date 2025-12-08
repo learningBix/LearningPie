@@ -204,9 +204,9 @@ const PricingCards = ({ selectedAgeGroup }) => {
   return (
     <section className="w-full bg-gray-100 py-8 px-4 md:px-8">
       <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {cards.map((card, index) => (
-            <div key={index} className="bg-white rounded-lg p-6 shadow-lg">
+            <div key={index} className="bg-white rounded-lg p-6 shadow-lg h-full flex flex-col">
               <h3 className="text-xl font-bold text-black mb-1">{card.title}</h3>
               <p className="text-sm text-gray-600 mb-4">{card.duration}</p>
 
@@ -217,7 +217,7 @@ const PricingCards = ({ selectedAgeGroup }) => {
                 <p className="text-xs text-gray-600">{card.kitDetails}</p>
               </div>
 
-              <p className="text-xs text-gray-600 mb-6 leading-relaxed">{card.more}</p>
+              <p className="text-xs text-gray-600 mb-6 leading-relaxed flex-grow">{card.more}</p>
 
               <div className="mb-4">
                 <div className="flex items-baseline gap-2 mb-2">
@@ -233,7 +233,7 @@ const PricingCards = ({ selectedAgeGroup }) => {
                 </div>
               </div>
 
-              <button className="w-full bg-[#ff6b35] text-white py-3 rounded-lg font-bold text-base hover:bg-[#e55a2b] transition-colors">
+              <button className="w-full bg-[#ff6b35] text-white py-3 rounded-lg font-bold text-base hover:bg-[#e55a2b] transition-colors mt-auto">
                 Enroll Now
               </button>
             </div>
