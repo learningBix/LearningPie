@@ -354,7 +354,7 @@ const LiveClass = ({ user = {}, userData = {}, onVideoWatch }) => {
 
       if (!sessionType) {
         console.log('🚫 No class on weekends');
-        setCurrentVideo({
+        setCurrentVideos({
           title: 'No Class Today',
           description: 'Enjoy your weekend! Classes resume on Monday.',
           isWeekend: true

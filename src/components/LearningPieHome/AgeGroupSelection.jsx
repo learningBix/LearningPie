@@ -2,8 +2,8 @@ import React from 'react';
 
 const AgeGroupSelection = ({ selectedAgeGroup, setSelectedAgeGroup }) => {
   return (
-    <section className="w-full bg-white py-6 px-4 md:px-8">
-      <div className="max-w-5xl mx-auto">
+    <div className="w-full bg-white py-6 px-4 md:px-8">
+      <div className="max-w-6xl mx-auto">
         <h2 className="text-xl md:text-2xl font-bold text-black mb-6">Select age group</h2>
         
         <div className="flex flex-wrap gap-4 justify-between">
@@ -119,7 +119,7 @@ const AgeGroupSelection = ({ selectedAgeGroup, setSelectedAgeGroup }) => {
           </div>
         </div>
       </div>
-    </section>
+    </div>
   );
 };
 

@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from './Header';
-import PromotionalBanner from './PromotionalBanner';
 import DemoForm from './DemoForm';
 import ProgramSection from './ProgramSection';
 import AgeGroupSelection from './AgeGroupSelection';
+import WhyLearningPie from './WhyLearningPie';
 import PricingCards from './PricingCards';
 import WhatsAppIcon from './WhatsAppIcon';
+import learningPieHomeImg from '../../assets/LearningPieHome.png';
 
 const LearningPieHome = ({ onLoginClick }) => {
   const [formData, setFormData] = useState({
@@ -17,6 +18,14 @@ const LearningPieHome = ({ onLoginClick }) => {
   });
 
   const [selectedAgeGroup, setSelectedAgeGroup] = useState('playgroup');
+
+  // Scroll to pricing section when age group changes
+  useEffect(() => {
+    const pricingSection = document.getElementById('pricing');
+    if (pricingSection) {
+      pricingSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [selectedAgeGroup]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -43,29 +52,43 @@ const LearningPieHome = ({ onLoginClick }) => {
     <div className="w-full bg-white">
       <Header onLoginClick={onLoginClick} />
 
-      {/* Main Content */}
-      <main className="flex flex-col lg:flex-row">
-        <PromotionalBanner />
-        <DemoForm 
-          formData={formData}
-          handleInputChange={handleInputChange}
-          handleProgramSelect={handleProgramSelect}
-          handleSubmit={handleSubmit}
-        />
+      {/* Main Content - Full Page Image with Overlay Form */}
+      <main className="relative w-full h-[600px] lg:h-[calc(100vh-80px)] overflow-hidden">
+        {/* Full Page Background Image */}
+        <div className="absolute inset-0 w-full h-full">
+          <img
+            src={learningPieHomeImg}
+            alt="LearningPie Home"
+            className="w-full h-full object-cover"
+            style={{ objectPosition: 'left center' }}
+          />
+        </div>
+
+        {/* Demo Form Overlay - Right Side */}
+        <div className="absolute top-0 right-0 h-full w-full lg:w-[38%] flex items-center justify-end pr-1 md:pr-2 lg:pr-4 z-10">
+          <DemoForm 
+            formData={formData}
+            handleInputChange={handleInputChange}
+            handleProgramSelect={handleProgramSelect}
+            handleSubmit={handleSubmit}
+          />
+        </div>
       </main>
 
       <div id="programs">
         <ProgramSection />
       </div>
 
-      <AgeGroupSelection 
-        selectedAgeGroup={selectedAgeGroup}
-        setSelectedAgeGroup={setSelectedAgeGroup}
-      />
-
-      <div id="pricing">
+      {/* Age Group Selection and Pricing Cards - Combined Section */}
+      <div id="pricing" className="w-full bg-white">
+        <AgeGroupSelection 
+          selectedAgeGroup={selectedAgeGroup}
+          setSelectedAgeGroup={setSelectedAgeGroup}
+        />
         <PricingCards selectedAgeGroup={selectedAgeGroup} />
       </div>
+
+      <WhyLearningPie />
 
       <div id="review" className="w-full bg-white py-12 px-4 md:px-8">
         <div className="max-w-6xl mx-auto text-center">
