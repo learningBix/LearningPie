@@ -1,5 +1,5 @@
 import React from 'react';
-import logoPie from '../../assets/logo-pie.png';
+import logoPie from '../../../assets/logo-pie.png';
 
 const ProgramSection = () => {
   return (
