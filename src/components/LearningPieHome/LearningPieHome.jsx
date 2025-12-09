@@ -36,9 +36,9 @@ const Header = ({ onLoginClick, onBookFreeClassClick }) => {
 
           <nav className="hidden md:flex space-x-8">
             <button onClick={() => scrollToSection('hero')} className="text-gray-700 hover:text-orange-500 font-medium">Home</button>
-            <button onClick={() => scrollToSection('description')} className="text-gray-700 hover:text-orange-500 font-medium">About</button>
-            <button onClick={() => scrollToSection('offer')} className="text-gray-700 hover:text-orange-500 font-medium">Programs</button>
-            <button onClick={() => scrollToSection('feedback')} className="text-gray-700 hover:text-orange-500 font-medium">Testimonials</button>
+            <button onClick={() => scrollToSection('pricing')} className="text-gray-700 hover:text-orange-500 font-medium">Pricing</button>
+            <button onClick={() => scrollToSection('what-will-learn')} className="text-gray-700 hover:text-orange-500 font-medium">Programs</button>
+            <button onClick={() => scrollToSection('feedback')} className="text-gray-700 hover:text-orange-500 font-medium">Review</button>
             <button onClick={() => scrollToSection('blogs')} className="text-gray-700 hover:text-orange-500 font-medium">Blogs</button>
           </nav>
 

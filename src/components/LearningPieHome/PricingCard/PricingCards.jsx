@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 // ================== PRICING DATA (Now in same file) ==================
 const pricingData = {
@@ -199,7 +199,16 @@ const pricingData = {
 
 // ================= PRICING CARDS COMPONENT =================
 const PricingCards = ({ selectedAgeGroup }) => {
+  const [showEnrollPopup, setShowEnrollPopup] = useState(false);
   const cards = pricingData[selectedAgeGroup] || pricingData.seniorKG;
+
+  const handleEnrollClick = () => {
+    setShowEnrollPopup(true);
+  };
+
+  const closeEnrollPopup = () => {
+    setShowEnrollPopup(false);
+  };
 
   return (
     <section className="w-full bg-gray-100 py-8 px-4 md:px-8">
@@ -233,13 +242,40 @@ const PricingCards = ({ selectedAgeGroup }) => {
                 </div>
               </div>
 
-              <button className="w-full bg-[#ff6b35] text-white py-3 rounded-lg font-bold text-base hover:bg-[#e55a2b] transition-colors mt-auto">
+              <button 
+                onClick={handleEnrollClick}
+                className="w-full bg-[#ff6b35] text-white py-3 rounded-lg font-bold text-base hover:bg-[#e55a2b] transition-colors mt-auto"
+              >
                 Enroll Now
               </button>
             </div>
           ))}
         </div>
       </div>
+
+      {/* Contact Admin Popup */}
+      {showEnrollPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full mx-4 p-6">
+            <h2 className="text-xl font-bold text-[#333] mb-3 text-center">Contact Admin</h2>
+            <p className="text-sm text-[#555] mb-4 text-center">
+              To enroll, please contact the admin at{' '}
+              <a href="mailto:contact@learningbix.com" className="text-[#FF8C42] font-semibold underline">
+                contact@learningbix.com
+              </a>
+              .
+            </p>
+            <div className="mt-4 flex justify-center">
+              <button
+                className="px-6 border border-[#FF8C42] text-[#FF8C42] rounded-lg py-2 text-sm font-semibold hover:bg-[#FFF3EB] transition-colors"
+                onClick={closeEnrollPopup}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 };

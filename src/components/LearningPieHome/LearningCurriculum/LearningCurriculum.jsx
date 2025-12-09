@@ -1,7 +1,12 @@
 import React, { useState } from "react";
+import icon1 from '../../../assets/Group38012.png';
+import icon2 from '../../../assets/Group38013.png';
+import icon3 from '../../../assets/Group38014.png';
+import BookFreeClassModal from '../BookFreeClassModal';
 
 const LearningCurriculum = () => {
   const [selectedAge, setSelectedAge] = useState("3.5-4.5");
+  const [showBookFreeClassModal, setShowBookFreeClassModal] = useState(false);
 
   const ageGroups = [
     { id: "1.5-2.5", label: "1.5-2.5 years" },
@@ -156,7 +161,7 @@ const LearningCurriculum = () => {
   };
 
   return (
-<section className="w-screen relative left-[50%] right-[50%] ml-[-50vw] mr-[-50vw] py-16 bg-[#DCECA0] overflow-hidden">
+<section id="what-will-learn" className="w-screen relative left-[50%] right-[50%] ml-[-50vw] mr-[-50vw] py-16 bg-[#DCECA0] overflow-hidden">
       <div className="max-w-7xl mx-auto">
         
         {/* Header */}
@@ -186,16 +191,20 @@ const LearningCurriculum = () => {
 
         {/* Curriculum Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-          {curriculumData[selectedAge].map((card, index) => (
+          {curriculumData[selectedAge].map((card, index) => {
+            const icons = [icon1, icon2, icon3];
+            return (
             <div
               key={index}
               className="bg-white rounded-3xl p-8 shadow-lg flex flex-col items-center"
             >
               {/* Illustration */}
               <div className="w-32 h-32 mb-6 flex items-center justify-center">
-                <div className="w-full h-full bg-gradient-to-br from-orange-200 to-pink-200 rounded-full flex items-center justify-center">
-                  <span className="text-4xl">🎨</span>
-                </div>
+                <img 
+                  src={icons[index]} 
+                  alt={card.title} 
+                  className="w-full h-full object-contain"
+                />
               </div>
 
               {/* Title */}
@@ -215,17 +224,27 @@ const LearningCurriculum = () => {
                 ))}
               </ul>
             </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* CTA Button */}
         <div className="text-center">
-          <button className="bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg px-8 py-4 rounded-full shadow-lg transition-all hover:shadow-xl">
+          <button 
+            onClick={() => setShowBookFreeClassModal(true)}
+            className="bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg px-8 py-4 rounded-full shadow-lg transition-all hover:shadow-xl"
+          >
             Book a Seat for your child
           </button>
         </div>
 
       </div>
+
+      {/* Book Free Class Modal */}
+      <BookFreeClassModal 
+        isOpen={showBookFreeClassModal} 
+        onClose={() => setShowBookFreeClassModal(false)} 
+      />
     </section>
   );
 };
