@@ -10,13 +10,14 @@ import ContactForm from './QueryForm/ContactForm';
 import TestimonialsSection from './Testimonials/Testimonials';
 import LearningCurriculum from './LearningCurriculum/LearningCurriculum';
 import WhatsAppIcon from './WhatsAppIcon';
+import BookFreeClassModal from './BookFreeClassModal';
 import learningPieHomeImg from '../../assets/LearningPieHome.png';
 import pieFooterWave from '../../assets/piefooterwave.jpg';
 import weAcceptPart1 from '../../assets/weacceptpart1.png';
 import weAcceptPart2 from '../../assets/weacceptpart2.png';
 
 // ================== HEADER COMPONENT HERE ====================
-const Header = ({ onLoginClick }) => {
+const Header = ({ onLoginClick, onBookFreeClassClick }) => {
   const scrollToSection = (targetId) => {
     const element = document.getElementById(targetId);
     if (element) {
@@ -45,7 +46,7 @@ const Header = ({ onLoginClick }) => {
             <button className="hidden sm:flex text-orange-500 font-medium" onClick={() => window.location.href = 'tel:91-8010554400'}>
               📞 91-8010554400
             </button>
-            <button className="bg-orange-500 text-white px-6 py-2 rounded-full" onClick={() => scrollToSection('bookdemo')}>
+            <button className="bg-orange-500 text-white px-6 py-2 rounded-full" onClick={onBookFreeClassClick}>
               Book a Free Class
             </button>
             <button className="border-2 border-orange-500 text-orange-500 px-6 py-2 rounded-full" onClick={onLoginClick}>
@@ -71,6 +72,7 @@ const LearningPieHome = ({ onLoginClick }) => {
   });
 
   const [selectedAgeGroup, setSelectedAgeGroup] = useState('playgroup');
+  const [showBookFreeClassModal, setShowBookFreeClassModal] = useState(false);
 
   // Scroll to pricing section when age group changes
   useEffect(() => {
@@ -104,7 +106,7 @@ const LearningPieHome = ({ onLoginClick }) => {
   return (
     <div className="w-full bg-white pt-24">
 
-      <Header onLoginClick={onLoginClick} />
+      <Header onLoginClick={onLoginClick} onBookFreeClassClick={() => setShowBookFreeClassModal(true)} />
 
       {/* Main Content - Full Page Image with Overlay Form */}
       <main id="hero" className="relative w-full h-[600px] lg:h-[calc(100vh-80px)] overflow-hidden">
@@ -149,7 +151,7 @@ const LearningPieHome = ({ onLoginClick }) => {
         <PricingCards selectedAgeGroup={selectedAgeGroup} />
       </section>
 
-      <WhyLearningPie />
+      <WhyLearningPie onEnrollClick={() => setShowBookFreeClassModal(true)} />
 
       {/* Blogs */}
       <section id="blogs" className="w-full bg-gray-50 py-12 px-4 md:px-8">
@@ -220,24 +222,24 @@ const LearningPieHome = ({ onLoginClick }) => {
         <h3 className="text-xl font-bold mb-4">Follow Us</h3>
         <div className="flex justify-center space-x-4 text-2xl">
 
-          <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="hover:scale-110 transition-transform">
+          <a href="https://www.facebook.com/learningpiepreschool" target="_blank" rel="noopener noreferrer" className="hover:scale-110 transition-transform">
             <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-orange-500 font-bold">f</div>
           </a>
 
-          <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="hover:scale-110 transition-transform">
-            <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-orange-500 font-bold">X</div>
+          <a href="https://x.com/learningpie1" target="_blank" rel="noopener noreferrer" className="hover:scale-110 transition-transform">
+            <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-orange-500 font-bold">𝕏</div>
           </a>
 
-          <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="hover:scale-110 transition-transform">
+          <a href="https://www.linkedin.com/company/learningpie/" target="_blank" rel="noopener noreferrer" className="hover:scale-110 transition-transform">
             <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-orange-500 font-bold">in</div>
           </a>
 
-          <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="hover:scale-110 transition-transform">
+          <a href="https://www.youtube.com/channel/UCA7Wdl0Nk5bDNSHtSsd1qVQ" target="_blank" rel="noopener noreferrer" className="hover:scale-110 transition-transform">
             <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-orange-500 font-bold">▶</div>
           </a>
 
           <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="hover:scale-110 transition-transform">
-            <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-orange-500 font-bold">IG</div>
+            <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-orange-500 font-bold">📷</div>
           </a>
 
         </div>
@@ -257,6 +259,12 @@ const LearningPieHome = ({ onLoginClick }) => {
 
 
       <WhatsAppIcon />
+
+      {/* Book Free Class Modal */}
+      <BookFreeClassModal 
+        isOpen={showBookFreeClassModal} 
+        onClose={() => setShowBookFreeClassModal(false)} 
+      />
     </div>
   );
 };
