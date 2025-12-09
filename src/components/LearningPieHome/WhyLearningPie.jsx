@@ -59,7 +59,7 @@ const WhyLearningPie = ({ onEnrollClick }) => {
 
         {/* Enrol Button */}
         <div className="flex justify-center">
-          <button 
+          <button
             onClick={onEnrollClick}
             className="bg-[#ff6b35] text-white px-8 py-4 rounded-lg text-lg font-bold uppercase tracking-wide hover:bg-[#e55a2b] transition-colors shadow-lg"
           >
