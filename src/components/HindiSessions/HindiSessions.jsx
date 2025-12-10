@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { contentsAPI } from "../../services/apiService";
-// import "./HindiSessions.css";
 import { BLOB_BASE_URL } from '../../config/api'; 
-
 
 const HindiSessions = () => {
   const [sessions, setSessions] = useState([]);
@@ -12,6 +10,46 @@ const HindiSessions = () => {
   useEffect(() => {
     loadHindiSessions();
   }, []);
+
+  // Function to decode HTML entities and fix Unicode encoding
+  const decodeHindiText = (text) => {
+    if (!text) return '';
+    
+    try {
+      // First decode HTML entities
+      const textarea = document.createElement('textarea');
+      textarea.innerHTML = text;
+      let decoded = textarea.value;
+      
+      // Check if text contains mojibake (incorrectly encoded UTF-8)
+      if (decoded.includes('à¤') || decoded.includes('à¥')) {
+        // Text is UTF-8 bytes interpreted as Latin-1/Windows-1252
+        // We need to convert it back
+        try {
+          // Convert the string to bytes as if it were Latin-1
+          const bytes = [];
+          for (let i = 0; i < decoded.length; i++) {
+            bytes.push(decoded.charCodeAt(i) & 0xff);
+          }
+          // Now decode those bytes as UTF-8
+          decoded = new TextDecoder('utf-8').decode(new Uint8Array(bytes));
+        } catch (e) {
+          console.log('UTF-8 decode failed:', e);
+        }
+      }
+      
+      // Remove any replacement characters (�) or null bytes
+      decoded = decoded.replace(/\uFFFD/g, '').replace(/\0/g, '');
+      
+      // Clean up any extra whitespace
+      decoded = decoded.trim();
+      
+      return decoded;
+    } catch (error) {
+      console.log('Error decoding text:', error);
+      return text;
+    }
+  };
 
   const loadHindiSessions = async () => {
     const res = await contentsAPI.getRhymesList();
@@ -34,10 +72,15 @@ const HindiSessions = () => {
 
     const mapped = filtered.map((item) => ({
       ...item,
+      // Decode Hindi text for title and description
+      title: decodeHindiText(item.title),
+      description: decodeHindiText(item.description),
       thumbnail: item.image ? `${BLOB_BASE_URL}${item.image}` : '',
-      // video: item.video ? `${BLOB_BASE_URL}${item.video}` : '',
+      video: item.video ? `${BLOB_BASE_URL}${item.video}` : '',
       isLocked: false // If later API gives locked status
     }));
+    
+    console.log('Mapped Hindi Sessions:', mapped);
     setSessions(mapped);
   };
 
