@@ -245,6 +245,20 @@
 .subject-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+  background: var(--subject-color) !important;
+}
+
+.subject-card:hover .card-icon-area {
+  background: var(--subject-color);
+}
+
+.subject-card:hover .card-label {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.subject-card:hover .card-title {
+  color: white;
+  font-weight: 700;
 }
 
 .card-icon-area {
@@ -256,6 +270,7 @@
   background: white;
   position: relative;
   min-height: 140px;
+  transition: background 0.3s ease;
 }
 
 .card-icon {
@@ -276,6 +291,7 @@
 .subject-card:hover .card-icon,
 .subject-card:hover .subject-icon-image {
   transform: scale(1.05);
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.8)) drop-shadow(0 0 4px rgba(255, 255, 255, 0.6));
 }
 
 /* Custom Icon Styles */
@@ -603,6 +619,7 @@
   justify-content: center;
   background: var(--subject-color);
   border-radius: 0 0 15px 15px;
+  transition: background 0.3s ease;
 }
 
 .card-title {
@@ -613,6 +630,7 @@
   letter-spacing: 0.5px;
   line-height: 1.3;
   word-spacing: 2px;
+  transition: color 0.3s ease, font-weight 0.3s ease;
 }
 
 /* Content Sections for What We Include & Activities */
@@ -895,7 +913,7 @@
 }
 
 .modal-content {
-  background: linear-gradient(180deg, rgba(255, 192, 203, 0.6) 0%, rgba(255, 255, 255, 0.95) 100%);
+  background: linear-gradient(180deg, #FFC0CB 0%, #FFFFFF 100%);
   border-radius: 20px;
   padding: 40px;
   max-width: 600px;

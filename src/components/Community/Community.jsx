@@ -64,6 +64,22 @@ const Community = ({ user }) => {
       : `https://i.pravatar.cc/150?img=${data.id}`;
   };
 
+  // Get avatar for post author - use current user's profile if it's their post
+  const getPostAuthorAvatar = (post) => {
+    const postUserId = String(post.user_id || post.userId || '');
+    const isCurrentUserPost = postUserId === USER_ID;
+    
+    // If it's current user's post, use current user's profile image
+    if (isCurrentUserPost && user) {
+      const userAvatar = user.profile_image || user.user_profile || user.image;
+      if (userAvatar) {
+        return getBlobUrl(userAvatar);
+      }
+    }
+    // Otherwise, use avatar from post data
+    return getAvatar(post);
+  };
+
   const toFullUrl = (path) => {
     return getBlobUrl(path) || (path && typeof path === 'string' ? path : null);
   };
@@ -461,7 +477,7 @@ const Community = ({ user }) => {
         <div className="flex justify-between items-center mt-3">
             <div className="flex items-center">
              <Avatar
-              src={getAvatar(post) || `https://i.pravatar.cc/150?img=${post.id}`}
+              src={getPostAuthorAvatar(post) || `https://i.pravatar.cc/150?img=${post.id}`}
               alt={post.name || post.author || 'avatar'}
               className="mr-3"
               size={48}
@@ -575,7 +591,7 @@ const Community = ({ user }) => {
 
               <div className="flex items-center gap-3 mt-4 mb-2">
                 <Avatar
-                  src={getAvatar(selectedPost) || `https://i.pravatar.cc/150?img=${selectedPost.id}`}
+                  src={getPostAuthorAvatar(selectedPost) || `https://i.pravatar.cc/150?img=${selectedPost.id}`}
                   alt={selectedPost.name || selectedPost.author || 'avatar'}
                   size={48}
                 />
