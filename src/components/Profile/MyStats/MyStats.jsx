@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { dashboardAPI } from '../../../services/apiService';
 import { getStudentId, toNumber } from '../../../utils/userUtils';
+import mystatsImg from '../../../assets/mystats.png';
 import './MyStats.css';
 
 const MyStats = ({ user, onBack }) => {
@@ -191,35 +192,12 @@ const MyStats = ({ user, onBack }) => {
               </div>
             </div>
             <div className="my-stats-card-illustration">
-              <svg
-                width="140"
-                height="110"
-                viewBox="0 0 140 110"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
+              <img 
+                src={mystatsImg} 
+                alt="My Stats" 
                 className="laptop-illustration"
-              >
-                {/* Laptop base */}
-                <rect x="15" y="35" width="70" height="45" rx="4" fill={card.id === 'recorded' || card.id === 'diy_home' ? 'rgba(74, 85, 104, 0.3)' : 'rgba(255,255,255,0.25)'}/>
-                {/* Laptop screen */}
-                <rect x="20" y="20" width="60" height="40" rx="3" fill={card.id === 'recorded' || card.id === 'diy_home' ? '#4A5568' : '#FFFFFF'}/>
-                {/* Screen content - pink/teal background */}
-                <rect x="25" y="25" width="50" height="30" rx="2" fill={card.id === 'recorded' || card.id === 'diy_home' ? '#FFFFFF' : '#EC4899'}/>
-                {/* Bar charts on screen */}
-                <rect x="30" y="45" width="6" height="8" rx="1" fill={card.id === 'recorded' || card.id === 'diy_home' ? '#4A5568' : '#14B8A6'}/>
-                <rect x="38" y="42" width="6" height="11" rx="1" fill={card.id === 'recorded' || card.id === 'diy_home' ? '#4A5568' : '#14B8A6'}/>
-                <rect x="46" y="40" width="6" height="13" rx="1" fill={card.id === 'recorded' || card.id === 'diy_home' ? '#4A5568' : '#14B8A6'}/>
-                {/* User profile icons */}
-                <circle cx="58" cy="30" r="4" fill={card.id === 'recorded' || card.id === 'diy_home' ? '#4A5568' : '#FFFFFF'}/>
-                <circle cx="66" cy="30" r="4" fill={card.id === 'recorded' || card.id === 'diy_home' ? '#4A5568' : '#FFFFFF'}/>
-                {/* Keyboard */}
-                <rect x="30" y="55" width="40" height="12" rx="2" fill={card.id === 'recorded' || card.id === 'diy_home' ? '#2D3748' : '#C4B5FD'}/>
-                {/* Phone - purple */}
-                <rect x="90" y="15" width="22" height="38" rx="4" fill={card.id === 'recorded' || card.id === 'diy_home' ? '#4A5568' : '#FFFFFF'}/>
-                <rect x="92" y="17" width="18" height="28" rx="2" fill={card.id === 'recorded' || card.id === 'diy_home' ? '#FFFFFF' : '#9333EA'}/>
-                {/* Connection line - dashed */}
-                <line x1="80" y1="40" x2="90" y2="34" stroke={card.id === 'recorded' || card.id === 'diy_home' ? '#FFFFFF' : '#9333EA'} strokeWidth="2.5" strokeDasharray="5 5" opacity="0.8"/>
-              </svg>
+                style={{ width: '140px', height: '110px', objectFit: 'contain' }}
+              />
             </div>
           </div>
         ))}

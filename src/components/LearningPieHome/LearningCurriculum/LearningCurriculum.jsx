@@ -2,11 +2,16 @@ import React, { useState } from "react";
 import icon1 from '../../../assets/Group38012.png';
 import icon2 from '../../../assets/Group38013.png';
 import icon3 from '../../../assets/Group38014.png';
-import BookFreeClassModal from '../BookFreeClassModal';
 
 const LearningCurriculum = () => {
   const [selectedAge, setSelectedAge] = useState("3.5-4.5");
-  const [showBookFreeClassModal, setShowBookFreeClassModal] = useState(false);
+
+  const scrollToDemoForm = () => {
+    const demoFormElement = document.getElementById('bookdemo');
+    if (demoFormElement) {
+      demoFormElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
 
   const ageGroups = [
     { id: "1.5-2.5", label: "1.5-2.5 years" },
@@ -231,7 +236,7 @@ const LearningCurriculum = () => {
         {/* CTA Button */}
         <div className="text-center">
           <button 
-            onClick={() => setShowBookFreeClassModal(true)}
+            onClick={scrollToDemoForm}
             className="bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg px-8 py-4 rounded-full shadow-lg transition-all hover:shadow-xl"
           >
             Book a Seat for your child
@@ -239,12 +244,6 @@ const LearningCurriculum = () => {
         </div>
 
       </div>
-
-      {/* Book Free Class Modal */}
-      <BookFreeClassModal 
-        isOpen={showBookFreeClassModal} 
-        onClose={() => setShowBookFreeClassModal(false)} 
-      />
     </section>
   );
 };

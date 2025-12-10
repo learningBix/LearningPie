@@ -1,5 +1,4 @@
 import React from 'react';
-import logoPie from '../../../assets/logo-pie.png';
 
 const ProgramSection = () => {
   return (
@@ -31,15 +30,6 @@ const ProgramSection = () => {
               className="absolute inset-0 w-full h-full"
             ></iframe>
 
-            {/* Video Title Overlay - Top Left */}
-            <div className="absolute top-2 left-2 z-20 flex items-center gap-2 max-w-[60%]">
-              <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center flex-shrink-0">
-                <img src={logoPie} alt="LearningPie" className="h-6 w-auto" />
-              </div>
-              {/* <h3 className="text-white text-xs md:text-sm font-bold drop-shadow-lg">
-                LearningPie@Home Preschool Program For Kids Delivered At Home
-              </h3> */}
-            </div>
           </div>
         </div>
       </div>

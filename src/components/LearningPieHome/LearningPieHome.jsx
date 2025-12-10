@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import logoPie from '../../assets/logo-pie.png';
 import DemoForm from './DemoForm';
+import { authAPI, ageGroupsAPI } from '../../services/apiService';
 import ProgramSection from './Videos/ProgramSection';
 import AgeGroupSelection from './AgeGroupSelection';
 import WhyLearningPie from './WhyLearningPie';
@@ -46,9 +47,9 @@ const Header = ({ onLoginClick, onBookFreeClassClick }) => {
             <button className="hidden sm:flex text-orange-500 font-medium" onClick={() => window.location.href = 'tel:91-8010554400'}>
               📞 91-8010554400
             </button>
-            <button className="bg-orange-500 text-white px-6 py-2 rounded-full" onClick={onBookFreeClassClick}>
+            {/* <button className="bg-orange-500 text-white px-6 py-2 rounded-full" onClick={onBookFreeClassClick}>
               Book a Free Class
-            </button>
+            </button> */}
             <button className="border-2 border-orange-500 text-orange-500 px-6 py-2 rounded-full" onClick={onLoginClick}>
               Login
             </button>
@@ -71,8 +72,32 @@ const LearningPieHome = ({ onLoginClick }) => {
     program: ''
   });
 
-  const [selectedAgeGroup, setSelectedAgeGroup] = useState('playgroup');
+  const [selectedAgeGroup, setSelectedAgeGroup] = useState('');
   const [showBookFreeClassModal, setShowBookFreeClassModal] = useState(false);
+  const [ageGroups, setAgeGroups] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [message, setMessage] = useState({ type: '', text: '' });
+
+  // Fetch age groups to map program to age_group_id
+  useEffect(() => {
+    const fetchAgeGroups = async () => {
+      try {
+        const response = await ageGroupsAPI.getAgeGroupsDropdown({ learning: '1' });
+        if (response.success && response.data && response.data.length > 0) {
+          setAgeGroups(response.data);
+          // Use first age group from API directly (no hardcoded mapping)
+          const firstAgeGroup = response.data[0];
+          if (firstAgeGroup && firstAgeGroup.id) {
+            // Use age_group_id from API instead of hardcoded string values
+            setSelectedAgeGroup(firstAgeGroup.id.toString());
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching age groups:', error);
+      }
+    };
+    fetchAgeGroups();
+  }, []);
 
   // Scroll to pricing section when age group changes
   useEffect(() => {
@@ -97,10 +122,105 @@ const LearningPieHome = ({ onLoginClick }) => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  // Generate random password
+  const generatePassword = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let password = '';
+    for (let i = 0; i < 10; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return password;
+  };
+
+  // Map program value to age_group_id
+  const getAgeGroupId = (program) => {
+    if (!program || ageGroups.length === 0) return '';
+    
+    const programLower = program.toLowerCase();
+    const ageGroup = ageGroups.find(ag => {
+      const titleLower = ag.title.toLowerCase();
+      if (programLower === 'playgroup' && (titleLower.includes('play group') || titleLower.includes('playgroup'))) {
+        return true;
+      } else if (programLower === 'nursery' && titleLower.includes('nursery')) {
+        return true;
+      } else if (programLower === 'juniorkg' && (titleLower.includes('jr.') || titleLower.includes('junior'))) {
+        return true;
+      } else if (programLower === 'seniorkg' && (titleLower.includes('sr.') || titleLower.includes('senior'))) {
+        return true;
+      }
+      return false;
+    });
+    
+    return ageGroup ? ageGroup.id.toString() : '';
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
-    // Handle form submission here
+    setSubmitting(true);
+    setMessage({ type: '', text: '' });
+
+    try {
+      // Get age_group_id from selected program
+      const ageGroupId = getAgeGroupId(formData.program);
+      
+      if (!ageGroupId) {
+        setMessage({ type: 'error', text: 'Please select a valid program.' });
+        setSubmitting(false);
+        return;
+      }
+
+      // Generate random password
+      const password = generatePassword();
+
+      // Prepare API payload
+      const payload = {
+        name: formData.childName || formData.parentName,
+        phone_no: formData.mobile,
+        email: formData.email,
+        gender: '',
+        image: '',
+        age_group_id: ageGroupId,
+        time_zone: '',
+        dob: '',
+        parents_name: formData.parentName,
+        school_name: '',
+        subscription_type: '0',
+        demo_class_date: '',
+        time_slot: '',
+        time_from: '',
+        time_to: '',
+        learning: '1',
+        first_name: formData.childName || formData.parentName,
+        last_name: '',
+        password: password
+      };
+
+      // Call API
+      const response = await authAPI.registerStudent(payload);
+
+      if (response.success) {
+        setMessage({ type: 'success', text: 'Successfully registered!' });
+        // Reset form
+        setFormData({
+          parentName: '',
+          email: '',
+          mobile: '',
+          childName: '',
+          program: ''
+        });
+        // Clear message after 5 seconds
+        setTimeout(() => {
+          setMessage({ type: '', text: '' });
+        }, 5000);
+      } else {
+        setMessage({ type: 'error', text: response.message || 'Registration failed. Please try again.' });
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      setMessage({ type: 'error', text: 'An error occurred. Please try again.' });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -122,12 +242,24 @@ const LearningPieHome = ({ onLoginClick }) => {
 
         {/* Demo Form Overlay - Right Side */}
         <div id="bookdemo" className="absolute top-0 right-0 h-full w-full lg:w-[38%] flex items-center justify-end pr-1 md:pr-2 lg:pr-4 z-10">
-          <DemoForm
-            formData={formData}
-            handleInputChange={handleInputChange}
-            handleProgramSelect={handleProgramSelect}
-            handleSubmit={handleSubmit}
-          />
+          <div className="w-full max-w-[450px]">
+            {message.text && (
+              <div className={`mb-4 p-3 rounded-lg text-sm font-medium text-center ${
+                message.type === 'success' 
+                  ? 'bg-green-100 text-green-800 border border-green-300' 
+                  : 'bg-red-100 text-red-800 border border-red-300'
+              }`}>
+                {message.text}
+              </div>
+            )}
+            <DemoForm
+              formData={formData}
+              handleInputChange={handleInputChange}
+              handleProgramSelect={handleProgramSelect}
+              handleSubmit={handleSubmit}
+              submitting={submitting}
+            />
+          </div>
         </div>
       </main>
 
@@ -151,7 +283,7 @@ const LearningPieHome = ({ onLoginClick }) => {
         <PricingCards selectedAgeGroup={selectedAgeGroup} />
       </section>
 
-      <WhyLearningPie onEnrollClick={() => setShowBookFreeClassModal(true)} />
+      <WhyLearningPie />
 
       {/* Blogs */}
       <section id="blogs" className="w-full bg-gray-50 py-12 px-4 md:px-8">
@@ -238,7 +370,7 @@ const LearningPieHome = ({ onLoginClick }) => {
                   <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-orange-500 font-bold">▶</div>
                 </a>
 
-                <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="hover:scale-110 transition-transform">
+                <a href="https://www.instagram.com/learningpie_/" target="_blank" rel="noopener noreferrer" className="hover:scale-110 transition-transform">
                   <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-orange-500 font-bold">📷</div>
                 </a>
 

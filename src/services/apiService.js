@@ -105,6 +105,9 @@ const getErrorMessage = (error) => {
 export const authAPI = {
   login: (email, password, roleId = '3') =>
     apiCall('/login', { email, password, role_id: roleId }),
+  registerStudent: (studentData) => {
+    return apiCall('/register_student', studentData);
+  },
 };
 
 /**
@@ -198,6 +201,9 @@ export const profileAPI = {
 export const ageGroupsAPI = {
   getAgeGroups: ({ keyword = '', learning = '1' } = {}) => {
     return apiCall('/age_group_list', { keyword, learning });
+  },
+  getAgeGroupsDropdown: ({ learning = '1' } = {}) => {
+    return apiCall('/age_group_list_dropdown', { learning });
   },
 };
 

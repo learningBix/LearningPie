@@ -15,6 +15,17 @@ import logoPie from '../../assets/logo-pie.png';
 import Community from '../Community/Community';
 import Invite from '../invite/invite';
 import Profile from '../Profile/Profile';
+// Dashboard icons
+import pieDchildIcon from '../../assets/Dashboard/pieDchild.svg';
+import myCoursesIcon from '../../assets/Dashboard/myCourses.png';
+import aboutMeIcon from '../../assets/Dashboard/Aboutme.png';
+import liveClassIcon from '../../assets/Dashboard/liveclass.png';
+import recordedClassIcon from '../../assets/Dashboard/recordedclass.png';
+import bonusSessionsIcon from '../../assets/Dashboard/Bonus(2).png';
+import storyTimeIcon from '../../assets/Dashboard/Story-Time.png';
+import rhymeTimeIcon from '../../assets/Dashboard/RhymeTime.png';
+import inviteIcon from '../../assets/Dashboard/Invite.png';
+import communityIcon from '../../assets/Dashboard/Community2.png';
 
 
 
@@ -259,33 +270,33 @@ const Dashboard = ({ user, onLogout }) => {
 
 
   const dashboardCards = [
-    { id: 1, title: 'My Courses', icon: '📚', color: '#4CAF50', section: 'My Courses' },
-    { id: 2, title: 'About Me', icon: '👤', color: '#8BC34A', section: 'My Profile' },
-    { id: 3, title: 'Live Class', icon: '▶️', color: '#FFA726', section: 'Live Class' },
-    { id: 4, title: 'Recorded Classes', icon: '📹', color: '#FF7043', section: 'Recorded Classes' },
-    { id: 5, title: 'Bonus Sessions', icon: '⭐', color: '#42A5F5', section: 'Bonus Sessions' },
-    { id: 6, title: 'Story Time', icon: '📖', color: '#EF5350', section: 'Story Time' },
-    { id: 7, title: 'Rhyme Time', icon: '🎵', color: '#AB47BC', section: 'Rhyme Time' },
-    { id: 8, title: 'Parent Section', icon: '👨‍👩‍👧', color: '#E91E63', section: 'Parent Section' },
-    { id: 9, title: 'Mythological Tales', icon: '👼', color: '#9C27B0', section: 'Mythological Tales' },
-    { id: 10, title: 'Hindi Sessions', icon: '💻', color: '#00BCD4', section: 'Hindi Sessions' },
-    { id: 11, title: 'Invite & Earn', icon: '🔗', color: '#66BB6A', section: 'Invite & Earn' },
-    { id: 12, title: 'Community', icon: '👥', color: '#29B6F6', section: 'Community' }
+    { id: 1, title: 'My Courses', icon: myCoursesIcon, color: '#17A2B8', section: 'My Courses', isImage: true },
+    { id: 2, title: 'About Me', icon: aboutMeIcon, color: '#8BC34A', section: 'My Profile', isImage: true },
+    { id: 3, title: 'Live Class', icon: liveClassIcon, color: '#FFC107', section: 'Live Class', isImage: true },
+    { id: 4, title: 'Recorded Classes', icon: recordedClassIcon, color: '#FF7043', section: 'Recorded Classes', isImage: true },
+    { id: 5, title: 'Bonus Sessions', icon: bonusSessionsIcon, color: '#42A5F5', section: 'Bonus Sessions', isImage: true },
+    { id: 6, title: 'Story Time', icon: storyTimeIcon, color: '#EF5350', section: 'Story Time', isImage: true },
+    { id: 7, title: 'Rhyme Time', icon: rhymeTimeIcon, color: '#AB47BC', section: 'Rhyme Time', isImage: true },
+    { id: 8, title: 'Parent Section', icon: '👨‍👩‍👧', color: '#E91E63', section: 'Parent Section', isImage: false },
+    { id: 9, title: 'Mythological Tales', icon: '👼', color: '#9C27B0', section: 'Mythological Tales', isImage: false },
+    { id: 10, title: 'Hindi Sessions', icon: '💻', color: '#00BCD4', section: 'Hindi Sessions', isImage: false },
+    { id: 11, title: 'Invite & Earn', icon: inviteIcon, color: '#66BB6A', section: 'Invite & Earn', isImage: true },
+    { id: 12, title: 'Community', icon: communityIcon, color: '#37474F', section: 'Community', isImage: true }
   ];
 
   const sidebarItems = [
-    { id: 1, title: 'Dashboard', icon: '▦' },
-    { id: 2, title: 'Parent Section', icon: '👨‍👩‍👧' },
-    { id: 3, title: 'My Courses', icon: '📚' },
-    { id: 4, title: 'Live Class', icon: '▶️' },
-    { id: 5, title: 'Recorded Classes', icon: '📹' },
-    { id: 6, title: 'Bonus Sessions', icon: '⭐' },
-    { id: 7, title: 'Story Time', icon: '☁️' },
-    { id: 8, title: 'Rhyme Time', icon: '🎵' },
-    { id: 9, title: 'Mythological Tales', icon: '👼' },
-    { id: 10, title: 'Hindi Sessions', icon: '💻' },
-    { id: 11, title: 'Community', icon: '👥' },
-    { id: 12, title: 'Invite & Earn', icon: '🔗' }
+    { id: 1, title: 'Dashboard', icon: '▦', isImage: false },
+    { id: 2, title: 'Parent Section', icon: '👨‍👩‍👧', isImage: false },
+    { id: 3, title: 'My Courses', icon: myCoursesIcon, isImage: true },
+    { id: 4, title: 'Live Class', icon: liveClassIcon, isImage: true },
+    { id: 5, title: 'Recorded Classes', icon: recordedClassIcon, isImage: true },
+    { id: 6, title: 'Bonus Sessions', icon: bonusSessionsIcon, isImage: true },
+    { id: 7, title: 'Story Time', icon: storyTimeIcon, isImage: true },
+    { id: 8, title: 'Rhyme Time', icon: rhymeTimeIcon, isImage: true },
+    { id: 9, title: 'Mythological Tales', icon: '👼', isImage: false },
+    { id: 10, title: 'Hindi Sessions', icon: '💻', isImage: false },
+    { id: 11, title: 'Community', icon: communityIcon, isImage: true },
+    { id: 12, title: 'Invite & Earn', icon: inviteIcon, isImage: true }
   ];
 
   const handleCardClick = (section) => {
@@ -487,7 +498,31 @@ const Dashboard = ({ user, onLogout }) => {
                 className={`sidebar-item ${activeSection === item.title ? 'active' : ''}`}
                 onClick={() => handleSidebarClick(item.title)}
               >
-                <span className="sidebar-icon">{item.icon}</span>
+                <span className="sidebar-icon">
+                  {item.isImage && item.icon ? (
+                    <img 
+                      src={item.icon} 
+                      alt={item.title} 
+                      className="sidebar-icon-image"
+                      onError={(e) => {
+                        console.error('Failed to load sidebar icon for:', item.title);
+                        e.target.style.display = 'none';
+                        // Fallback to emoji if image fails
+                        const fallbackEmoji = item.title === 'My Courses' ? '📚' :
+                                             item.title === 'Live Class' ? '▶️' :
+                                             item.title === 'Recorded Classes' ? '📹' :
+                                             item.title === 'Bonus Sessions' ? '⭐' :
+                                             item.title === 'Story Time' ? '📖' :
+                                             item.title === 'Rhyme Time' ? '🎵' :
+                                             item.title === 'Community' ? '👥' :
+                                             item.title === 'Invite & Earn' ? '🔗' : '📄';
+                        e.target.parentElement.innerHTML = fallbackEmoji;
+                      }}
+                    />
+                  ) : typeof item.icon === 'string' ? (
+                    <span className="sidebar-icon-text">{item.icon}</span>
+                  ) : null}
+                </span>
                 <span className="sidebar-text">{item.title}</span>
               </button>
             ))}
@@ -522,7 +557,21 @@ const Dashboard = ({ user, onLogout }) => {
                   data-card-color={card.color}
                   style={{ '--card-color': card.color }}
                 >
-                  <div className="card-icon">{card.icon}</div>
+                  <div className="card-icon">
+                    {card.isImage && card.icon ? (
+                      <img 
+                        src={card.icon} 
+                        alt={card.title} 
+                        className="card-icon-image"
+                        onError={(e) => {
+                          console.error('Failed to load icon for:', card.title, 'Path:', card.icon);
+                          e.target.style.display = 'none';
+                        }}
+                      />
+                    ) : typeof card.icon === 'string' ? (
+                      <span className="card-icon-emoji">{card.icon}</span>
+                    ) : null}
+                  </div>
                   <div className="card-footer" style={{ backgroundColor: card.color }}>
                     <span className="card-title">{card.title}</span>
                   </div>
@@ -639,22 +688,13 @@ const Dashboard = ({ user, onLogout }) => {
               </div>
 
               <div className="illustration-container">
-                <div className="person-illustration">
-                  <div className="thought-bubbles">
-                    <span className="bubble bubble-1">⚙️</span>
-                    <span className="bubble bubble-2">💡</span>
-                    <span className="bubble bubble-3">⭐</span>
-                    <span className="bubble bubble-4">🎓</span>
-                  </div>
-
-                  <div className="person-working">
-                    <div className="person-head"></div>
-                    <div className="headphones"></div>
-                    <div className="laptop-work"></div>
-                  </div>
+                <div className="pie-child-container">
+                  <img 
+                    src={pieDchildIcon} 
+                    alt="Child Icon" 
+                    className="pie-child-icon" 
+                  />
                 </div>
-
-                <div className="chat-bubble-float">💬</div>
               </div>
             </aside>
           )}

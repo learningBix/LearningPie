@@ -6,7 +6,14 @@ import get3 from '../../assets/get-3.png';
 import get4 from '../../assets/get-4.png';
 import get5 from '../../assets/get-5.png';
 
-const WhyLearningPie = ({ onEnrollClick }) => {
+const WhyLearningPie = () => {
+  const scrollToDemoForm = () => {
+    const demoFormElement = document.getElementById('bookdemo');
+    if (demoFormElement) {
+      demoFormElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   const features = [
     {
       icon: <img src={get1} alt="Activity box" className="w-32 h-32 object-contain" />,
@@ -60,7 +67,7 @@ const WhyLearningPie = ({ onEnrollClick }) => {
         {/* Enrol Button */}
         <div className="flex justify-center">
           <button
-            onClick={onEnrollClick}
+            onClick={scrollToDemoForm}
             className="bg-[#ff6b35] text-white px-8 py-4 rounded-lg text-lg font-bold uppercase tracking-wide hover:bg-[#e55a2b] transition-colors shadow-lg"
           >
             ENROL YOUR CHILD NOW

@@ -9,43 +9,49 @@ import explorationImage from '../../assets/Exploration.jpg';
 import storiesImage from '../../assets/Stories.png';
 import parentData from '../../assets/Parent.json';
 import activityData from '../../assets/Activity.json';
+import artAndColorIcon from '../../assets/parent/ArtandColor.png';
+import languageIcon from '../../assets/parent/language.png';
+import mathsIcon from '../../assets/parent/maths.png';
+import musicIcon from '../../assets/parent/music.png';
+import socialIcon from '../../assets/parent/social.png';
+import stemIcon from '../../assets/parent/stem.png';
 
 // Base subjects structure with icons and colors (descriptions will come from JSON)
 const baseSubjects = [
     {
       id: 1,
       title: 'LANGUAGE AND READING',
-      iconType: 'monitor-abc',
+      icon: languageIcon,
       color: '#17A2B8'
     },
     {
       id: 2,
       title: 'MATHEMATICS',
-      iconType: 'monitor-numbers',
+      icon: mathsIcon,
       color: '#8BC34A'
     },
     {
       id: 3,
       title: 'GENERAL & SOCIAL AWARENESS',
-      iconType: 'handshake-globe',
+      icon: socialIcon,
       color: '#2196F3'
     },
     {
       id: 4,
       title: 'STEM LEARNING',
-      iconType: 'atom-stem',
+      icon: stemIcon,
       color: '#F44336'
     },
     {
       id: 5,
       title: 'ART & COLORS',
-      iconType: 'palette-brush',
+      icon: artAndColorIcon,
       color: '#9C27B0'
     },
     {
       id: 6,
       title: 'MUSIC & MOVEMENT/EXERCISE',
-      iconType: 'music-note',
+      icon: musicIcon,
       color: '#FFC107'
     }
   ];
@@ -174,85 +180,6 @@ const ParentSection = ({ courseType: initialCourseType = 'jkg' }) => {
     setSelectedSubject(null);
   };
 
-  const renderIcon = (iconType) => {
-    switch(iconType) {
-      case 'monitor-abc':
-        return (
-          <div className="icon-monitor-abc">
-            <div className="monitor-frame">
-              <div className="monitor-screen">
-                <span className="block block-a">A</span>
-                <span className="block block-b">B</span>
-                <span className="block block-c">C</span>
-              </div>
-            </div>
-          </div>
-        );
-      case 'monitor-numbers':
-        return (
-          <div className="icon-monitor-numbers">
-            <div className="monitor-frame">
-              <div className="monitor-screen">
-                <span className="block block-2">2</span>
-                <span className="block block-3">3</span>
-              </div>
-            </div>
-          </div>
-        );
-      case 'handshake-globe':
-        return (
-          <div className="icon-handshake">
-            <div className="globe-icon">🌍</div>
-            <div className="handshake-base">🤝</div>
-          </div>
-        );
-      case 'atom-stem':
-        return (
-          <div className="icon-atom">
-            <div className="atom-center"></div>
-            <div className="atom-ring ring-1"></div>
-            <div className="atom-ring ring-2"></div>
-            <span className="stem-letter letter-s">S</span>
-            <span className="stem-letter letter-t">T</span>
-            <span className="stem-letter letter-e">E</span>
-            <span className="stem-letter letter-m">M</span>
-          </div>
-        );
-      case 'palette-brush':
-        return (
-          <div className="icon-art">
-            <div className="paintbrush">
-              <div className="brush-handle"></div>
-              <div className="brush-tip"></div>
-            </div>
-            <div className="palette">
-              <div className="palette-shape">
-                <span className="paint-dot dot-red"></span>
-                <span className="paint-dot dot-orange"></span>
-                <span className="paint-dot dot-yellow"></span>
-                <span className="paint-dot dot-green"></span>
-                <span className="paint-dot dot-blue"></span>
-                <span className="paint-dot dot-purple"></span>
-              </div>
-            </div>
-          </div>
-        );
-      case 'music-note':
-        return (
-          <div className="icon-music">
-            <div className="treble-clef">🎼</div>
-            <div className="vinyl-record"></div>
-            <div className="sound-waves">
-              <span className="wave"></span>
-              <span className="wave"></span>
-              <span className="wave"></span>
-            </div>
-          </div>
-        );
-      default:
-        return <span>📚</span>;
-    }
-  };
 
   return (
     <div className="parent-section-container">
@@ -291,7 +218,11 @@ const ParentSection = ({ courseType: initialCourseType = 'jkg' }) => {
               style={{ '--subject-color': subject.color }}
             >
               <div className="card-icon-area">
-                {renderIcon(subject.iconType || subject.icon)}
+                <img 
+                  src={subject.icon} 
+                  alt={subject.title} 
+                  className="subject-icon-image"
+                />
               </div>
               <div className="card-label" style={{ backgroundColor: subject.color }}>
                 <span className="card-title">{subject.title}</span>

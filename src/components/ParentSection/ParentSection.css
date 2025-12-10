@@ -223,9 +223,10 @@
 .subjects-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 30px;
-  max-width: 1000px;
+  gap: 25px;
+  max-width: 1200px;
   margin: 0 auto;
+  padding: 0 20px;
 }
 
 .subject-card {
@@ -234,38 +235,16 @@
   overflow: hidden;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   display: flex;
   flex-direction: column;
-  height: 210px;
+  min-height: 200px;
   position: relative;
 }
 
-.subject-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 55px;
-  background: var(--subject-color);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  border-radius: 15px 15px 0 0;
-  z-index: 1;
-}
-
-.subject-card:hover::before {
-  opacity: 0.25;
-}
-
 .subject-card:hover {
-  transform: translateY(-10px);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-}
-
-.subject-card:hover .card-label {
-  background: var(--subject-color) !important;
+  transform: translateY(-5px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
 }
 
 .card-icon-area {
@@ -273,10 +252,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 25px;
-  background: transparent;
+  padding: 30px 20px;
+  background: white;
   position: relative;
-  z-index: 2;
+  min-height: 140px;
 }
 
 .card-icon {
@@ -284,8 +263,19 @@
   transition: transform 0.3s ease;
 }
 
-.subject-card:hover .card-icon {
-  transform: scale(1.1);
+.subject-icon-image {
+  width: auto;
+  height: auto;
+  max-width: 120px;
+  max-height: 120px;
+  object-fit: contain;
+  transition: transform 0.3s ease;
+  display: block;
+}
+
+.subject-card:hover .card-icon,
+.subject-card:hover .subject-icon-image {
+  transform: scale(1.05);
 }
 
 /* Custom Icon Styles */
@@ -605,20 +595,24 @@
 }
 
 .card-label {
-  padding: 14px;
+  padding: 16px 12px;
   text-align: center;
-  min-height: 55px;
+  min-height: 60px;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: var(--subject-color);
+  border-radius: 0 0 15px 15px;
 }
 
 .card-title {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   color: white;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  line-height: 1.3;
+  word-spacing: 2px;
 }
 
 /* Content Sections for What We Include & Activities */
@@ -1006,7 +1000,12 @@
   }
   
   .subject-card {
-    height: 200px;
+    min-height: 200px;
+  }
+  
+  .subject-icon-image {
+    max-width: 100px;
+    max-height: 100px;
   }
   
   .header-titles {
@@ -1105,7 +1104,26 @@
   }
   
   .subject-card {
-    height: 190px;
+    min-height: 180px;
+  }
+  
+  .card-icon-area {
+    min-height: 120px;
+    padding: 20px 15px;
+  }
+  
+  .subject-icon-image {
+    max-width: 90px;
+    max-height: 90px;
+  }
+  
+  .card-label {
+    padding: 14px 10px;
+    min-height: 55px;
+  }
+  
+  .card-title {
+    font-size: 12px;
   }
   
   .header-illustration {
