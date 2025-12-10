@@ -6,6 +6,7 @@ const HindiSessions = () => {
   const [sessions, setSessions] = useState([]);
   const [selectedSession, setSelectedSession] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [videoError, setVideoError] = useState(null);
 
   useEffect(() => {
     loadHindiSessions();
@@ -51,6 +52,18 @@ const HindiSessions = () => {
     }
   };
 
+  // Helper function to construct blob URL safely
+  const getBlobUrl = (path) => {
+    if (!path) return '';
+    // If already a full URL, return as is
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      return path;
+    }
+    // Remove leading slash if present to avoid double slashes
+    const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+    return `${BLOB_BASE_URL}${cleanPath}`;
+  };
+
   const loadHindiSessions = async () => {
     const res = await contentsAPI.getRhymesList();
 
@@ -70,17 +83,29 @@ const HindiSessions = () => {
     // ⭐ Filter only Hindi Sessions (type = 7)
     const filtered = (data || []).filter((item) => item.type === 7);
 
-    const mapped = filtered.map((item) => ({
-      ...item,
-      // Decode Hindi text for title and description
-      title: decodeHindiText(item.title),
-      description: decodeHindiText(item.description),
-      thumbnail: item.image ? `${BLOB_BASE_URL}${item.image}` : '',
-      video: item.video ? `${BLOB_BASE_URL}${item.video}` : '',
-      isLocked: false // If later API gives locked status
-    }));
+    const mapped = filtered.map((item) => {
+      const videoUrl = getBlobUrl(item.video || item.video_url || item.videoUrl);
+      const thumbnailUrl = getBlobUrl(item.image || item.thumbnail || item.thumbnail_url);
+      
+      console.log(`📹 Hindi Session ${item.id}:`, {
+        originalVideo: item.video || item.video_url || item.videoUrl,
+        constructedVideoUrl: videoUrl,
+        originalImage: item.image || item.thumbnail,
+        constructedThumbnailUrl: thumbnailUrl
+      });
+
+      return {
+        ...item,
+        // Decode Hindi text for title and description
+        title: decodeHindiText(item.title),
+        description: decodeHindiText(item.description),
+        thumbnail: thumbnailUrl,
+        video: videoUrl,
+        isLocked: false // If later API gives locked status
+      };
+    });
     
-    console.log('Mapped Hindi Sessions:', mapped);
+    console.log('✅ Mapped Hindi Sessions:', mapped);
     setSessions(mapped);
   };
 
@@ -89,6 +114,7 @@ const HindiSessions = () => {
       alert("This Hindi session is locked!");
       return;
     }
+    setVideoError(null); // Reset error when opening new session
     setSelectedSession(session);
     setShowModal(true);
   };
@@ -96,6 +122,7 @@ const HindiSessions = () => {
   const closeModal = () => {
     setShowModal(false);
     setSelectedSession(null);
+    setVideoError(null); // Clear error when closing modal
   };
 
   return (
@@ -167,14 +194,104 @@ const HindiSessions = () => {
             <h2 className="modal-title">{selectedSession.title}</h2>
 
             <div className="modal-video-wrapper">
-              <iframe
-                src={selectedSession.video}
-                title="Hindi Session Player"
-                frameBorder="0"
-                allow="autoplay; fullscreen; picture-in-picture"
-                allowFullScreen
-                className="video-frame"
-              ></iframe>
+              {videoError ? (
+                <div className="video-error" style={{ 
+                  padding: '40px', 
+                  textAlign: 'center', 
+                  color: '#d32f2f',
+                  backgroundColor: '#ffebee',
+                  borderRadius: '8px'
+                }}>
+                  <p style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '10px' }}>
+                    ⚠️ Video Loading Error
+                  </p>
+                  <p style={{ fontSize: '14px', marginBottom: '10px' }}>
+                    {videoError}
+                  </p>
+                  <p style={{ fontSize: '12px', color: '#666', wordBreak: 'break-all' }}>
+                    URL: {selectedSession.video}
+                  </p>
+                  <button 
+                    onClick={() => {
+                      setVideoError(null);
+                      // Force reload by updating the video src
+                      const video = document.querySelector('.video-frame');
+                      if (video && video.tagName === 'VIDEO') {
+                        video.load();
+                      }
+                    }}
+                    style={{
+                      marginTop: '15px',
+                      padding: '8px 16px',
+                      backgroundColor: '#1976d2',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Retry
+                  </button>
+                </div>
+              ) : selectedSession.video ? (
+                // Check if it's a YouTube/Vimeo embed URL or direct video file
+                selectedSession.video.includes('youtube.com') || 
+                selectedSession.video.includes('youtu.be') || 
+                selectedSession.video.includes('vimeo.com') ? (
+                  // Use iframe for embed URLs
+                  <iframe
+                    src={selectedSession.video}
+                    title="Hindi Session Player"
+                    frameBorder="0"
+                    allow="autoplay; fullscreen; picture-in-picture"
+                    allowFullScreen
+                    className="video-frame"
+                    onError={(e) => {
+                      console.error('❌ Iframe video load error:', e);
+                      setVideoError('Failed to load embedded video. The video may not be available.');
+                    }}
+                  ></iframe>
+                ) : (
+                  // Use video tag for direct video files (blob storage URLs)
+                  <video
+                    key={selectedSession.video} // Force re-render on video change
+                    src={selectedSession.video}
+                    controls
+                    autoPlay
+                    className="video-frame"
+                    style={{ width: '100%', height: '100%' }}
+                    onError={(e) => {
+                      console.error('❌ Video load error:', {
+                        videoUrl: selectedSession.video,
+                        error: e,
+                        videoElement: e.target
+                      });
+                      setVideoError('Video file not found or cannot be loaded. Please contact support if this issue persists.');
+                    }}
+                    onLoadStart={() => {
+                      console.log('📹 Loading video:', selectedSession.video);
+                      setVideoError(null);
+                    }}
+                    onLoadedData={() => {
+                      console.log('✅ Video loaded successfully:', selectedSession.video);
+                      setVideoError(null);
+                    }}
+                  >
+                    Your browser does not support the video tag.
+                  </video>
+                )
+              ) : (
+                <div className="video-error" style={{ 
+                  padding: '40px', 
+                  textAlign: 'center', 
+                  color: '#666' 
+                }}>
+                  <p>⚠️ Video URL not available</p>
+                  <p style={{ fontSize: '14px', marginTop: '10px' }}>
+                    This session does not have a video URL configured.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
