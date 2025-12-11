@@ -140,6 +140,59 @@ const RecordedClasses = ({ user = {}, userData = {}, onVideoWatch }) => {
 
   // UPDATE: Add this helper function at the top of RecordedClasses component (after state declarations)
 
+// Helper function to calculate unlock date for a specific video index
+const calculateUnlockDate = (videoIndex, courseStartDate, quarterId, studentId, isRecordedClass = true) => {
+  if (!courseStartDate) return null;
+  
+  const start = new Date(courseStartDate);
+  start.setHours(0, 0, 0, 0);
+  
+  const quarterIdStr = String(quarterId);
+  let targetDayIndex = videoIndex;
+  let offsetDays = 0;
+  
+  // Handle Quarter 1 orientation video (index 0 is always unlocked)
+  if (quarterIdStr === '521' && videoIndex === 0) {
+    return null; // Orientation is always unlocked
+  }
+  
+  // Adjust index for Quarter 1 (skip orientation video at index 0)
+  if (quarterIdStr === '521' && videoIndex > 0) {
+    targetDayIndex = videoIndex - 1; // Day videos start from index 1
+  }
+  
+  // Calculate offset based on quarter sequential unlock logic
+  if (quarterIdStr === '790') {
+    // Quarter 2: Need to add Quarter 1 total days
+    // This will be calculated async, so we'll handle it in the main function
+    offsetDays = 0; // Will be set later
+  } else if (quarterIdStr === '772') {
+    // Quarter 3: Need to add Quarter 1 + Quarter 2 total days
+    offsetDays = 0; // Will be set later
+  }
+  
+  // Find the date for the target day index
+  // For Recorded Classes: Monday (1), Wednesday (3), Friday (5)
+  // For Bonus Sessions: Tuesday (2), Thursday (4)
+  const targetDays = isRecordedClass ? [1, 3, 5] : [2, 4];
+  let dayCount = 0;
+  let currentDate = new Date(start);
+  
+  // Find the date that corresponds to the target day index
+  while (dayCount <= targetDayIndex + offsetDays) {
+    const dayOfWeek = currentDate.getDay();
+    if (targetDays.includes(dayOfWeek)) {
+      if (dayCount === targetDayIndex + offsetDays) {
+        return currentDate;
+      }
+      dayCount++;
+    }
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+  
+  return null;
+};
+
 const calculateUnlockedVideoIndex = async (quarterId, courseStartDate, studentId) => {
   if (!courseStartDate) return 0;
   
@@ -235,6 +288,9 @@ const loadQuarterSessions = async (quarterId) => {
       
       // Get course_start_date to calculate unlocked videos
       let unlockedCount = lessons.length; // Default: all unlocked
+      let courseStartDate = null;
+      let quarter1Total = 0;
+      let quarter2Total = 0;
       
       try {
         const sid = user?.sid || userData?.sid || localStorage.getItem('sid') || sessionStorage.getItem('sid');
@@ -242,9 +298,21 @@ const loadQuarterSessions = async (quarterId) => {
         if (sid) {
           const subscriptionRes = await subjectsAPI.checkStudentSubscription(sid);
           if (subscriptionRes.success && subscriptionRes.data?.[0]?.course_start_date) {
-            const courseStartDate = subscriptionRes.data[0].course_start_date;
+            courseStartDate = subscriptionRes.data[0].course_start_date;
             unlockedCount = await calculateUnlockedVideoIndex(quarterId, courseStartDate, studentId);
             console.log(`🔓 [Recorded] Quarter ${quarterId} - Unlocked videos count:`, unlockedCount);
+            
+            // Get quarter totals for unlock date calculation
+            const quarterIdStr = String(quarterId);
+            if (quarterIdStr === '790') {
+              const quarter1Sessions = await getTotalSessionsInQuarter('521', studentId);
+              quarter1Total = quarter1Sessions.recordedCount;
+            } else if (quarterIdStr === '772') {
+              const quarter1Sessions = await getTotalSessionsInQuarter('521', studentId);
+              const quarter2Sessions = await getTotalSessionsInQuarter('790', studentId);
+              quarter1Total = quarter1Sessions.recordedCount;
+              quarter2Total = quarter2Sessions.recordedCount;
+            }
           }
         }
       } catch (err) {
@@ -259,6 +327,7 @@ const loadQuarterSessions = async (quarterId) => {
         // Orientation (index 0) is always unlocked, Day videos start from index 1
         // For Quarter 2 (id: 790) and Quarter 3 (id: 772), all videos follow normal unlock logic
         let isLocked = false;
+        let unlockDate = null;
         const quarterIdStr = String(quarterId);
         
         if (quarterIdStr === '521') {
@@ -273,12 +342,63 @@ const loadQuarterSessions = async (quarterId) => {
             // So if unlockedCount = 6, unlock indices 1-6 (Day 1-6)
             // Day 7 (index 7) should be locked
             isLocked = index > unlockedCount;
+            if (isLocked && courseStartDate) {
+              // Calculate unlock date for this video index
+              const start = new Date(courseStartDate);
+              start.setHours(0, 0, 0, 0);
+              const targetDays = [1, 3, 5]; // Mon, Wed, Fri
+              let dayCount = 0;
+              let currentDate = new Date(start);
+              
+              // For Quarter 1, index 1 = Day 1, index 2 = Day 2, etc.
+              const targetDayIndex = index - 1; // Skip orientation video
+              
+              while (dayCount <= targetDayIndex) {
+                const dayOfWeek = currentDate.getDay();
+                if (targetDays.includes(dayOfWeek)) {
+                  if (dayCount === targetDayIndex) {
+                    unlockDate = new Date(currentDate);
+                    break;
+                  }
+                  dayCount++;
+                }
+                currentDate.setDate(currentDate.getDate() + 1);
+              }
+            }
           }
         } else {
           // Quarter 2 (790) and Quarter 3 (772): Normal unlock logic (no orientation video)
           // unlockedCount represents number of videos unlocked (up to yesterday)
           // So if unlockedCount = 6, unlock indices 0-5 (Day 1-6)
           isLocked = index >= unlockedCount;
+          if (isLocked && courseStartDate) {
+            // Calculate unlock date with quarter offset
+            let offset = 0;
+            if (quarterIdStr === '790') {
+              offset = quarter1Total;
+            } else if (quarterIdStr === '772') {
+              offset = quarter1Total + quarter2Total;
+            }
+            
+            // Find the date for this video index
+            const start = new Date(courseStartDate);
+            start.setHours(0, 0, 0, 0);
+            const targetDays = [1, 3, 5]; // Mon, Wed, Fri
+            let dayCount = 0;
+            let currentDate = new Date(start);
+            
+            while (dayCount <= index + offset) {
+              const dayOfWeek = currentDate.getDay();
+              if (targetDays.includes(dayOfWeek)) {
+                if (dayCount === index + offset) {
+                  unlockDate = new Date(currentDate);
+                  break;
+                }
+                dayCount++;
+              }
+              currentDate.setDate(currentDate.getDate() + 1);
+            }
+          }
         }
         
         return {
@@ -291,6 +411,7 @@ const loadQuarterSessions = async (quarterId) => {
           requirement: lesson.requirements || content?.class_requirement || '',
           content,
           isLocked: isLocked,
+          unlockDate: unlockDate,
           index: index
         };
       });
@@ -964,7 +1085,11 @@ const handleSessionClick = (session) => {
                 <div className="p-5 flex flex-col bg-white">
                   <h3 className="text-base font-semibold text-black m-0 leading-normal">{session.title}</h3>
                   {session.isLocked && (
-                    <p className="text-xs text-[#FF8C42] mt-2 font-semibold">🔒 Unlocks after live class</p>
+                    <p className="text-xs text-[#FF8C42] mt-2 font-semibold">
+                      {session.unlockDate 
+                        ? `🔒 Unlocks on ${session.unlockDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+                        : '🔒 Unlocks after live class'}
+                    </p>
                   )}
                 </div>
               </div>

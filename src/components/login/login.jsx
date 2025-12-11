@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { apiCall } from '../../services/apiService';
-import loginImg from "../../assets/loginImage2.jpg";
+import loginImg from "../../assets/LearningPieLogin.jpg";
 
 const Login = ({ onLoginSuccess, onBack }) => {
   const [step, setStep] = useState(1); // 1: Email, 2: OTP

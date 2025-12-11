@@ -1,11 +1,14 @@
 import React from "react";
+import img01 from "../../../assets/img01.png";
+import img02 from "../../../assets/img02.png";
+import img03 from "../../../assets/img03.png";
 
 const TestimonialsSection = () => {
   const testimonials = [
     {
       name: "Nishant Bansal",
       title: "Investment Banker",
-      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop",
+      image: img01,
       rating: 5,
       text: "This pandemic presented itself as a challenge for learning. Suryaveer became very cranky at home. LearningPie came as a lifesaver, even home is an everyday adventure for him. Thanks to LearningPie for making this happen.",
       bgColor: "bg-blue-400"
@@ -13,7 +16,7 @@ const TestimonialsSection = () => {
     {
       name: "Pooja Mehta",
       title: "Educator",
-      image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop",
+      image: img02,
       rating: 5,
       text: "LearningPie Preschool Program was an easy choice. They have included everything. A child could want and a parent would need. Their offerings are vast and comprehensive. Truly, a complete preschool program. Avya can't really take his hands-off the kit.",
       bgColor: "bg-orange-500"
@@ -21,7 +24,7 @@ const TestimonialsSection = () => {
     {
       name: "Manish Harodia",
       title: "IIM-K",
-      image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop",
+      image: img03,
       rating: 5,
       text: "During these times, we observed that we need to engage Navya in some or the other way in order to continue her learning process. We came across LearningPie and it has been an upward spiral of fun since then.",
       bgColor: "bg-blue-500"

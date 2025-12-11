@@ -16,6 +16,7 @@ import learningPieHomeImg from '../../assets/LearningPieHome.png';
 import pieFooterWave from '../../assets/piefooterwave.jpg';
 import weAcceptPart1 from '../../assets/weacceptpart1.png';
 import weAcceptPart2 from '../../assets/weacceptpart2.png';
+import insta from '../../assets/insta.png';
 
 // ================== HEADER COMPONENT HERE ====================
 const Header = ({ onLoginClick, onBookFreeClassClick }) => {
@@ -355,23 +356,25 @@ const LearningPieHome = ({ onLoginClick }) => {
               <div className="flex justify-center space-x-4 text-2xl">
 
                 <a href="https://www.facebook.com/learningpiepreschool" target="_blank" rel="noopener noreferrer" className="hover:scale-110 transition-transform">
-                  <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-orange-500 font-bold">f</div>
+                  <div className="w-10 h-10 bg-orange-600 rounded-full flex items-center justify-center text-white font-bold shadow-sm">f</div>
                 </a>
 
                 <a href="https://x.com/learningpie1" target="_blank" rel="noopener noreferrer" className="hover:scale-110 transition-transform">
-                  <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-orange-500 font-bold">𝕏</div>
+                  <div className="w-10 h-10 bg-orange-600 rounded-full flex items-center justify-center text-white font-bold shadow-sm">𝕏</div>
                 </a>
 
                 <a href="https://www.linkedin.com/company/learningpie/" target="_blank" rel="noopener noreferrer" className="hover:scale-110 transition-transform">
-                  <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-orange-500 font-bold">in</div>
+                  <div className="w-10 h-10 bg-orange-600 rounded-full flex items-center justify-center text-white font-bold shadow-sm">in</div>
                 </a>
 
                 <a href="https://www.youtube.com/channel/UCA7Wdl0Nk5bDNSHtSsd1qVQ" target="_blank" rel="noopener noreferrer" className="hover:scale-110 transition-transform">
-                  <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-orange-500 font-bold">▶</div>
+                  <div className="w-10 h-10 bg-orange-600 rounded-full flex items-center justify-center text-white font-bold shadow-sm">▶</div>
                 </a>
 
                 <a href="https://www.instagram.com/learningpie_/" target="_blank" rel="noopener noreferrer" className="hover:scale-110 transition-transform">
-                  <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-orange-500 font-bold">📷</div>
+                  <div className="w-10 h-10 rounded-full bg-orange-600 flex items-center justify-center shadow-sm">
+                    <img src={insta} alt="Instagram" className="w-6 h-6 object-contain filter invert" />
+                  </div>
                 </a>
 
               </div>

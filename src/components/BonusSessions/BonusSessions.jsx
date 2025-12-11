@@ -676,6 +676,9 @@ const loadQuarterSessions = async (chapterId) => {
   if (response.success && response.raw?.lessons) {
     // Get course_start_date to calculate unlocked videos
     let unlockedCount = response.raw.lessons.length; // Default: all unlocked
+    let courseStartDate = null;
+    let quarter1Total = 0;
+    let quarter2Total = 0;
     
     // Determine quarter number from selectedQuarter if available
     let quarterNumber = null;
@@ -688,9 +691,21 @@ const loadQuarterSessions = async (chapterId) => {
       if (sid) {
         const subscriptionRes = await subjectsAPI.checkStudentSubscription(sid);
         if (subscriptionRes.success && subscriptionRes.data?.[0]?.course_start_date) {
-          const courseStartDate = subscriptionRes.data[0].course_start_date;
+          courseStartDate = subscriptionRes.data[0].course_start_date;
           unlockedCount = await calculateUnlockedBonusVideoIndex(chapterId, courseStartDate, studentId, quarterNumber);
           console.log(`🔓 [Bonus] Quarter ${chapterId} (qNum: ${quarterNumber}) - Unlocked videos count:`, unlockedCount);
+          
+          // Get quarter totals for unlock date calculation
+          const chapterIdStr = String(chapterId);
+          if (chapterIdStr === '790' || quarterNumber === 2) {
+            const quarter1Sessions = await getTotalSessionsInQuarter('521', studentId);
+            quarter1Total = quarter1Sessions.bonusCount;
+          } else if (chapterIdStr === '772' || chapterIdStr === '767' || quarterNumber === 3) {
+            const quarter1Sessions = await getTotalSessionsInQuarter('521', studentId);
+            const quarter2Sessions = await getTotalSessionsInQuarter('790', studentId);
+            quarter1Total = quarter1Sessions.bonusCount;
+            quarter2Total = quarter2Sessions.bonusCount;
+          }
         }
       }
     } catch (err) {
@@ -700,6 +715,38 @@ const loadQuarterSessions = async (chapterId) => {
     const mappedSessions = response.raw.lessons.map((lesson, index) => {
       const content = lesson.content?.[0] || null;
       const isLocked = index >= unlockedCount; // Lock videos beyond unlocked count
+      
+      // Calculate unlock date for locked videos
+      let unlockDate = null;
+      if (isLocked && courseStartDate) {
+        // Calculate unlock date with quarter offset
+        let offset = 0;
+        const chapterIdStr = String(chapterId);
+        if (chapterIdStr === '790' || quarterNumber === 2) {
+          offset = quarter1Total;
+        } else if (chapterIdStr === '772' || chapterIdStr === '767' || quarterNumber === 3) {
+          offset = quarter1Total + quarter2Total;
+        }
+        
+        // Find the date for this video index (Bonus sessions: Tuesday (2), Thursday (4))
+        const start = new Date(courseStartDate);
+        start.setHours(0, 0, 0, 0);
+        const targetDays = [2, 4]; // Tue, Thu
+        let dayCount = 0;
+        let currentDate = new Date(start);
+        
+        while (dayCount <= index + offset) {
+          const dayOfWeek = currentDate.getDay();
+          if (targetDays.includes(dayOfWeek)) {
+            if (dayCount === index + offset) {
+              unlockDate = new Date(currentDate);
+              break;
+            }
+            dayCount++;
+          }
+          currentDate.setDate(currentDate.getDate() + 1);
+        }
+      }
 
       // Prefer backend-provided class_summary_pdf (day-wise PDF) if available, otherwise fall back to video_url
       let contentUrl = '';
@@ -730,6 +777,7 @@ const loadQuarterSessions = async (chapterId) => {
         requirement: content ? formatRichText(content.class_requirement) : '',
         classTopic: content?.class_topic || lesson.class_topic || '', // Include class_topic if available
         isLocked: isLocked,
+        unlockDate: unlockDate,
         index: index
       };
     });
@@ -1205,7 +1253,11 @@ const handleSessionClick = (session) => {
                 <div className="p-5 flex flex-col bg-white">
                   <h3 className="text-base font-semibold text-black m-0 leading-normal">{session.title}</h3>
                   {session.isLocked && (
-                    <p className="text-xs text-[#FF8C42] mt-2 font-semibold">🔒 Unlocks after live class</p>
+                    <p className="text-xs text-[#FF8C42] mt-2 font-semibold">
+                      {session.unlockDate 
+                        ? `🔒 Unlocks on ${session.unlockDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+                        : '🔒 Unlocks after live class'}
+                    </p>
                   )}
                 </div>
               </div>
