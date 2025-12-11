@@ -263,14 +263,6 @@ const Login = ({ onLoginSuccess, onBack }) => {
               </div>
             )}
 
-            {/* Show OTP on UI so user doesn't need to open console (for simplicity / testing) */}
-            {step === 2 && serverOtp && (
-              <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 text-yellow-700 rounded-lg text-sm text-center">
-                <span className="font-medium">Your OTP:</span>{' '}
-                <span className="font-bold tracking-[0.35em] text-xl">{serverOtp}</span>
-              </div>
-            )}
-
             <div className="space-y-6">
               {step === 1 ? (
                 // Step 1: Email Input
