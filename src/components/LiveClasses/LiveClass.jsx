@@ -663,13 +663,13 @@ const LiveClass = ({ user = {}, userData = {}, onVideoWatch }) => {
             <h1 className="text-[32px] font-bold text-[#333] m-0 leading-tight">
               Today's Live Class
             </h1>
-            <span className={`px-4 py-1 rounded-full text-sm font-semibold ${
+            {/* <span className={`px-4 py-1 rounded-full text-sm font-semibold ${
               currentDayType === 'recorded' 
                 ? 'bg-blue-100 text-blue-600' 
                 : 'bg-orange-100 text-orange-600'
             }`}>
               {currentDayType === 'recorded' ? 'Recorded Class' : 'Bonus Session'}
-            </span>
+            </span> */}
           </div>
           {currentVideos.length > 0 && (
             <p className="text-base text-[#666]">
